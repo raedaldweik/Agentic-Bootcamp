@@ -1,0 +1,7 @@
+# LibreOffice / render artefacts
+*.pdf
+render/
+node_modules/
+__pycache__/
+~$*.pptx
+.DS_Store
