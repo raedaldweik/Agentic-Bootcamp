@@ -63,7 +63,7 @@ function Header({ tab, setTab }) {
         <div className="header-eyebrow">Emirates Health Services × SAS</div>
         <div className="title-row">
           <h1 className="app-title">
-            <b>Agentic AI Bootcamp</b> <span className="title-sep">·</span> Population-health agent on SAS RAM
+            <b>Agentic AI Bootcamp</b> <span className="title-sep">·</span> SAS Retrieval Agent Manager
           </h1>
           <div className="accent-line" />
         </div>
@@ -102,13 +102,13 @@ function Layout() {
   const [tab, setTab] = useState('landing');
   const page = () => {
     switch (tab) {
-      case 'landing': return <LandingPage go={setTab} />;
+      case 'landing': return <LandingPage />;
       case 'overview': return <DashboardOverview />;
       case 'data': return <DataPage />;
       case 'documents': return <DocumentsPage />;
       case 'assistant': return <AssistantPage />;
       case 'ram': return <RamCopilotPage />;
-      default: return <LandingPage go={setTab} />;
+      default: return <LandingPage />;
     }
   };
 

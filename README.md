@@ -32,7 +32,7 @@ NHA-CG-03 hypertension, NHA-PP-01 screening and recall). Not for clinical use.
 
 | Tab | What it shows |
 |---|---|
-| Home | What the bootcamp builds, the **three environment buttons** (SAS Viya, SAS RAM, bootcamp materials; each opens in a new tab; URLs come from `VIYA_URL`, `RAM_URL`, `MATERIALS_URL`), a tour of the tabs, and the use case in one patient |
+| Home | The **three environment buttons** (SAS Viya, SAS RAM, bootcamp materials; each opens in a new tab; URLs come from `VIYA_URL`, `RAM_URL`, `MATERIALS_URL`, greyed out until set) and the live registry summary |
 | Dashboard | The registry overview so participants understand the population (KPIs, HbA1c trend, demand forecast, facility benchmark, risk tiers, complications) |
 | Data · Documents | The raw registry tables (browse, search) and the NHA guideline PDFs: what participants load into SAS Viya and index in a RAM collection |
 | Assistant | Basira, the finished population-health agent: live agent trace, scenario chips, charts, citations, drafts queued for human approval, EN/AR voice |

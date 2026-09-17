@@ -616,13 +616,14 @@ html, body, #root {
 /* ═══ Landing page — cinematic opener ═══ */
 .landing { height: 100%; overflow-y: auto; overflow-x: hidden; position: relative; }
 .landing-inner { max-width: 1240px; margin: 0 auto; padding: 0 28px 60px; }
-.hero { position: relative; min-height: calc(100vh - 240px); display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 40px; align-items: center; padding: 30px 0 40px; }
+.hero { position: relative; overflow: hidden; min-height: calc(100vh - 220px); display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 40px; align-items: center; padding: 30px 0 40px; }
 .hero-g {
-  position: absolute; right: -120px; top: -60px; width: 640px; height: 640px;
+  position: absolute; right: 0; top: 50%; width: min(46%, 560px); height: auto;
+  transform: translateY(-50%);
   opacity: 0.06; pointer-events: none; z-index: 0;
   animation: g-drift 18s ease-in-out infinite;
 }
-@keyframes g-drift { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-14px) rotate(3deg); } }
+@keyframes g-drift { 0%, 100% { transform: translateY(-50%) rotate(0deg); } 50% { transform: translateY(calc(-50% - 12px)) rotate(2deg); } }
 .hero-title {
   font-size: clamp(38px, 4.2cqw, 64px);
   font-weight: 800; line-height: 1.02; letter-spacing: -0.025em;
@@ -926,3 +927,8 @@ html, body, #root {
 .tour-sub { font-size: 9.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-top: 3px; }
 .tour-text { font-size: 11px; line-height: 1.5; color: var(--text-dim); margin-top: 7px; }
 @container (max-width: 1000px) { .tour-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Environment buttons on the home page: greyed out until the URL is configured */
+.btn-disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+.btn-disabled:hover { transform: none; box-shadow: none; }
+a.btn-primary, a.btn-secondary { text-decoration: none; }
