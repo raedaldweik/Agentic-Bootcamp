@@ -1,10 +1,10 @@
-// UI strings for the SAS Copilot page — English / Arabic. The toggle in the
+// UI strings for the SAS RAM page — English / Arabic. The toggle in the
 // page's top bar switches the page (and flips the page container to RTL; the
 // host app's document direction is never touched). The backend is told the
 // language per query for compatibility; RAM agents answer as configured.
 
 const STR = {
-  appTitle: { en: 'SAS Copilot · Retrieval Agent Manager', ar: 'مساعد SAS · مدير وكلاء الاسترجاع' },
+  appTitle: { en: 'SAS RAM · Retrieval Agent Manager', ar: 'SAS RAM · مدير وكلاء الاسترجاع' },
   connecting: { en: 'Connecting…', ar: 'جارٍ الاتصال…' },
   connected: { en: 'Connected', ar: 'متصل' },
   mockMode: { en: 'Mock mode', ar: 'وضع المحاكاة' },
@@ -43,8 +43,8 @@ const STR = {
   delete: { en: 'Delete', ar: 'حذف' },
 
   welcome: {
-    en: 'Welcome to the SAS Copilot for the SAS × EHS Agentic AI Bootcamp. Pick an agent published in SAS Retrieval Agent Manager from the dropdown above and ask about the diabetes population, care gaps, guidelines or a policy simulation. Every answer shows its tool calls, retrieval and sources.',
-    ar: 'مرحباً بك في مساعد SAS لمعسكر SAS × EHS للذكاء الاصطناعي الوكيل. اختر وكيلاً منشوراً في SAS Retrieval Agent Manager من القائمة أعلاه واسأل عن مرضى السكري، أو فجوات الرعاية، أو الإرشادات السريرية، أو محاكاة سياسة. كل إجابة تعرض استدعاءات أدواتها وعمليات الاسترجاع ومصادرها.',
+    en: 'Welcome to the EHS Agentic AI Bootcamp assistant on SAS Retrieval Agent Manager (RAM). Pick an agent published in RAM from the dropdown above and ask about the diabetes population, care gaps, guidelines or a policy simulation. Every answer shows its tool calls, retrieval and sources.',
+    ar: 'مرحباً بك في مساعد معسكر EHS للذكاء الاصطناعي الوكيل على SAS Retrieval Agent Manager. اختر وكيلاً منشوراً في RAM من القائمة أعلاه واسأل عن مرضى السكري، أو فجوات الرعاية، أو الإرشادات السريرية، أو محاكاة سياسة. كل إجابة تعرض استدعاءات أدواتها وعمليات الاسترجاع ومصادرها.',
   },
 
   selectAgent: { en: 'Select an agent', ar: 'اختر وكيلاً' },

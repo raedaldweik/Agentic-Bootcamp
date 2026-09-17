@@ -9,12 +9,12 @@ import { useId, useMemo, useRef, useState } from 'react';
 
 // The reports 4-step colour ramps (light → dark), verbatim.
 export const RAMPS = [
-  ['#C6E9E4', '#5FBFB4', '#0E9488', '#004D48'],   // EHS teal
+  ['#D5E1EC', '#7D9FBF', '#3A6890', '#1B3650'],   // EHS teal
   ['#ffe1a8', '#ebbf6a', '#b8862e', '#7a571a'],   // honey gold
   ['#d8c5f5', '#a98ae0', '#6d4fa8', '#3f2a6b'],   // violet
   ['#a8f5b8', '#6ddc8a', '#3a8e5a', '#1f5a36'],   // emerald
   ['#ffd0a8', '#fb923c', '#b06024', '#6e3a12'],   // amber
-  ['#f5c0dc', '#e07ab2', '#2F9C92', '#651f47'],   // rose
+  ['#f5c0dc', '#e07ab2', '#46729A', '#651f47'],   // rose
   ['#ffb8b8', '#f08585', '#b03c3c', '#6f1f1f'],   // crimson
   ['#f7e8a8', '#e3cb5d', '#a8902a', '#6b5a14'],   // citrine
   ['#e9d9c8', '#c9a98a', '#8a6a4e', '#4e3728'],   // desert sand

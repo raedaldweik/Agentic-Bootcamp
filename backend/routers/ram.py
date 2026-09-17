@@ -29,7 +29,7 @@ class QueryRequest(BaseModel):
     collectionIds: list[str] | None = None
     querySessionId: str | None = None
     attachments: list[Attachment] | None = None
-    # UI language ("en" / "ar"). Accepted for compatibility with the SAS Copilot
+    # UI language ("en" / "ar"). Accepted for compatibility with the SAS RAM
     # frontend; RAM agents decide the answer language themselves, so it is ignored.
     language: str | None = "en"
 

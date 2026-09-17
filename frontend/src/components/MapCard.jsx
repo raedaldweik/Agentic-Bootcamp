@@ -37,7 +37,7 @@ const FALLBACK_STYLE = {
 };
 
 // sand → teal sequential ramp (worse = darker)
-const RAMP = ['#efe1cf', '#D8E6D3', '#9FD0C6', '#4FB0A4', '#007A73', '#004D48'];
+const RAMP = ['#efe1cf', '#E0E8F0', '#A9C0D5', '#5E86AC', '#2B5378', '#1B3650'];
 const lerp = (a, b, t) => a + (b - a) * t;
 const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 function rampColor(t) {

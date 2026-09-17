@@ -4,10 +4,6 @@ import { getHealth, getLinks } from './services/api';
 import LandingPage from './pages/LandingPage';
 import AssistantPage from './pages/AssistantPage';
 import DashboardOverview from './pages/DashboardOverview';
-import DashboardClinical from './pages/DashboardClinical';
-import DashboardRisk from './pages/DashboardRisk';
-import DashboardCost from './pages/DashboardCost';
-import DashboardMap from './pages/DashboardMap';
 import QueuePage from './pages/QueuePage';
 import DocumentsPage from './pages/DocumentsPage';
 import DataPage from './pages/DataPage';
@@ -15,15 +11,6 @@ import AuditPage from './pages/AuditPage';
 import EvaluationPage from './pages/EvaluationPage';
 import SimulatorPage from './pages/SimulatorPage';
 import RamCopilotPage from './ram/RamCopilotPage';
-
-const DASH_TABS = [
-  { id: 'overview', label: 'Registry' },
-  { id: 'clinical', label: 'Clinical Quality' },
-  { id: 'risk', label: 'Deterioration Risk' },
-  { id: 'cost', label: 'Cost & Equity' },
-  { id: 'geography', label: 'Geography' },
-];
-const DASH_IDS = DASH_TABS.map((t) => t.id);
 
 function Bokeh() {
   return (
@@ -50,12 +37,12 @@ function PersonaSelector() {
         className="flex items-center gap-2 pl-3 pr-2.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all"
         style={{
           background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(0,122,115,0.22)', color: 'var(--text)', minWidth: 210,
+          border: '1px solid rgba(43,83,120,0.22)', color: 'var(--text)', minWidth: 210,
         }}>
         <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--green)' }} />
         <span className="flex-1 text-left truncate">{personaInfo.name}</span>
         <span className="text-[8.5px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded shrink-0"
-          style={{ background: 'rgba(0,122,115,0.10)', color: 'var(--brand)' }}>
+          style={{ background: 'rgba(43,83,120,0.10)', color: 'var(--brand)' }}>
           {persona}
         </span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2.5"
@@ -67,7 +54,7 @@ function PersonaSelector() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full mt-1 rounded-xl shadow-xl overflow-hidden z-50 w-[280px] animate-fade-up"
-            style={{ background: 'rgba(255,255,255,0.97)', border: '1px solid rgba(0,122,115,0.2)', backdropFilter: 'blur(20px)' }}>
+            style={{ background: 'rgba(255,255,255,0.97)', border: '1px solid rgba(43,83,120,0.2)', backdropFilter: 'blur(20px)' }}>
             <p className="px-3 pt-2.5 pb-1 text-[9px] font-bold tracking-widest uppercase" style={{ color: 'var(--text-dim)' }}>
               Personas
             </p>
@@ -76,8 +63,8 @@ function PersonaSelector() {
                 const active = u.id === persona;
                 return (
                   <button key={u.id} onClick={() => { setPersona(u.id); setOpen(false); }}
-                    className="w-full text-left px-3 py-2 transition-all hover:bg-[rgba(0,122,115,0.06)] flex items-center gap-2.5"
-                    style={active ? { background: 'rgba(0,122,115,0.10)', borderLeft: '3px solid var(--brand)' }
+                    className="w-full text-left px-3 py-2 transition-all hover:bg-[rgba(43,83,120,0.06)] flex items-center gap-2.5"
+                    style={active ? { background: 'rgba(43,83,120,0.10)', borderLeft: '3px solid var(--brand)' }
                       : { borderLeft: '3px solid transparent' }}>
                     <div className={`w-7 h-7 rounded-full ${u.color} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}>
                       {u.avatar}
@@ -99,7 +86,7 @@ function PersonaSelector() {
 
 function Header({ tab, setTab }) {
   const [health, setHealth] = useState(null);
-  const [ehsLogo, setEhsLogo] = useState('/ehs-logo.svg');
+  const [ehsLogo, setEhsLogo] = useState('/ehs-logo.png');
   useEffect(() => {
     let timer;
     const tick = () => getHealth().then((h) => {
@@ -108,7 +95,7 @@ function Header({ tab, setTab }) {
       if (h?.mode === 'multi-agent' && !h.warmup?.ready) timer = setTimeout(tick, 3000);
     }).catch(() => setHealth({ status: 'down' }));
     tick();
-    // An official logo hosted elsewhere can be plugged in through EHS_LOGO_URL without a rebuild.
+    // A hosted logo can be plugged in through EHS_LOGO_URL without a rebuild.
     getLinks().then((r) => { if (r?.branding?.ehs_logo_url) setEhsLogo(r.branding.ehs_logo_url); }).catch(() => {});
     return () => clearTimeout(timer);
   }, []);
@@ -120,27 +107,25 @@ function Header({ tab, setTab }) {
   const tabs = [
     { id: 'landing', label: 'Home' },
     { id: 'assistant', label: 'Assistant' },
-    { id: 'overview', label: 'Dashboards' },
+    { id: 'overview', label: 'Dashboard' },
     { id: 'simulator', label: 'Simulator' },
-    { id: 'copilot', label: 'SAS Copilot' },
+    { id: 'ram', label: 'SAS RAM' },
     { id: 'evaluation', label: 'Evaluation' },
     { id: 'queue', label: 'Queue' },
     { id: 'documents', label: 'Documents' },
     { id: 'data', label: 'Data' },
     { id: 'audit', label: 'Audit' },
   ];
-  const isDash = DASH_IDS.includes(tab);
-  const activeTop = isDash ? 'overview' : tab;
 
   return (
     <header className="app-header">
       <button onClick={() => setTab('landing')} title="Home">
         <img className="brand-logo" src={ehsLogo} alt="Emirates Health Services"
-          onError={(e) => { if (e.target.src.indexOf('/ehs-logo.svg') === -1) e.target.src = '/ehs-logo.svg'; }} />
+          onError={(e) => { if (e.target.src.indexOf('/ehs-logo.png') === -1) e.target.src = '/ehs-logo.png'; }} />
       </button>
 
       <div className="title-block">
-        <div className="header-eyebrow">Emirates Health Services · Agentic AI Bootcamp with SAS</div>
+        <div className="header-eyebrow">Emirates Health Services · Agentic AI Bootcamp</div>
         <div className="title-row">
           <h1 className="app-title">
             <b>Basira</b> <span className="title-ar">بصيرة</span> <span className="title-sep">·</span> Population Health Intelligence
@@ -151,24 +136,11 @@ function Header({ tab, setTab }) {
           <div className="seg-track">
             {tabs.map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`seg-pill ${activeTop === t.id ? 'active' : ''} ${t.id === 'copilot' ? 'seg-pill-sas' : ''}`}>
+                className={`seg-pill ${tab === t.id ? 'active' : ''}`}>
                 {t.label}
               </button>
             ))}
           </div>
-          {isDash && (
-            <>
-              <span className="nav-divider" />
-              <div className="seg-track">
-                {DASH_TABS.map((t) => (
-                  <button key={t.id} onClick={() => setTab(t.id)}
-                    className={`seg-pill ${tab === t.id ? 'active' : ''}`}>
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
         </div>
       </div>
 
@@ -187,7 +159,6 @@ function Header({ tab, setTab }) {
           </div>
         )}
         <PersonaSelector />
-        <img className="org-logo" src="/sas-logo.png" alt="SAS" onError={(e) => { e.target.style.display = 'none'; }} />
       </div>
     </header>
   );
@@ -200,12 +171,8 @@ function Layout() {
       case 'landing': return <LandingPage go={setTab} />;
       case 'assistant': return <AssistantPage />;
       case 'overview': return <DashboardOverview />;
-      case 'clinical': return <DashboardClinical />;
-      case 'risk': return <DashboardRisk />;
-      case 'cost': return <DashboardCost />;
-      case 'geography': return <DashboardMap />;
       case 'simulator': return <SimulatorPage />;
-      case 'copilot': return <RamCopilotPage />;
+      case 'ram': return <RamCopilotPage />;
       case 'evaluation': return <EvaluationPage />;
       case 'queue': return <QueuePage />;
       case 'documents': return <DocumentsPage />;

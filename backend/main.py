@@ -3,7 +3,7 @@ Basira (بصيرة), National Population Health Intelligence.
 
 FastAPI backend: multi-agent chat (ADK supervisor, provider-agnostic model), dashboards, HITL queue,
 audit trail, guideline documents, HIE data browser, the bootcamp environment links and the
-SAS Copilot page (a proxy to SAS Retrieval Agent Manager). Serves the built React
+SAS RAM page (a proxy to SAS Retrieval Agent Manager). Serves the built React
 frontend from frontend/dist in production (single container, Railway-ready).
 """
 from __future__ import annotations

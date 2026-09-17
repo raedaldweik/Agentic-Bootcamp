@@ -5,7 +5,7 @@ Variables tab without a rebuild.
   VIYA_URL        the SAS Viya environment participants log into
   RAM_URL         the SAS Retrieval Agent Manager UI
   MATERIALS_URL   the bootcamp materials (defaults to this repository on GitHub)
-  EHS_LOGO_URL    optional: an absolute URL to the official EHS logo, used instead of /ehs-logo.svg
+  EHS_LOGO_URL    optional: an absolute URL to a hosted EHS logo, used instead of /ehs-logo.png
 """
 from __future__ import annotations
 

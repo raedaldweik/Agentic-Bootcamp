@@ -18,7 +18,7 @@ import { Panel, Spinner } from '../components/ui';
  * Every number comes from the backend: the model is re-scored on each change (debounced).
  */
 
-const BAND_COLOR = { Low: '#3a8e5a', Moderate: '#b8862e', High: '#d97706', 'Very High': '#0E9488' };
+const BAND_COLOR = { Low: '#3a8e5a', Moderate: '#b8862e', High: '#d97706', 'Very High': '#3A6890' };
 const UP = '#b03c3c';
 const DOWN = '#3a8e5a';
 
@@ -261,7 +261,7 @@ export default function SimulatorPage() {
             {open && q.trim() && (pick?.matches || []).length > 0 && (
               <div className="absolute right-0 mt-1 z-50 glass-card p-1 w-[300px]" style={{ background: 'rgba(255,255,255,0.97)' }}>
                 {pick.matches.map((m) => (
-                  <button key={m.patient_id} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[rgba(0,122,115,0.06)] flex items-center justify-between gap-2"
+                  <button key={m.patient_id} className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-[rgba(43,83,120,0.06)] flex items-center justify-between gap-2"
                     onMouseDown={() => { setPid(m.patient_id); setQ(''); setOpen(false); }}>
                     <span className="text-[11px] font-bold truncate" style={{ color: 'var(--text)' }}>{m.name} <span className="font-mono font-normal" style={{ color: 'var(--text-faint)' }}>{m.patient_id}</span></span>
                     <span className="text-[10px] shrink-0" style={{ color: 'var(--text-dim)' }}>{m.age} · {m.diabetes_type === 'type1' ? 'T1' : 'T2'} · HbA1c {m.hba1c_latest ?? 'n/a'} · {m.registry_tier}</span>

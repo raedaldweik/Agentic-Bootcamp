@@ -18,7 +18,7 @@ import { AgentChip, KpiStrip, Panel, Spinner } from '../components/ui';
  * Every number here is computed on request from data the model never trained on.
  */
 
-const MAROON = '#0E9488';
+const MAROON = '#3A6890';
 const GOLD = '#b8862e';
 const VIOLET = '#6d4fa8';
 const GREEN = '#3a8e5a';
@@ -56,7 +56,7 @@ function TipBox({ active, payload, label, fmt }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg px-2.5 py-1.5 text-[10.5px] shadow-lg"
-      style={{ background: 'rgba(255,255,255,0.96)', border: '1px solid rgba(0,122,115,0.18)' }}>
+      style={{ background: 'rgba(255,255,255,0.96)', border: '1px solid rgba(43,83,120,0.18)' }}>
       <p className="font-bold mb-0.5" style={{ color: 'var(--text)' }}>{label}</p>
       {payload.map((p) => (
         <p key={p.dataKey} style={{ color: p.color }}>{p.name}: <b>{fmt ? fmt(p.value) : p.value}</b></p>
@@ -189,7 +189,7 @@ function ModelView() {
                   {d.threshold_sweep.map((r) => {
                     const active = Math.abs(r.threshold - t) < 0.005;
                     return (
-                      <tr key={r.threshold} style={{ background: active ? 'rgba(0,122,115,0.08)' : 'transparent', color: 'var(--text-md)' }}
+                      <tr key={r.threshold} style={{ background: active ? 'rgba(43,83,120,0.08)' : 'transparent', color: 'var(--text-md)' }}
                         className="border-t border-[rgba(15,23,42,0.05)]">
                         <td className="py-1 font-bold" style={{ color: active ? 'var(--brand)' : 'var(--text)' }}>≥ {pct(r.threshold, 0)}</td>
                         <td>{pct(r.flag_rate)}</td><td>{pct(r.sensitivity)}</td><td>{pct(r.specificity)}</td><td>{pct(r.ppv)}</td>
@@ -310,13 +310,13 @@ function AgentsView() {
                 </div>
                 <button disabled={running} onClick={() => runAgentEval(mode).then(() => setStatus({ running: true, progress: 0, total: cases.length })).catch(() => {})}
                   className="px-3 py-1.5 rounded-lg text-[10.5px] font-bold text-white"
-                  style={{ background: running ? '#94a3b8' : 'var(--brand-grad)', boxShadow: running ? 'none' : '0 4px 12px rgba(0,122,115,0.3)' }}>
+                  style={{ background: running ? '#94a3b8' : 'var(--brand-grad)', boxShadow: running ? 'none' : '0 4px 12px rgba(43,83,120,0.3)' }}>
                   {running ? `Running… ${status.progress}/${status.total}` : 'Run evalset'}
                 </button>
               </div>
             }>
             {running && (
-              <div className="mx-2 mb-2 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,122,115,0.12)' }}>
+              <div className="mx-2 mb-2 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(43,83,120,0.12)' }}>
                 <div className="h-full transition-all" style={{ width: `${progress}%`, background: 'var(--brand-grad)' }} />
               </div>
             )}
@@ -337,8 +337,8 @@ function AgentsView() {
                     return (
                       <Fragment key={c.id}>
                         <tr onClick={() => setOpen(isOpen ? null : c.id)}
-                          className="border-t border-[rgba(15,23,42,0.05)] cursor-pointer hover:bg-[rgba(0,122,115,0.04)]"
-                          style={{ color: 'var(--text-md)', background: isOpen ? 'rgba(0,122,115,0.05)' : undefined }}>
+                          className="border-t border-[rgba(15,23,42,0.05)] cursor-pointer hover:bg-[rgba(43,83,120,0.04)]"
+                          style={{ color: 'var(--text-md)', background: isOpen ? 'rgba(43,83,120,0.05)' : undefined }}>
                           <td className="py-1.5 pr-2" style={{ maxWidth: 260 }}>
                             <p className="font-bold truncate" style={{ color: 'var(--text)' }}>{c.question}</p>
                             <p className="text-[9px]" style={{ color: 'var(--text-faint)' }}>{c.id} · {c.persona}</p>

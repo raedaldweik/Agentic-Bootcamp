@@ -44,7 +44,7 @@ const AGENTS = [
   { id: 'guideline_agent', name: 'Guidelines', sub: 'RAG · CITATIONS', color: '#3a8e5a' },
   { id: 'risk_agent', name: 'Risk · ML', sub: 'SCORE · SIMULATE', color: '#b06024' },
   { id: 'pophealth_agent', name: 'Pop-health', sub: 'MCP SERVER ★', color: '#b8862e', mcp: true },
-  { id: 'action_agent', name: 'Actions', sub: 'HUMAN-IN-LOOP', color: '#007A73' },
+  { id: 'action_agent', name: 'Actions', sub: 'HUMAN-IN-LOOP', color: '#2B5378' },
 ];
 
 function Constellation() {
@@ -57,7 +57,7 @@ function Constellation() {
     <svg viewBox="0 0 520 352" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
       <defs>
         <linearGradient id="core-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#1FA79B" /><stop offset="1" stopColor="#004D48" />
+          <stop offset="0" stopColor="#4A78A0" /><stop offset="1" stopColor="#1B3650" />
         </linearGradient>
       </defs>
       {nodes.map((n) => (
@@ -90,7 +90,7 @@ function RiskRing({ pct }) {
         style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(0.34,1.1,0.64,1)' }} />
       <defs>
         <linearGradient id="risk-grad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#b8862e" /><stop offset="1" stopColor="#007A73" />
+          <stop offset="0" stopColor="#b8862e" /><stop offset="1" stopColor="#2B5378" />
         </linearGradient>
       </defs>
       <text x="45" y="52" className="risk-ring-val">{Math.round(pct * 100)}%</text>
@@ -176,7 +176,7 @@ export default function LandingPage({ go }) {
 
         {/* ── HERO ── */}
         <section className="hero">
-          <img src="/basira-mark.svg" alt="" className="hero-g" />
+          <img src="/ehs-mark.png" alt="" className="hero-g" />
           <div className="relative z-[1]">
             <div className="section-eyebrow reveal d1">Emirates Health Services · Diabetes registry · Northern Emirates</div>
             <h1 className="hero-title reveal d2">
@@ -192,8 +192,8 @@ export default function LandingPage({ go }) {
             </p>
             <div className="flex items-center gap-3 mt-7 reveal d4">
               <button className="btn-primary" onClick={() => go('assistant')}>Open the Assistant</button>
-              <button className="btn-secondary" onClick={() => go('overview')}>Registry dashboards</button>
-              <button className="btn-secondary" onClick={() => go('copilot')}>SAS Copilot · RAM</button>
+              <button className="btn-secondary" onClick={() => go('overview')}>Registry dashboard</button>
+              <button className="btn-secondary" onClick={() => go('ram')}>SAS RAM</button>
             </div>
             <p className="text-[11px] mt-5 reveal d5" style={{ color: 'var(--text-faint)' }}>
               Supervisor + specialist agents · Model Context Protocol · hybrid guideline retrieval · Built for the SAS × EHS Agentic AI Bootcamp
@@ -210,7 +210,7 @@ export default function LandingPage({ go }) {
                 <svg viewBox="0 0 640 160" style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="ecg-grad" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0" stopColor="#007A73" /><stop offset="0.6" stopColor="#b8862e" /><stop offset="1" stopColor="#d4a64f" />
+                      <stop offset="0" stopColor="#2B5378" /><stop offset="0.6" stopColor="#b8862e" /><stop offset="1" stopColor="#d4a64f" />
                     </linearGradient>
                   </defs>
                   <path d={ECG_D} className="ecg-base" />
@@ -328,7 +328,7 @@ export default function LandingPage({ go }) {
           <div className="grid grid-cols-[1.2fr_1fr] gap-6 mt-5 items-stretch">
             <div className="glass-card p-5 flex gap-5 items-center">
               <div className="w-16 h-16 rounded-2xl shrink-0 flex items-center justify-center text-white text-[18px] font-extrabold"
-                style={{ background: 'var(--brand-grad)', boxShadow: '0 8px 20px rgba(0,122,115,0.3)' }}>
+                style={{ background: 'var(--brand-grad)', boxShadow: '0 8px 20px rgba(43,83,120,0.3)' }}>
                 {p ? p.full_name.split(' ').map((w) => w[0]).join('').slice(0, 2) : 'n/a'}
               </div>
               <div className="flex-1 min-w-0">
@@ -381,8 +381,8 @@ export default function LandingPage({ go }) {
           <h2 className="section-title">The agent stack in this demonstration, and the SAS Viya and SAS RAM services it maps to.</h2>
           <div className="text-[10px] font-bold uppercase tracking-[0.14em] mt-4 mb-1.5" style={{ color: 'var(--text-faint)' }}>In this demonstration</div>
           <div className="flex flex-wrap gap-2">
-            {[['Supervisor + 5 specialist agents', '#007A73'], ['Model Context Protocol', '#b8862e'], ['Function-calling LLM, customer-owned', '#007A73'],
-              ['Hybrid retrieval · BM25 + embeddings', '#007A73'], ['XGBoost risk model · v2.1.0', '#8a6a4e'], ['Web Speech · EN/AR', '#8a6a4e']].map(([n, c]) => (
+            {[['Supervisor + 5 specialist agents', '#2B5378'], ['Model Context Protocol', '#b8862e'], ['Function-calling LLM, customer-owned', '#2B5378'],
+              ['Hybrid retrieval · BM25 + embeddings', '#2B5378'], ['XGBoost risk model · v2.1.0', '#8a6a4e'], ['Web Speech · EN/AR', '#8a6a4e']].map(([n, c]) => (
               <span key={n} className="gcloud-chip"><span className="dot" style={{ background: c }} />{n}</span>
             ))}
           </div>
@@ -390,7 +390,7 @@ export default function LandingPage({ go }) {
           <div className="flex flex-wrap gap-2">
             {['SAS Retrieval Agent Manager · agents, collections, tools', 'SAS Viya MCP server · data, code, models', 'SAS Model Studio · Model Manager',
               'SAS Intelligent Decisioning', 'SAS Visual Analytics', 'CAS in-memory tables', 'In-country deployment · UAE'].map((n) => (
-              <span key={n} className="gcloud-chip target"><span className="dot" style={{ background: '#0766D1' }} />{n}</span>
+              <span key={n} className="gcloud-chip target"><span className="dot" style={{ background: '#2B5378' }} />{n}</span>
             ))}
           </div>
           <p className="text-[10.5px] mt-6" style={{ color: 'var(--text-faint)' }}>

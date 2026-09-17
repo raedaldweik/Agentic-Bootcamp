@@ -31,7 +31,7 @@ export function Panel({ title, right, children, className = '', pad = true }) {
 }
 
 export const AGENT_COLORS = {
-  basira_supervisor: { bg: 'rgba(0,122,115,0.10)', fg: '#004D48', label: 'supervisor' },
+  basira_supervisor: { bg: 'rgba(43,83,120,0.10)', fg: '#1B3650', label: 'supervisor' },
   cohort_agent: { bg: 'rgba(138,106,78,0.14)', fg: '#5c3f2a', label: 'cohort' },
   guideline_agent: { bg: 'rgba(0,131,0,0.10)', fg: '#006300', label: 'guidelines' },
   risk_agent: { bg: 'rgba(235,104,52,0.12)', fg: '#9a3b12', label: 'risk · ML' },

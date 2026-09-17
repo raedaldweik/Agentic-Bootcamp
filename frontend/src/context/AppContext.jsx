@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 export const PERSONAS = {
   clinician: {
     id: 'clinician', name: 'Dr. Amal Al Mansoori', sub: 'Consultant Endocrinologist · Al Qassimi Hospital',
-    avatar: 'AM', color: 'bg-[#007A73]',
+    avatar: 'AM', color: 'bg-[#2B5378]',
     welcome: "Good morning, Dr. Al Mansoori. Ask about any patient on your panel, an open care gap or a guideline recommendation, or run one of the scenarios below. Every draft waits for your approval before anything is actioned.",
   },
   executive: {

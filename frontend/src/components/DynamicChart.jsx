@@ -18,7 +18,7 @@ import MapCard from './MapCard';
  */
 
 // Validated categorical palette, the reports ramp mid-tones, fixed order.
-export const PALETTE = ['#0E9488', '#b8862e', '#6d4fa8', '#3a8e5a', '#d97706', '#2F9C92'];
+export const PALETTE = ['#3A6890', '#b8862e', '#6d4fa8', '#3a8e5a', '#d97706', '#46729A'];
 
 const AXIS_TICK = { fontSize: 10, fill: '#64748b', fontFamily: 'Manrope' };
 const GRID = 'rgba(15,23,42,0.07)';
@@ -69,7 +69,7 @@ export default function DynamicChart({ spec, bare = false, height = 230, onSelec
       domain={type === 'line' || type === 'area' ? ['auto', 'auto'] : [0, 'auto']} />
   );
   const grid = <CartesianGrid stroke={GRID} vertical={false} />;
-  const tip = <Tooltip content={<GlassTooltip />} cursor={{ fill: 'rgba(0,122,115,0.05)' }} />;
+  const tip = <Tooltip content={<GlassTooltip />} cursor={{ fill: 'rgba(43,83,120,0.05)' }} />;
   const legend = multi ? <Legend wrapperStyle={legendStyle} iconSize={9} /> : null;
   const refLine = spec.referenceY != null ? (
     <ReferenceLine y={spec.referenceY} stroke="#94a3b8" strokeDasharray="4 3"

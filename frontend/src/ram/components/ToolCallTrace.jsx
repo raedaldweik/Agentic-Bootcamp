@@ -33,7 +33,7 @@ export default function ToolCallTrace({ toolCalls }) {
           {toolCalls.map((call, i) => (
             <div key={i} className="trace-step">
               <div className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mt-0.5"
-                style={{ background: 'rgba(12,110,122,0.15)', color: 'var(--teal)' }}>
+                style={{ background: 'rgba(58,104,144,0.15)', color: 'var(--teal)' }}>
                 {i + 1}
               </div>
               <div className="flex-1 min-w-0">
@@ -42,13 +42,13 @@ export default function ToolCallTrace({ toolCalls }) {
                 </div>
                 {call.input && (
                   <div className="mt-1 text-[10.5px] px-2 py-1 rounded font-mono break-all"
-                    style={{ background: 'rgba(12,110,122,0.04)', color: 'var(--text-dim)', border: '1px solid rgba(12,110,122,0.08)' }}>
+                    style={{ background: 'rgba(58,104,144,0.04)', color: 'var(--text-dim)', border: '1px solid rgba(58,104,144,0.08)' }}>
                     in: {fmt(call.input).slice(0, 400)}
                   </div>
                 )}
                 {call.output && (
                   <div className="mt-1 text-[10.5px] px-2 py-1 rounded font-mono break-all"
-                    style={{ background: 'rgba(12,110,122,0.04)', color: 'var(--text-dim)', border: '1px solid rgba(12,110,122,0.08)' }}>
+                    style={{ background: 'rgba(58,104,144,0.04)', color: 'var(--text-dim)', border: '1px solid rgba(58,104,144,0.08)' }}>
                     out: {fmt(call.output).slice(0, 400)}
                   </div>
                 )}

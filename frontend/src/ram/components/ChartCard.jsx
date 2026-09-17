@@ -11,8 +11,8 @@ import { useMemo, useRef, useState } from 'react';
  */
 
 // SAS-themed categorical palette (mirrors the ram.css tokens).
-const PALETTE = ['#0766D1', '#0e7490', '#b45309', '#047857', '#054A99',
-                 '#475569', '#2E8BE6', '#0891b2', '#92400e', '#1e293b'];
+const PALETTE = ['#2B5378', '#3A6890', '#b45309', '#047857', '#1B3650',
+                 '#475569', '#4A78A0', '#0891b2', '#92400e', '#1e293b'];
 
 const VB_W = 720;
 const VB_H = 380;
