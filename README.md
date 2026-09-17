@@ -6,6 +6,7 @@ Health Services (facilitators: EHS, BITS Pilani, SAS).
 | Path | What it is |
 |---|---|
 | `backend/`, `frontend/`, `Dockerfile` | **The bootcamp app**: the participants' workbench for the two days. The three environment links, the registry dashboard, the raw data and guideline documents, a working population-health assistant (Basira) to learn from, and a **SAS RAM** page that signs in to the participants' own Retrieval Agent Manager environment. Details below. |
+| `bootcamp/` | **The bootcamp kit**: the flow, the pre-built Design Thinking Agent (prompt + config), the Population Health Agent template and test questions, the CAS-ready registry CSVs with a data dictionary, the NHA guideline PDFs for the RAM collection, and the SAS Viya MCP tool selection for each agent. |
 | `Day1/Session2_How_an_AI_Agent_Works/` | Session 2 deck (10:45 – 11:30): *How an AI agent works and makes decisions*. Speaker notes and the build script included. |
 | `templates/SAS_External_Template.pptx` | Clean SAS EXTERNAL PowerPoint template (SAS-2023 palette, Anova fonts embedded). Base for every SAS-delivered session. |
 

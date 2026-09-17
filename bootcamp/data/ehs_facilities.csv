@@ -1,0 +1,19 @@
+facility_id,facility_name,facility_type,region
+F001,Al Qassimi Hospital,Hospital,Sharjah
+F002,Kuwait Hospital Sharjah,Hospital,Sharjah
+F003,Saqr Hospital,Hospital,Ras Al Khaimah
+F004,Fujairah Hospital,Hospital,Fujairah
+F005,Umm Al Quwain Hospital,Hospital,Umm Al Quwain
+F006,Wasit Health Centre,Primary Care,Sharjah
+F007,Al Hamriyah Health Centre,Primary Care,Sharjah
+F008,Al Dhaid Health Centre,Primary Care,Sharjah
+F009,Al Hamidiya Health Centre,Primary Care,Ajman
+F010,Al Rams Health Centre,Primary Care,Ras Al Khaimah
+F011,Sha'am Health Centre,Primary Care,Ras Al Khaimah
+F012,Falaj Al Mualla Health Centre,Primary Care,Umm Al Quwain
+F013,Qidfa Health Centre,Primary Care,Fujairah
+F014,Al Bidya Health Centre,Primary Care,Fujairah
+F015,Al Nahda Health Centre,Primary Care,Sharjah
+F016,Masafi Health Centre,Primary Care,Fujairah
+F017,Khorfakkan Hospital,Hospital,Sharjah
+F018,Dibba Hospital,Hospital,Fujairah
