@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AppProvider, PERSONAS, useApp } from './context/AppContext';
+import { AppProvider } from './context/AppContext';
 import { getHealth, getLinks } from './services/api';
 import LandingPage from './pages/LandingPage';
 import AssistantPage from './pages/AssistantPage';
@@ -19,63 +19,6 @@ function Bokeh() {
       <div className="bokeh-dot blue-blob m5" /><div className="bokeh-dot purple-blob m6" />
       <div className="bokeh-dot blue-blob m7" /><div className="bokeh-dot amber-blob m8" />
       <div className="bokeh-dot cyan-blob m9" /><div className="bokeh-dot blue-blob m10" />
-    </div>
-  );
-}
-
-/** Persona picker (light glass dropdown): who the assistant is talking to. */
-function PersonaSelector() {
-  const { persona, setPersona, personaInfo } = useApp();
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="relative">
-      <button onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 pl-3 pr-2.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all"
-        style={{
-          background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(43,83,120,0.22)', color: 'var(--text)', minWidth: 210,
-        }}>
-        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--green)' }} />
-        <span className="flex-1 text-left truncate">{personaInfo.name}</span>
-        <span className="text-[8.5px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded shrink-0"
-          style={{ background: 'rgba(43,83,120,0.10)', color: 'var(--brand)' }}>
-          {persona}
-        </span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2.5"
-          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 rounded-xl shadow-xl overflow-hidden z-50 w-[280px] animate-fade-up"
-            style={{ background: 'rgba(255,255,255,0.97)', border: '1px solid rgba(43,83,120,0.2)', backdropFilter: 'blur(20px)' }}>
-            <p className="px-3 pt-2.5 pb-1 text-[9px] font-bold tracking-widest uppercase" style={{ color: 'var(--text-dim)' }}>
-              Personas
-            </p>
-            <div className="pb-1.5">
-              {Object.values(PERSONAS).map((u) => {
-                const active = u.id === persona;
-                return (
-                  <button key={u.id} onClick={() => { setPersona(u.id); setOpen(false); }}
-                    className="w-full text-left px-3 py-2 transition-all hover:bg-[rgba(43,83,120,0.06)] flex items-center gap-2.5"
-                    style={active ? { background: 'rgba(43,83,120,0.10)', borderLeft: '3px solid var(--brand)' }
-                      : { borderLeft: '3px solid transparent' }}>
-                    <div className={`w-7 h-7 rounded-full ${u.color} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}>
-                      {u.avatar}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[12px] font-semibold truncate" style={{ color: active ? 'var(--brand-lo)' : 'var(--text)' }}>{u.name}</p>
-                      <p className="text-[10.5px] truncate" style={{ color: 'var(--text-dim)' }}>{u.sub}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </>
-      )}
     </div>
   );
 }
@@ -117,10 +60,10 @@ function Header({ tab, setTab }) {
       </button>
 
       <div className="title-block">
-        <div className="header-eyebrow">Emirates Health Services × SAS · Two days · One use case</div>
+        <div className="header-eyebrow">Emirates Health Services × SAS</div>
         <div className="title-row">
           <h1 className="app-title">
-            <b>Agentic AI Bootcamp</b> <span className="title-sep">·</span> Build a population-health agent on SAS RAM
+            <b>Agentic AI Bootcamp</b> <span className="title-sep">·</span> Population-health agent on SAS RAM
           </h1>
           <div className="accent-line" />
         </div>
@@ -150,7 +93,6 @@ function Header({ tab, setTab }) {
             </span>
           </div>
         )}
-        <PersonaSelector />
       </div>
     </header>
   );

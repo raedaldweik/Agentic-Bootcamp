@@ -39,8 +39,8 @@ const AssistantAvatar = () => (
   </div>
 );
 
-/* ─── Slim page-level top bar: logo · title · RAM status · sign-in · language ─── */
-function TopBar() {
+/* ─── RAM connection controls: status · sign-in · language (sit in the chat card's title row) ─── */
+function RamControls() {
   const { t, toggle } = useLanguage();
   const [health, setHealth] = useState(null);
 
@@ -58,21 +58,14 @@ function TopBar() {
     : t('backendOffline');
 
   return (
-    <div className="ram-topbar">
-      <img className="ram-logo" src="/ehs-mark.png" alt="EHS" onError={hideOnError} />
-      <div className="ram-title-row">
-        <span className="ram-title">{t('appTitle')}</span>
-        <span className="ram-accent" />
+    <div className="flex items-center gap-2 shrink-0">
+      <div className="status-pill">
+        <span className={`w-2 h-2 rounded-full ${ok ? '' : 'animate-pulse'}`}
+          style={{ background: ok ? 'var(--green)' : needsSignin ? 'var(--amber)' : health ? 'var(--red)' : 'var(--amber)' }} />
+        <span>{label}</span>
       </div>
-      <div className="flex items-center gap-3 shrink-0">
-        <div className="status-pill">
-          <span className={`w-2 h-2 rounded-full ${ok ? '' : 'animate-pulse'}`}
-            style={{ background: ok ? 'var(--green)' : needsSignin ? 'var(--amber)' : health ? 'var(--red)' : 'var(--amber)' }} />
-          <span>{label}</span>
-        </div>
-        {needsSignin && <SignIn health={health} />}
-        <button onClick={toggle} className="ram-lang-btn" title="English / عربي">{t('langButton')}</button>
-      </div>
+      {needsSignin && <SignIn health={health} />}
+      <button onClick={toggle} className="ram-lang-btn" title="English / عربي">{t('langButton')}</button>
     </div>
   );
 }
@@ -318,8 +311,11 @@ function ChatBody() {
               {(activeChat?.title && activeChat.title !== 'New conversation') ? activeChat.title : t('newConversationTitle')}
             </span>
           </div>
-          <TargetSelector agents={agents} collections={collections} target={target}
-            onChange={setTarget} loading={targetsLoading} error={targetsError} />
+          <div className="flex items-center gap-3 shrink-0">
+            <TargetSelector agents={agents} collections={collections} target={target}
+              onChange={setTarget} loading={targetsLoading} error={targetsError} />
+            <RamControls />
+          </div>
         </div>
 
         {/* Messages */}
@@ -494,7 +490,6 @@ function PageShell() {
   const { lang, isRTL } = useLanguage();
   return (
     <div className="ram-page h-full" dir={isRTL ? 'rtl' : 'ltr'} lang={lang}>
-      <TopBar />
       <ChatBody />
     </div>
   );

@@ -1,20 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 export const PERSONAS = {
-  clinician: {
-    id: 'clinician', name: 'Dr. Amal Al Mansoori', sub: 'Consultant Endocrinologist · Al Qassimi Hospital',
-    avatar: 'AM', color: 'bg-[#2B5378]',
-    welcome: "Good morning, Dr. Al Mansoori. Ask about any patient on your panel, an open care gap or a guideline recommendation, or run one of the scenarios below. Every draft waits for your approval before anything is actioned.",
-  },
   executive: {
-    id: 'executive', name: 'Dr. Khalid Al Shamsi', sub: 'Population Health Executive · EHS',
-    avatar: 'KS', color: 'bg-[#8a6420]',
-    welcome: "Welcome, Dr. Al Shamsi. Ask about registry outcomes, cost, equity or demand, or simulate a programme before committing budget. Every figure is computed from the exchange and every clinical statement is cited.",
+    id: 'executive', name: 'Population Health Executive', sub: 'Emirates Health Services',
+    avatar: 'You', color: 'bg-[#2B5378]',
+    welcome: "Welcome. Ask about registry outcomes, care gaps, cost, equity or demand, or run one of the scenarios below. Every figure is computed from the registry and every clinical statement is cited to a guideline page.",
   },
 };
 
 const NEW_TITLE = 'New conversation';
-const STORE_KEY = 'basira_chats_v1';
+const STORE_KEY = 'bootcamp_chats_v1';
 const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 const welcomeMsg = (persona) => ({ role: 'assistant', welcome: true, content: PERSONAS[persona].welcome });
@@ -34,7 +29,7 @@ const Ctx = createContext(null);
 
 export function AppProvider({ children }) {
   const stored = loadStored();
-  const [persona, setPersona] = useState(stored?.persona || 'clinician');
+  const [persona, setPersona] = useState('executive');
   // Dashboard cross-filter: {tier: 'High', facility: '...'}; shared by every dashboard tab.
   const [dashFilter, setDashFilter] = useState({});
   const toggleFilter = useCallback((key, value) => setDashFilter((f) => {
@@ -42,7 +37,7 @@ export function AppProvider({ children }) {
     return { ...f, [key]: value };
   }), []);
   const clearFilter = useCallback(() => setDashFilter({}), []);
-  const [chats, setChats] = useState(stored?.chats || [freshChat(stored?.persona || 'clinician')]);
+  const [chats, setChats] = useState(stored?.chats || [freshChat('executive')]);
   const [activeChatId, setActiveChatId] = useState(stored?.activeChatId || (stored?.chats?.[0]?.id) || null);
 
   const visibleChats = chats.filter((c) => c.persona === persona);

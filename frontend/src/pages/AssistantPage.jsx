@@ -177,18 +177,15 @@ export default function AssistantPage() {
               {activeChat?.title || 'New conversation'}
             </span>
           </div>
-          <span className="text-[10.5px] px-2 py-0.5 rounded-full font-semibold shrink-0"
-            style={{ background: 'rgba(43,83,120,0.08)', color: 'var(--brand-lo)' }}>
-            {personaInfo.sub}
-          </span>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 relative z-[1]">
           {messages.map((msg, i) => (
             <div key={i} className={`flex gap-2.5 animate-fade-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
               {msg.role === 'user' ? (
-                <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-[10px] font-bold text-white ${personaInfo.color}`}>
-                  {personaInfo.avatar}
+                <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-[10px] font-bold"
+                  style={{ background: 'rgba(43,83,120,0.12)', border: '1px solid rgba(43,83,120,0.28)', color: 'var(--brand-lo)' }}>
+                  You
                 </div>
               ) : (
                 <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center p-1"
@@ -289,7 +286,7 @@ export default function AssistantPage() {
             <textarea ref={inputRef} rows="1" value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-              placeholder={`Ask about the ${persona === 'clinician' ? 'panel' : 'population'}: data, guidelines, risk, what-ifs`}
+              placeholder="Ask about the population: data, guidelines, risk, what-ifs"
               className="flex-1 bg-transparent border-none outline-none text-[13px] py-2 px-2 resize-none leading-relaxed"
               style={{ fontFamily: 'Manrope, sans-serif', color: 'var(--text)' }} />
             <button onClick={() => send()}
