@@ -4,12 +4,8 @@ import { getHealth, getLinks } from './services/api';
 import LandingPage from './pages/LandingPage';
 import AssistantPage from './pages/AssistantPage';
 import DashboardOverview from './pages/DashboardOverview';
-import QueuePage from './pages/QueuePage';
 import DocumentsPage from './pages/DocumentsPage';
 import DataPage from './pages/DataPage';
-import AuditPage from './pages/AuditPage';
-import EvaluationPage from './pages/EvaluationPage';
-import SimulatorPage from './pages/SimulatorPage';
 import RamCopilotPage from './ram/RamCopilotPage';
 
 function Bokeh() {
@@ -27,7 +23,7 @@ function Bokeh() {
   );
 }
 
-/** Persona picker (light glass dropdown). */
+/** Persona picker (light glass dropdown): who the assistant is talking to. */
 function PersonaSelector() {
   const { persona, setPersona, personaInfo } = useApp();
   const [open, setOpen] = useState(false);
@@ -84,6 +80,15 @@ function PersonaSelector() {
   );
 }
 
+export const TABS = [
+  { id: 'landing', label: 'Home' },
+  { id: 'overview', label: 'Dashboard' },
+  { id: 'data', label: 'Data' },
+  { id: 'documents', label: 'Documents' },
+  { id: 'assistant', label: 'Assistant' },
+  { id: 'ram', label: 'SAS RAM' },
+];
+
 function Header({ tab, setTab }) {
   const [health, setHealth] = useState(null);
   const [ehsLogo, setEhsLogo] = useState('/ehs-logo.png');
@@ -104,19 +109,6 @@ function Header({ tab, setTab }) {
   const warming = ok && health.mode === 'multi-agent' && !health.warmup?.ready;
   const keyBad = ok && health.mode === 'multi-agent' && selfTest && !selfTest.ok;
 
-  const tabs = [
-    { id: 'landing', label: 'Home' },
-    { id: 'assistant', label: 'Assistant' },
-    { id: 'overview', label: 'Dashboard' },
-    { id: 'simulator', label: 'Simulator' },
-    { id: 'ram', label: 'SAS RAM' },
-    { id: 'evaluation', label: 'Evaluation' },
-    { id: 'queue', label: 'Queue' },
-    { id: 'documents', label: 'Documents' },
-    { id: 'data', label: 'Data' },
-    { id: 'audit', label: 'Audit' },
-  ];
-
   return (
     <header className="app-header">
       <button onClick={() => setTab('landing')} title="Home">
@@ -125,16 +117,16 @@ function Header({ tab, setTab }) {
       </button>
 
       <div className="title-block">
-        <div className="header-eyebrow">Emirates Health Services · Agentic AI Bootcamp</div>
+        <div className="header-eyebrow">Emirates Health Services × SAS · Two days · One use case</div>
         <div className="title-row">
           <h1 className="app-title">
-            <b>Basira</b> <span className="title-ar">بصيرة</span> <span className="title-sep">·</span> Population Health Intelligence
+            <b>Agentic AI Bootcamp</b> <span className="title-sep">·</span> Build a population-health agent on SAS RAM
           </h1>
           <div className="accent-line" />
         </div>
         <div className="nav-row">
           <div className="seg-track">
-            {tabs.map((t) => (
+            {TABS.map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 className={`seg-pill ${tab === t.id ? 'active' : ''}`}>
                 {t.label}
@@ -169,15 +161,11 @@ function Layout() {
   const page = () => {
     switch (tab) {
       case 'landing': return <LandingPage go={setTab} />;
-      case 'assistant': return <AssistantPage />;
       case 'overview': return <DashboardOverview />;
-      case 'simulator': return <SimulatorPage />;
-      case 'ram': return <RamCopilotPage />;
-      case 'evaluation': return <EvaluationPage />;
-      case 'queue': return <QueuePage />;
-      case 'documents': return <DocumentsPage />;
       case 'data': return <DataPage />;
-      case 'audit': return <AuditPage />;
+      case 'documents': return <DocumentsPage />;
+      case 'assistant': return <AssistantPage />;
+      case 'ram': return <RamCopilotPage />;
       default: return <LandingPage go={setTab} />;
     }
   };

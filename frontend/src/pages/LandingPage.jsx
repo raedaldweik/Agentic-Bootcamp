@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { getDashboard, getDataTables, getLinks, getStoryHero } from '../services/api';
-import { Bar3D } from '../components/Chart3D';
-import { AgentChip, KpiStrip } from '../components/ui';
+import { AgentChip } from '../components/ui';
 
 /* ─── count-up hook (ease-out) ─── */
 function useCountUp(target, duration = 1700, start = true) {
@@ -40,7 +39,7 @@ const ECG_D = (() => {
 })();
 
 const AGENTS = [
-  { id: 'cohort_agent', name: 'Cohort', sub: 'HIE QUERIES', color: '#8a6a4e' },
+  { id: 'cohort_agent', name: 'Cohort', sub: 'REGISTRY QUERIES', color: '#8a6a4e' },
   { id: 'guideline_agent', name: 'Guidelines', sub: 'RAG · CITATIONS', color: '#3a8e5a' },
   { id: 'risk_agent', name: 'Risk · ML', sub: 'SCORE · SIMULATE', color: '#b06024' },
   { id: 'pophealth_agent', name: 'Pop-health', sub: 'MCP SERVER ★', color: '#b8862e', mcp: true },
@@ -65,7 +64,7 @@ function Constellation() {
       ))}
       <g className="cst-node">
         <circle cx={cx} cy={cy} r="50" className="cst-core" />
-        <text x={cx} y={cy - 4} className="cst-core-text">Supervisor</text>
+        <text x={cx} y={cy - 4} className="cst-core-text">RAM agent</text>
         <text x={cx} y={cy + 11} className="cst-core-sub">LLM · TOOLS</text>
       </g>
       {nodes.map((n) => (
@@ -139,18 +138,28 @@ function EnvCard({ link }) {
   );
 }
 
+/* ─── How to use this app during the bootcamp: one card per tab ─── */
+const TOUR = [
+  { tab: 'overview', n: '1', title: 'Dashboard', sub: 'Understand the population',
+    text: 'The registry at a glance: control, complications, care gaps, demand and cost. This is the population your agent will reason about.' },
+  { tab: 'data', n: '2', title: 'Data & Documents', sub: 'The raw material',
+    text: 'The eight registry tables you will load into SAS Viya, and the NHA guideline PDFs you will index in a RAM collection. Browse both here.' },
+  { tab: 'assistant', n: '3', title: 'Assistant', sub: 'Play with the finished idea',
+    text: 'Basira is a working population-health agent: a supervisor, specialists, cited guidelines, model scoring and human approval. Ask it anything to see the target.' },
+  { tab: 'ram', n: '4', title: 'SAS RAM', sub: 'Build yours',
+    text: 'Sign in to your RAM environment at the top of the page, pick the agent you built, and test it here with the same questions. Every tool, LLM and retrieval call is shown.' },
+];
+
 export default function LandingPage({ go }) {
   const { personaInfo } = useApp();
   const [ov, setOv] = useState(null);
   const [tables, setTables] = useState(null);
-  const [risk, setRisk] = useState(null);
   const [hero, setHero] = useState(null);
   const [links, setLinks] = useState(null);
 
   useEffect(() => {
     getDashboard('overview').then(setOv).catch(() => {});
     getDataTables().then((r) => setTables(r.tables)).catch(() => {});
-    getDashboard('risk').then(setRisk).catch(() => {});
     getStoryHero().then(setHero).catch(() => {});
     getLinks().then((r) => setLinks(r.links)).catch(() => setLinks([
       { id: 'viya', label: 'SAS Viya environment', sub: '', url: '', icon: 'viya' },
@@ -167,7 +176,6 @@ export default function LandingPage({ go }) {
   const gaps = rows('care_gaps');
   const costM = ov ? parseFloat(kpi[5]?.value) : null;
   const overdue = ov ? kpi[4]?.value : null;
-  const auc = risk?.auc, legacy = risk?.legacy_auc;
   const p = hero?.patient;
 
   return (
@@ -178,32 +186,31 @@ export default function LandingPage({ go }) {
         <section className="hero">
           <img src="/ehs-mark.png" alt="" className="hero-g" />
           <div className="relative z-[1]">
-            <div className="section-eyebrow reveal d1">Emirates Health Services · Diabetes registry · Northern Emirates</div>
+            <div className="section-eyebrow reveal d1">Emirates Health Services × SAS · Agentic AI Bootcamp</div>
             <h1 className="hero-title reveal d2">
-              Diabetes population health,<br />
-              <span className="hero-grad">answered from the exchange.</span>
+              Build a population-health agent<br />
+              <span className="hero-grad">on SAS RAM, in two days.</span>
             </h1>
             <p className="hero-lede mt-5 reveal d3">
-              Basira sits on a synthetic health information exchange modelled on the EHS diabetes registry across the
-              Northern Emirates. Clinicians and programme leaders ask questions in plain language; a supervisor agent
-              routes each question to specialist agents that query the exchange, cite the clinical guidelines, run the
-              deterioration-risk model and draft actions for a clinician to approve. Every answer is traceable to the
-              data row and the guideline page.
+              This is your workbench for the bootcamp, not a slide deck. It holds the use case you will build: a
+              synthetic EHS diabetes registry, the clinical guidelines that go into your RAM collection, a working
+              population-health assistant to learn from, and a page that connects to your own SAS Retrieval Agent
+              Manager environment so you can test the agent you build with the same questions.
             </p>
             <div className="flex items-center gap-3 mt-7 reveal d4">
-              <button className="btn-primary" onClick={() => go('assistant')}>Open the Assistant</button>
-              <button className="btn-secondary" onClick={() => go('overview')}>Registry dashboard</button>
-              <button className="btn-secondary" onClick={() => go('ram')}>SAS RAM</button>
+              <button className="btn-primary" onClick={() => go('assistant')}>Open the assistant</button>
+              <button className="btn-secondary" onClick={() => go('overview')}>Explore the data</button>
+              <button className="btn-secondary" onClick={() => go('ram')}>Build on SAS RAM</button>
             </div>
             <p className="text-[11px] mt-5 reveal d5" style={{ color: 'var(--text-faint)' }}>
-              Supervisor + specialist agents · Model Context Protocol · hybrid guideline retrieval · Built for the SAS × EHS Agentic AI Bootcamp
+              SAS Retrieval Agent Manager · SAS Viya · Model Context Protocol · cited guidelines · human-in-the-loop
             </p>
           </div>
 
           <div className="relative z-[1] reveal d3">
             <div className="glass-card p-5">
               <div className="flex items-center justify-between mb-2">
-                <span className="ecg-live">Live · registry summary</span>
+                <span className="ecg-live">Live · the registry you will work with</span>
                 <span className="text-[10px] font-bold" style={{ color: 'var(--text-faint)' }}>36 months · 8 tables · FHIR R4 export</span>
               </div>
               <div className="ecg-wrap">
@@ -234,39 +241,52 @@ export default function LandingPage({ go }) {
 
         {/* ── YOUR ENVIRONMENTS ── */}
         <section className="landing-section pt-2">
-          <div className="section-eyebrow">Your bootcamp environments</div>
-          <h2 className="section-title">Three doors: the SAS Viya environment, the SAS RAM environment, and the materials.</h2>
+          <div className="section-eyebrow">Your environments</div>
+          <h2 className="section-title">Three doors. Everything you need on the day is behind one of them.</h2>
           <p className="section-sub mt-2 mb-4">
-            Each opens in a new tab. Viya is where the data, models and decisions live; Retrieval Agent Manager is where the
-            agents, collections and tools are configured; the materials hold the decks, labs and this application.
+            Each opens in a new tab. SAS Viya is where the data, models and decisions live. SAS RAM is where you
+            create the collection, the agent and its tools. The materials hold the decks, the labs and this application.
           </p>
           <div className="env-grid">
             {(links || []).map((l) => <EnvCard key={l.id} link={l} />)}
           </div>
         </section>
 
-        {ov && <KpiStrip items={kpi.map((k, i) => ({
-          ...k, icon: ['users', 'droplet', 'check', 'alert', 'activity', 'coins'][i],
-          tone: ['sand', 'rose', 'green', 'maroon', 'red', 'gold'][i],
-        }))} />}
+        {/* ── HOW TO USE THIS APP ── */}
+        <section className="landing-section">
+          <div className="section-eyebrow">How to use this app during the bootcamp</div>
+          <h2 className="section-title">Four tabs, in the order you will need them.</h2>
+          <div className="tour-grid mt-4">
+            {TOUR.map((t) => (
+              <button key={t.tab} className="tour-card reveal" onClick={() => go(t.tab)}>
+                <span className="tour-num">{t.n}</span>
+                <div className="min-w-0">
+                  <div className="tour-title">{t.title}</div>
+                  <div className="tour-sub">{t.sub}</div>
+                  <p className="tour-text">{t.text}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
 
-        {/* ── AGENTS ── */}
+        {/* ── WHAT YOU WILL BUILD ── */}
         <section className="landing-section grid grid-cols-2 gap-10 items-center">
           <div>
-            <div className="section-eyebrow">Multi-agent system · a supervisor and its specialists</div>
-            <h2 className="section-title">A supervisor and five specialists,<br />with a complete audit trail.</h2>
+            <div className="section-eyebrow">What you will build</div>
+            <h2 className="section-title">One RAM agent, grounded in documents,<br />connected to data and models through MCP.</h2>
             <p className="section-sub mt-3">
-              The supervisor plans and composes; it does not invent figures. The data specialist queries the exchange,
-              the guideline specialist retrieves and cites, the risk specialist runs the deployed models, the
-              population-health specialist works through the MCP server, and the action specialist drafts into a queue
-              that a clinician must approve. The same pattern is what you build in SAS Retrieval Agent Manager on the day.
+              The assistant in this app is the finished version. It plans, then routes each question to specialists:
+              one queries the registry, one retrieves and cites the guidelines, one runs the risk model, one works through
+              a population-health MCP server, and one drafts actions into a queue a clinician must approve. In RAM you
+              build the same thing in four steps.
             </p>
             <div className="mt-5 space-y-3">
               {[
-                ['The question', 'is asked in English or Arabic, typed or spoken.'],
-                ['The supervisor plans', 'and routes to the specialists it needs; each step is shown as it happens.'],
-                ['Tools do the work', 'exchange queries, guideline retrieval, model scoring, an MCP call, a draft.'],
-                ['The answer is cited', 'with charts, guideline pages, and any action waiting for approval.'],
+                ['A collection', 'upload the NHA guideline PDFs from the Documents tab; RAM indexes them for retrieval with citations.'],
+                ['An agent', 'write its instructions: the persona, the rules (numbers only from tools, cite before recommending), the escalation points.'],
+                ['Its tools', 'connect the SAS Viya MCP server for data, code and published models, and the population-health MCP server for cohorts, care gaps and policy what-ifs.'],
+                ['A test', 'ask it the evaluation questions in the SAS RAM tab and read the trace: which tools it called, what it retrieved, what it answered.'],
               ].map(([t, d], i) => (
                 <div key={i} className="flex items-start gap-3">
                   <span className="step-num">{i + 1}</span>
@@ -283,47 +303,14 @@ export default function LandingPage({ go }) {
           <div className="glass-card p-6">
             <Constellation />
             <p className="text-[10.5px] text-center mt-2" style={{ color: 'var(--text-faint)' }}>
-              The population-health specialist connects over the Model Context Protocol to a server built for this programme: care gaps, quality measures, stratification and simulation. Under SAS RAM the same server registers as a tool source.
+              The population-health specialist reaches its server over the Model Context Protocol. In RAM, MCP servers register as tool sources on the agent.
             </p>
           </div>
         </section>
 
-        {/* ── MODELS ── */}
-        <section className="landing-section grid grid-cols-2 gap-10 items-center">
-          <div className="glass-card p-5" style={{ height: 330 }}>
-            <p className="panel-title mb-2">Deterioration-risk model · held-out AUC</p>
-            {auc && (
-              <Bar3D data={[{ label: 'Registry rule-based tier', value: +(legacy * 100).toFixed(1) },
-                            { label: 'Basira XGBoost', value: +(auc * 100).toFixed(1) }]} unit="%" />
-            )}
-          </div>
-          <div>
-            <div className="section-eyebrow">Machine learning · evaluated on held-out patients</div>
-            <h2 className="section-title">Four models trained on the exchange.<br />The deterioration model outperforms the registry tier by {auc && legacy ? `${((auc - legacy) * 100).toFixed(1)} points` : '…'}.</h2>
-            <p className="section-sub mt-3">
-              The deterioration-risk model learns what the rule-based registry tier cannot see: kidney function, the
-              HbA1c trajectory, adherence, missed monitoring and complication status. Every score is explained with
-              feature contributions, and monotonic clinical constraints keep those explanations plausible. The same
-              model drives two simulators: the programme simulator re-scores an eligible cohort with an intervention
-              applied, and the patient simulator lets a clinician move a lever and watch the estimate respond. On SAS
-              Viya the same models come out of Model Studio and are governed in Model Manager.
-            </p>
-            <button className="btn-secondary mt-4" onClick={() => go('simulator')}>Open the risk simulator</button>
-            <div className="grid grid-cols-2 gap-2.5 mt-5">
-              {(risk?.model_cards || []).map((c) => (
-                <div key={c.model_id} className="model-card">
-                  <p className="text-[12px] font-extrabold" style={{ color: 'var(--text)' }}>{c.name}</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-dim)' }}>{c.framework}</p>
-                  <span className="badge badge-blue mt-2">v{c.version}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── THE STORY ── */}
-        <section className="landing-section">
-          <div className="section-eyebrow">The patient the demonstration follows</div>
+        {/* ── THE USE CASE ── */}
+        <section className="landing-section pb-8">
+          <div className="section-eyebrow">The use case, in one patient</div>
           <h2 className="section-title">{p ? p.full_name : 'A patient'}: flagged by the model, not by the registry tier.</h2>
           <div className="grid grid-cols-[1.2fr_1fr] gap-6 mt-5 items-stretch">
             <div className="glass-card p-5 flex gap-5 items-center">
@@ -365,33 +352,14 @@ export default function LandingPage({ go }) {
                     <>HbA1c has risen from <b>{p.hba1c_12m_ago ?? 'n/a'}%</b> to <b>{p.hba1c_latest}%</b> in twelve months on <b>metformin alone</b>
                     {p.ckd || p.albuminuria ? <>, with early kidney involvement (eGFR {Math.round(p.egfr_latest)})</> : <>, with a BMI of {p.bmi}</>}.
                     The registry's rule-based tier lists {p.gender === 'female' ? 'her' : 'him'} as <b>{p.registry_risk_tier}</b>. The deterioration model puts the 12-month
-                    risk at <b>{Math.round((hero?.risk?.event_probability_12m ?? 0) * 100)}%</b>, and the clinical guideline recommends adding an SGLT2 inhibitor or
-                    GLP-1 receptor agonist at this point. Basira surfaces the case, cites the guideline page, and drafts the prescription for Dr. Al Mansoori to approve.</>
+                    risk at <b>{Math.round((hero?.risk?.event_probability_12m ?? 0) * 100)}%</b>, and the guideline recommends adding an SGLT2 inhibitor or
+                    GLP-1 receptor agonist at this point. This is the kind of answer your agent should give: the number from the data, the recommendation
+                    from the cited guideline, and a draft that waits for a clinician.</>
                   ) : 'Loading the case…'}
                 </p>
               </div>
-              <button className="btn-primary mt-4 self-start" onClick={() => go('assistant')}>Open the case in the Assistant</button>
+              <button className="btn-primary mt-4 self-start" onClick={() => go('assistant')}>See the assistant answer it</button>
             </div>
-          </div>
-        </section>
-
-        {/* ── BUILT WITH SAS ── */}
-        <section className="landing-section pb-8">
-          <div className="section-eyebrow">Built with SAS</div>
-          <h2 className="section-title">The agent stack in this demonstration, and the SAS Viya and SAS RAM services it maps to.</h2>
-          <div className="text-[10px] font-bold uppercase tracking-[0.14em] mt-4 mb-1.5" style={{ color: 'var(--text-faint)' }}>In this demonstration</div>
-          <div className="flex flex-wrap gap-2">
-            {[['Supervisor + 5 specialist agents', '#2B5378'], ['Model Context Protocol', '#b8862e'], ['Function-calling LLM, customer-owned', '#2B5378'],
-              ['Hybrid retrieval · BM25 + embeddings', '#2B5378'], ['XGBoost risk model · v2.1.0', '#8a6a4e'], ['Web Speech · EN/AR', '#8a6a4e']].map(([n, c]) => (
-              <span key={n} className="gcloud-chip"><span className="dot" style={{ background: c }} />{n}</span>
-            ))}
-          </div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.14em] mt-4 mb-1.5" style={{ color: 'var(--text-faint)' }}>On SAS Viya and SAS Retrieval Agent Manager</div>
-          <div className="flex flex-wrap gap-2">
-            {['SAS Retrieval Agent Manager · agents, collections, tools', 'SAS Viya MCP server · data, code, models', 'SAS Model Studio · Model Manager',
-              'SAS Intelligent Decisioning', 'SAS Visual Analytics', 'CAS in-memory tables', 'In-country deployment · UAE'].map((n) => (
-              <span key={n} className="gcloud-chip target"><span className="dot" style={{ background: '#2B5378' }} />{n}</span>
-            ))}
           </div>
           <p className="text-[10.5px] mt-6" style={{ color: 'var(--text-faint)' }}>
             Signed in as {personaInfo.name}. Switch persona at the top right. All patient data is synthetic and not for clinical use.

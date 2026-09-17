@@ -5,21 +5,22 @@ Health Services (facilitators: EHS, BITS Pilani, SAS).
 
 | Path | What it is |
 |---|---|
-| `backend/`, `frontend/`, `Dockerfile` | **Basira (بصيرة)**, the bootcamp's population-health intelligence app: an agentic assistant on an EHS-flavoured diabetes registry, plus a **SAS RAM** page connected to SAS Retrieval Agent Manager. Details below. |
+| `backend/`, `frontend/`, `Dockerfile` | **The bootcamp app**: the participants' workbench for the two days. The three environment links, the registry dashboard, the raw data and guideline documents, a working population-health assistant (Basira) to learn from, and a **SAS RAM** page that signs in to the participants' own Retrieval Agent Manager environment. Details below. |
 | `Day1/Session2_How_an_AI_Agent_Works/` | Session 2 deck (10:45 – 11:30): *How an AI agent works and makes decisions*. Speaker notes and the build script included. |
 | `templates/SAS_External_Template.pptx` | Clean SAS EXTERNAL PowerPoint template (SAS-2023 palette, Anova fonts embedded). Base for every SAS-delivered session. |
 
 ---
 
-## Basira: EHS Population Health Intelligence
+## The bootcamp app
 
-An agentic AI assistant on top of a synthetic health information exchange modelled on the EHS
-diabetes registry across the Northern Emirates: a supervisor and five specialist agents on a
-function-calling model, grounded retrieval with page-level citations over a clinical guideline
-corpus, four trained ML models with model cards and held-out evaluation, a patient what-if
-simulator, a counterfactual programme simulator, a human-in-the-loop approval queue, a full audit
-trail, a population-health MCP server, and a SAS RAM page that talks to SAS Retrieval Agent
-Manager (RAM).
+Participants build a population-health agent on SAS Retrieval Agent Manager (RAM) over two days.
+This app replaces the slides-only approach: it carries the use case they build, the data and
+documents they load, a finished agent to learn from, and a page connected to their own RAM
+environment to test what they built. Under the hood it is an agentic assistant (Basira) on a
+synthetic health information exchange modelled on the EHS diabetes registry across the Northern
+Emirates: a supervisor and five specialist agents on a function-calling model, grounded retrieval
+with page-level citations over a clinical guideline corpus, trained ML models, a human-in-the-loop
+approval queue, an audit trail and a population-health MCP server.
 
 All patient data is synthetic: 4,000 people living with diabetes across 18 EHS hospitals and
 primary healthcare centres in Sharjah, Ajman, Umm Al Quwain, Ras Al Khaimah and Fujairah, with
@@ -31,13 +32,11 @@ NHA-CG-03 hypertension, NHA-PP-01 screening and recall). Not for clinical use.
 
 | Tab | What it shows |
 |---|---|
-| Home | The story, the registry summary, and the **three environment buttons**: SAS Viya, SAS RAM, bootcamp materials (each opens in a new tab; URLs come from `VIYA_URL`, `RAM_URL`, `MATERIALS_URL`) |
-| Assistant | The multi-agent assistant with a live agent trace, scenario chips, charts, maps, citations, EN/AR voice |
-| Dashboard | The registry overview (KPIs, HbA1c trend, demand forecast, facility benchmark, risk tiers, complications) |
-| Simulator | Patient what-if with live re-scoring, attribution and a narrated explanation |
-| **SAS RAM** | The RAM chat page: pick an agent or collection published in SAS Retrieval Agent Manager, ask, and see every tool, LLM and retrieval call. Sign-in flows for standalone RAM (Keycloak device code) and full Viya (SASLogon code). `RAM_MOCK=true` runs it without a RAM. |
-| Evaluation | Held-out model metrics, the golden agent evalset, the LLM cost plan, the governance control list |
-| Queue · Documents · Data · Audit | Human approvals, the guideline corpus, the HIE browser, the audit trail |
+| Home | What the bootcamp builds, the **three environment buttons** (SAS Viya, SAS RAM, bootcamp materials; each opens in a new tab; URLs come from `VIYA_URL`, `RAM_URL`, `MATERIALS_URL`), a tour of the tabs, and the use case in one patient |
+| Dashboard | The registry overview so participants understand the population (KPIs, HbA1c trend, demand forecast, facility benchmark, risk tiers, complications) |
+| Data · Documents | The raw registry tables (browse, search) and the NHA guideline PDFs: what participants load into SAS Viya and index in a RAM collection |
+| Assistant | Basira, the finished population-health agent: live agent trace, scenario chips, charts, citations, drafts queued for human approval, EN/AR voice |
+| **SAS RAM** | Sign in to the participants' own RAM environment at the top of the page, pick the agent they built, and test it: every tool, LLM and retrieval call is shown. Sign-in flows for standalone RAM (Keycloak device code) and full Viya (SASLogon code). `RAM_MOCK=true` runs it against a mock without a RAM. |
 
 ### Quickstart
 
@@ -57,7 +56,7 @@ npm run dev                             # http://localhost:5173 (proxies /api �
 ```
 
 **No API key?** Everything still works: the scenario chips run the tools directly on live data; only
-free-form chat and the simulator's narrated explanation need model credentials. The SAS RAM page
+free-form chat needs model credentials. The SAS RAM page
 runs against an in-memory mock until `RAM_API_URL` is set (`RAM_MOCK=true`).
 
 Regenerate the synthetic registry from scratch (deterministic, seeded): `python -m scripts.generate_hie_data`.
@@ -66,7 +65,7 @@ Regenerate the synthetic registry from scratch (deterministic, seeded): `python 
 
 | Variable | Purpose |
 |---|---|
-| `ANTHROPIC_API_KEY` | The language model behind the assistant and the simulator explanation (`MODEL` pins an id) |
+| `ANTHROPIC_API_KEY` | The language model behind the assistant (`MODEL` pins an id) |
 | `VIYA_URL`, `RAM_URL`, `MATERIALS_URL` | The three buttons on the home page (materials defaults to this repo) |
 | `EHS_LOGO_URL` | Optional absolute URL to a hosted EHS logo, used in the header instead of `frontend/public/ehs-logo.png` |
 | `RAM_API_URL` (+ auth) | SAS Retrieval Agent Manager for the SAS RAM page; see `backend/.env.example` for the sign-in options (`RAM_TOKEN`, OAuth client, or interactive sign-in) |
@@ -92,7 +91,7 @@ frontend, installs the backend, trains the models at image build time, and serve
 ```
 backend/
   main.py                FastAPI app (serves API + built frontend)
-  routers/               chat (NDJSON streaming) · dashboards · evals · simulate · queue/audit/docs/data
+  routers/               chat (NDJSON streaming) · dashboards · queue/audit/docs/data (evals and simulate stay as APIs)
                          links (the environment buttons) · ram (proxy to SAS Retrieval Agent Manager)
   services/
     hie.py               the registry query engine (single source of truth for chat + dashboards)
@@ -108,7 +107,7 @@ backend/
   data/guidelines/       the NHA guideline PDFs (RAG corpus)
   data/evals/            golden agent evalset (10 cases)
 frontend/                React + Vite + Tailwind + Recharts + MapLibre glass UI
-  src/pages/             landing, assistant, registry dashboard, simulator, evaluation, queue, documents, data, audit
+  src/pages/             landing, registry dashboard, data, documents, assistant
   src/ram/               the SAS RAM page (RAM chat, sign-in, traces, charts)
 ```
 
