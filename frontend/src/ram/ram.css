@@ -1,0 +1,216 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SAS Copilot page (src/ram/) — everything is scoped under .ram-page so the
+   SAS blue skin never leaks into the rest of the host app, and the host's
+   maroon/teal brand never leaks in here. The shared glass recipe classes
+   (glass-card, status-pill, msg-*-bubble, trace-*, suggestion-chip,
+   animate-*, pop) come from the host index.css; the SAS-coloured bits are
+   overridden below.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.ram-page {
+  --sas: #0766D1;
+  --sas-hi: #2E8BE6;
+  --sas-lo: #054A99;
+  --sas-grad: linear-gradient(135deg, #2E8BE6, #0766D1, #054A99);
+  --nav-grad: linear-gradient(135deg, #0a1628 0%, #1e293b 45%, #14202f 75%, #243447 100%);
+  --teal: #0e7490;
+
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ─── Slim page top bar ────────────────────────────────────────────── */
+.ram-page .ram-topbar {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 16px 0;
+  position: relative; z-index: 10;
+}
+.ram-page .ram-logo {
+  height: 30px; width: auto; object-fit: contain; display: block;
+  filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.08));
+}
+.ram-page .ram-title-row { flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px; }
+.ram-page .ram-title {
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px; font-weight: 600;
+  color: var(--text); letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ram-page .ram-accent {
+  flex: 1; min-width: 24px; height: 1px;
+  background: linear-gradient(90deg, var(--sas-hi) 0%, var(--sas) 50%, rgba(7,102,209,0.4) 80%, transparent 100%);
+  box-shadow: 0 0 6px rgba(7,102,209,0.25);
+}
+.ram-page .ram-lang-btn {
+  padding: 6px 12px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; line-height: 1;
+  color: var(--sas-lo);
+  background: rgba(7,102,209,0.08);
+  border: 1px solid rgba(7,102,209,0.22);
+  cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.ram-page .ram-lang-btn:hover { background: var(--sas); color: #fff; border-color: var(--sas); }
+
+/* ─── Chat body layout (sidebar + main card) ───────────────────────── */
+.ram-page .ram-chat {
+  flex: 1; min-height: 0;
+  display: flex; gap: 16px; padding: 16px;
+  position: relative;
+}
+
+/* ─── SAS-blue re-skins of the host's shared chat classes ──────────── */
+.ram-page .panel-title {
+  border-left: 2px solid var(--sas);
+  box-shadow: -1px 0 0 rgba(7,102,209,0.15);
+}
+.ram-page .chat-watermark {
+  width: 280px; height: 280px; opacity: 0.06;
+}
+.ram-page .msg-bot-bubble {
+  border-left: 3px solid var(--sas);
+}
+.ram-page .msg-user-bubble {
+  background: linear-gradient(135deg, rgba(7,102,209,0.08), rgba(7,102,209,0.03));
+  border: 1px solid rgba(7,102,209,0.14);
+  border-radius: 14px;
+  border-top-right-radius: 4px;
+}
+
+/* Suggested prompt chips — SAS index.css recipe, hover in SAS blue */
+.ram-page .suggestion-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(244,248,246,0.75));
+  border: 1px solid rgba(7,102,209,0.18);
+  border-radius: 999px;
+  font-size: 12px; font-weight: 600;
+  color: var(--text-md);
+  cursor: pointer; transition: all 0.18s;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.05), inset 0 1px 0 rgba(255,255,255,0.9);
+  text-align: start;
+}
+.ram-page .suggestion-chip:hover {
+  background: var(--sas); color: #fff; border-color: var(--sas);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(7,102,209,0.28);
+}
+.ram-page .suggestion-chip .chip-tag { color: var(--sas); }
+.ram-page .suggestion-chip:hover .chip-tag { color: rgba(255,255,255,0.8); }
+
+/* Reasoning trace — SAS teal (the host's version is bronze) */
+.ram-page .trace-panel {
+  background: linear-gradient(135deg, rgba(14,116,144,0.04), rgba(14,116,144,0.02));
+  border: 1px solid rgba(14,116,144,0.18);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.ram-page .trace-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px;
+  background: rgba(14,116,144,0.06);
+  border-bottom: 1px solid rgba(14,116,144,0.10);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--teal); cursor: pointer;
+}
+.ram-page .trace-step {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 7px 14px;
+  border-bottom: 1px solid rgba(14,116,144,0.06);
+  font-size: 11.5px;
+}
+.ram-page .trace-step:last-child { border-bottom: none; }
+.ram-page .trace-step-tool {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 10px; font-weight: 600;
+  color: var(--teal);
+  background: rgba(14,116,144,0.08);
+  padding: 1px 7px; border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* ─── ChartCard — interactive render_chart spec, SAS-themed ────────── */
+.ram-page .cc-wrap { margin-top: 8px; max-width: 100%; }
+.ram-page .cc-title {
+  font-size: 12.5px; font-weight: 700; color: var(--sas);
+  margin: 0 2px 2px; letter-spacing: 0.01em;
+}
+.ram-page .cc-sub { font-size: 11px; color: var(--text-dim); margin: 0 2px 6px; }
+.ram-page .cc-plot {
+  position: relative;
+  border-radius: 14px;
+  background: var(--glass-strong);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  padding: 10px 12px 6px;
+  direction: ltr;
+}
+.ram-page .cc-svg { width: 100%; height: auto; display: block; }
+.ram-page .cc-tip {
+  position: absolute; pointer-events: none; z-index: 5;
+  transform: translate(14px, -50%);
+  min-width: 120px; padding: 7px 9px; border-radius: 10px;
+  background: var(--glass-strong);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-lg);
+  font-size: 11.5px;
+}
+.ram-page .cc-tip-label { font-weight: 700; color: var(--sas); margin-bottom: 3px; }
+.ram-page .cc-tip-row { display: flex; align-items: center; gap: 6px; line-height: 1.6; }
+.ram-page .cc-tip-dot { width: 9px; height: 9px; border-radius: 999px; flex: none; }
+.ram-page .cc-tip-name { color: var(--text-md); margin-right: auto; }
+.ram-page .cc-tip-val { color: var(--text); font-weight: 700; }
+.ram-page .cc-legend {
+  display: flex; flex-wrap: wrap; gap: 10px 14px;
+  margin: 8px 2px 2px; font-size: 11px; color: var(--text-md);
+}
+.ram-page .cc-leg-item { display: inline-flex; align-items: center; gap: 5px; }
+.ram-page .cc-leg-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+/* ─── RTL / Arabic mode (page-scoped: only the .ram-page container flips) ── */
+.ram-page[dir="rtl"],
+.ram-page[dir="rtl"] button,
+.ram-page[dir="rtl"] input,
+.ram-page[dir="rtl"] textarea {
+  font-family: 'IBM Plex Sans Arabic', 'Manrope', 'Segoe UI', Tahoma, sans-serif;
+}
+.ram-page[dir="rtl"] .ram-title {
+  letter-spacing: 0;
+  font-family: 'IBM Plex Sans Arabic', 'Manrope', sans-serif;
+  font-weight: 600;
+}
+/* Mirror the accent line so it fades away from the title in RTL */
+.ram-page[dir="rtl"] .ram-accent {
+  background: linear-gradient(270deg, var(--sas-hi) 0%, var(--sas) 50%, rgba(7,102,209,0.4) 80%, transparent 100%);
+}
+/* Panel titles: blue marker bar sits on the reading side */
+.ram-page[dir="rtl"] .panel-title {
+  padding-left: 0; padding-right: 8px;
+  border-left: none; border-right: 2px solid var(--sas);
+  box-shadow: 1px 0 0 rgba(7,102,209,0.15);
+}
+/* Chat bubbles: the accent edge and the "tail" corner follow the reading side */
+.ram-page[dir="rtl"] .msg-bot-bubble {
+  border-left: 1px solid var(--hairline);
+  border-right: 3px solid var(--sas);
+  border-top-left-radius: 14px;
+  border-top-right-radius: 4px;
+}
+.ram-page[dir="rtl"] .msg-user-bubble {
+  border-top-right-radius: 14px;
+  border-top-left-radius: 4px;
+}
+/* The send arrow points into the reading direction */
+.ram-page[dir="rtl"] .ram-send-icon { transform: scaleX(-1); }
+/* keep code, traces and identifiers left-to-right inside the Arabic UI */
+.ram-page[dir="rtl"] pre,
+.ram-page[dir="rtl"] code,
+.ram-page[dir="rtl"] .font-mono { direction: ltr; text-align: left; }

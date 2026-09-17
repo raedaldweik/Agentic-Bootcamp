@@ -1,0 +1,134 @@
+"""
+Basira (بصيرة), National Population Health Intelligence.
+
+FastAPI backend: multi-agent chat (ADK supervisor, provider-agnostic model), dashboards, HITL queue,
+audit trail, guideline documents, HIE data browser, the bootcamp environment links and the
+SAS Copilot page (a proxy to SAS Retrieval Agent Manager). Serves the built React
+frontend from frontend/dist in production (single container, Railway-ready).
+"""
+from __future__ import annotations
+
+import os
+import threading
+import time
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+from routers import chat, dashboards, evals, links, ops, ram, simulate
+from services import agent, audit, hie, rag
+from services import llm_client as LC
+from services import platform as P
+
+FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+
+# Warm-up state, the agent graph and model resolution happen in the background so the
+# process answers /api/health within seconds of boot (Railway's healthcheck must not wait on
+# the model provider). Chat requests that arrive before warm-up completes simply build the runner.
+WARM = {"ready": False, "error": None, "seconds": None, "self_test": None}
+
+
+def _warm_up():
+    t0 = time.time()
+    try:
+        model = agent.resolve_model()
+        print(f"· Model resolution: {model}, {agent.RESOLUTION['source']}"
+              + (f" · error: {agent.RESOLUTION['error']}" if agent.RESOLUTION.get("error") else "")
+              + (f" · visible: {', '.join(agent.RESOLUTION['visible'][:8])}" if agent.RESOLUTION.get("visible") else ""),
+              flush=True)
+        agent._get_runner()
+        _record_self_test(agent.self_test(), t0)
+        if not WARM["ready"]:
+            threading.Thread(target=_retest_loop, name="basira-retest", daemon=True).start()
+    except Exception as e:                      # never take the process down over warm-up
+        WARM["error"] = f"{type(e).__name__}: {e}"
+        print(f"✗ Agent warm-up failed (chat will retry on first request): {WARM['error']}", flush=True)
+
+
+def _record_self_test(test: dict, t0: float):
+    WARM["self_test"] = test
+    WARM["seconds"] = round(time.time() - t0, 1)
+    WARM["ready"] = bool(test.get("ok"))
+    if test.get("ok"):
+        print(f"✓ Multi-agent mode ready in {WARM['seconds']}s: {LC.describe()} · model {test['model']} answered in "
+              f"{test['ms']} ms (ADK supervisor + 5 specialists + MCP)"
+              + (f" · after falling back from {test['tried'][0]['model']}" if test.get("tried") else ""), flush=True)
+    else:
+        print(f"✗ Model self-test FAILED for {test.get('model')}: {test.get('error') or test}, "
+              f"{'capacity error, will re-test every minute' if test.get('capacity') else 'check the key'}", flush=True)
+
+
+def _retest_loop():
+    """Provider overload (503 / 529) is transient: keep testing every minute until it clears."""
+    for _ in range(120):
+        time.sleep(60)
+        if WARM["ready"]:
+            return
+        _record_self_test(agent.self_test(), time.time())
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    t0 = time.time()
+    print(f"· Platform: {P.COMPUTE}{' · ' + P.REGION if P.REGION else ''} · HIE backend {P.HIE_BACKEND}"
+          f"{' (' + P.PROJECT + '.' + P.BQ_DATASET + ')' if P.HIE_BACKEND == 'bigquery' else ''} · LLM {LC.describe()}", flush=True)
+    t = hie.tables()
+    from services import bq
+    print(f"✓ HIE loaded from {bq.STATUS['loaded_from']}: {len(t['patient_summary']):,} patients, "
+          f"{len(t['observations']):,} observations, {len(t['encounters']):,} encounters "
+          f"({time.time() - t0:.1f}s)", flush=True)
+    rag.ensure_loaded()
+    print(f"✓ Guideline corpus: {rag.status()}", flush=True)
+    if agent.llm_enabled():
+        print(f"✓ Model credentials present ({LC.describe()}), warming the agent graph in the background", flush=True)
+        threading.Thread(target=_warm_up, name="basira-warmup", daemon=True).start()
+    else:
+        print("✓ Direct tool mode: no model credentials, scenario chips run on live data; free-form chat disabled", flush=True)
+    audit.log("SYSTEM·START", "basira",
+              f"Backend started, mode={'multi-agent' if agent.llm_enabled() else 'direct-tools'}")
+    print(f"✓ Startup complete in {time.time() - t0:.1f}s · listening on port {os.getenv('PORT', '8000')}", flush=True)
+    yield
+
+
+app = FastAPI(title="Basira: EHS Population Health Intelligence (SAS Agentic AI Bootcamp)", lifespan=lifespan)
+
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
+                   allow_headers=["*"])
+
+app.include_router(chat.router)
+app.include_router(dashboards.router)
+app.include_router(ops.router)
+app.include_router(evals.router)
+app.include_router(simulate.router)
+app.include_router(links.router)
+app.include_router(ram.router)
+
+
+@app.get("/api/health")
+def health():
+    live = agent.llm_enabled()
+    return {"status": "ok", "app": "basira", "edition": "sas-ehs-bootcamp",
+            "mode": "multi-agent" if live else "direct-tools",
+            "model": (agent.display_model(agent.active_model()) if WARM["ready"] else "warming") if live else None,
+            "model_switches": agent._active["switches"] if live else None,
+            "model_source": agent.RESOLUTION.get("source") if live else None,
+            "warmup": WARM if live else None,
+            "platform": P.info(),
+            "patients": len(hie.summary())}
+
+
+# ── Serve the built frontend (production) ──
+if FRONTEND_DIST.exists():
+    app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
+
+    @app.get("/{path:path}")
+    def spa(path: str):
+        candidate = FRONTEND_DIST / path
+        if path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(FRONTEND_DIST / "index.html")

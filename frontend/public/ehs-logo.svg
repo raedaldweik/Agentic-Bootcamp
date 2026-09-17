@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 72" width="360" height="72" role="img" aria-label="Emirates Health Services">
+  <!-- Placeholder lockup. Replace this file with the official EHS logo (same file name) or set EHS_LOGO_URL. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1FA79B"/><stop offset="1" stop-color="#004D48"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="4" width="64" height="64" rx="16" fill="url(#g)"/>
+  <path d="M12 38 H24 L29 26 L36 50 L42 32 L46 38 H56" fill="none" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="56" cy="38" r="3.2" fill="#E0C062"/>
+  <text x="80" y="31" font-family="Manrope, 'Segoe UI', sans-serif" font-size="19" font-weight="800" fill="#004D48" letter-spacing="0.2">Emirates Health Services</text>
+  <text x="80" y="55" font-family="'IBM Plex Sans Arabic', 'Noto Naskh Arabic', 'Segoe UI', Tahoma, sans-serif" font-size="15" font-weight="600" fill="#007A73">مؤسسة الإمارات للخدمات الصحية</text>
+</svg>
