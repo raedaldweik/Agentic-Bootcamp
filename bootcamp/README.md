@@ -14,7 +14,8 @@ idea ──► Design Thinking Agent (pre-built, on RAM, drives SAS Viya through
              └─ 3. knowledge ───────► the participant creates the RAM collection with the NHA PDFs (manual)
                                             │
                               4. the participant builds their agent in RAM (no code):
-                                 system prompt + collection + SAS Viya MCP tools (chosen by name)
+                                 system prompt + collection + the team's Bootcamp MCP tool source
+                                 (8 tools, scoped to their table and model by ALLOWED_TABLES / ALLOWED_MODELS)
                                             │
                               5. they test it on the app's SAS RAM tab (sign in, pick the agent)
 ```
@@ -25,13 +26,16 @@ idea ──► Design Thinking Agent (pre-built, on RAM, drives SAS Viya through
 | Structured data | SAS Viya CAS | `data/ehs_diabetes_registry.csv` (4,000 patients, 54 columns), `data/ehs_facilities.csv`, `data/DATA_DICTIONARY.md` |
 | ML model | Model Studio via MCP | target `deterioration_next_12m`; leakage columns listed in the data dictionary |
 | Knowledge (RAG) | RAM collection | `documents/NHA_*.pdf` (4 synthetic guideline PDFs, section-numbered) |
+| Bootcamp MCP | RAM tool source, one registration per team | `../bootcamp_mcp/` (container image; `ALLOWED_TABLES`, `ALLOWED_MODELS`), tool list in `tools.md` |
 | Population Health Agent | RAM, built by each team | `agents/population_health_agent.md` (prompt template + test questions with expected answers) |
 
 ## Facilitator dry-run (do this yourself first)
 
-1. **MCP server.** Deploy the SAS Viya MCP server in HTTP mode with `MCP_TIERS=0,1,2,5,6`,
+1. **MCP servers.** Deploy the SAS Viya MCP server in HTTP mode with `MCP_TIERS=0,1,2,5,6`,
    `MCP_READ_ONLY=false`, `ALLOW_RAW_BEARER=true`, and register it in RAM as a tool source
    (the official example: `sas-retrieval-agent-manager-examples/examples/container_mcp_servers/sas_mcp_server`).
+   Build the Bootcamp MCP image from `../bootcamp_mcp/` (`docker build -t bootcamp-mcp:0.1.0 .`);
+   you register it in step 6, once the table and model exist.
 2. **Design Thinking Agent.** In RAM: new agent → name `Design Thinking Agent` → paste the prompt
    from `agents/design_thinking_agent.md` → add the MCP tool source and tick the 24 tools in
    `tools.md` → share with all participant accounts.
@@ -53,9 +57,12 @@ idea ──► Design Thinking Agent (pre-built, on RAM, drives SAS Viya through
 5. **Collection.** In RAM: new collection `NHA_Guidelines_TEST` → upload the four PDFs from
    `documents/` → chunk 600–800 characters with overlap, top-k 4–6, citations on → test one query:
    "LDL target very high risk" must return NHA-CG-02 §3.
-6. **Population Health Agent.** New agent → paste the prompt from
-   `agents/population_health_agent.md` with `REGISTRY_TEST` and your module name filled in → attach
-   the collection → add the MCP tool source with the 6 tools → publish.
+6. **Population Health Agent.** Register the Bootcamp MCP in RAM as a tool source with the same
+   auth settings as the SAS server plus `ALLOWED_TABLES=CASUSER.REGISTRY_TEST` and
+   `ALLOWED_MODELS=<your module name>` (`../bootcamp_mcp/README.md`). New agent → paste the prompt
+   from `agents/population_health_agent.md` with `REGISTRY_TEST` and your module name filled in →
+   attach the collection → add the Bootcamp MCP tool source (all 8 tools) → publish. Ask it "which
+   tables can you see?": only `CASUSER.REGISTRY_TEST` may come back.
 7. **Test on the app.** Set `RAM_API_URL` (and auth) on the deployed app, open the SAS RAM tab, sign
    in, pick `Population Health Agent`, and run the test questions in
    `agents/population_health_agent.md`. The numbers must match the app's Dashboard tab.
@@ -68,4 +75,7 @@ minutes (stagger teams); RAG ingestion takes a minute or two after upload.
 Teams of three or four, one RAM login per team (RAM history is per identity; a shared login means
 every team sees every conversation, so set `RAM_HIDE_HISTORY=true` on the app if you must share).
 Every artefact carries the team suffix (`_TEAM3`). Route A (load the registry) keeps all teams on the
-same numbers as the app; route B (generate) is for teams with their own idea.
+same numbers as the app; route B (generate) is for teams with their own idea. When a team's table and
+model are ready, register their Bootcamp MCP (one registration per team, `ALLOWED_TABLES` and
+`ALLOWED_MODELS` set to theirs); the Design Thinking Agent's last message gives them the two values
+to hand over.

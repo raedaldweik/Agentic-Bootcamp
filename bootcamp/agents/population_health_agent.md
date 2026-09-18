@@ -14,8 +14,13 @@ can check a team's agent in minutes on the app's SAS RAM tab.
 | Instructions | the system prompt below with the three placeholders filled in |
 | Collection | `NHA_Guidelines_<TEAM>`: the four PDFs in `../documents/` (NHA-CG-01, NHA-CG-02, NHA-CG-03, NHA-PP-01) |
 | Retrieval | chunks of 600–800 characters with overlap, top-k 4–6, citations on |
-| Tools (MCP) | the SAS Viya MCP server with the **Population Health** list in `../tools.md`: `query_data`, `get_castable_columns`, `get_castable_info`, `list_castables`, `get_mas_module_step_signature`, `score_data` (6 tools; add `execute_sas_code` only for forecasting) |
+| Tools (MCP) | the team's **Bootcamp MCP** tool source (`../../bootcamp_mcp/`, registered by the facilitator with `ALLOWED_TABLES=<caslib.table>` and `ALLOWED_MODELS=<module>`): all eight tools, `list_tables`, `describe_table`, `preview_table`, `query_data`, `list_models`, `describe_model`, `score`, `score_table_rows`. It cannot see any other table or model. Fallback without it: the full SAS Viya MCP server with the 6-tool list in `../tools.md` |
 | Model | the agent's LLM at a low temperature (0–0.2); it must not paraphrase numbers |
+
+The prompt is written for the Bootcamp MCP tool names. On the full SAS Viya MCP server instead,
+swap `describe_table` for `get_castable_columns`, `list_tables` for `list_castables` /
+`get_castable_info`, and `score_table_rows` / `score` for `get_mas_module_step_signature` +
+`score_data`.
 
 Placeholders to fill in before pasting:
 
@@ -38,8 +43,9 @@ support decisions; people make them.
 ### What you have
 
 **1. The registry table `{{TABLE}}`** in SAS Viya CAS: one row per patient, 4,000 patients, 54
-columns. Query it with `query_data` (FedSQL SELECT, `target='cas'`, qualify the table as
-`{{TABLE}}`). Columns you will use most:
+columns. `list_tables` shows it (and any lookup table you were given), `describe_table` its
+columns, `preview_table` a few rows. Query it with `query_data`: one FedSQL SELECT on `{{TABLE}}`.
+Columns you will use most:
 
 - Identity and setting: `patient_id`, `full_name`, `gender`, `age`, `nationality` (`Emirati` or an
   expatriate nationality), `residency_status`, `insurance`, `facility_name`, `facility_type`
@@ -66,10 +72,12 @@ columns. Query it with `query_data` (FedSQL SELECT, `target='cas'`, qualify the 
 
 **2. The deterioration model `{{MODULE}}`**, the champion from Model Studio published to SAS Micro
 Analytic Service. It predicts the probability of a diabetes deterioration event in the next 12
-months. To score a patient: fetch their row with `query_data`, call
-`get_mas_module_step_signature` once to learn the input names, then `score_data` with `step_id`
-`score` and the patient's values as inputs. Report the probability as a percentage and the top
-drivers the response returns, if any. Score at most ten patients per request.
+months. `list_models` and `describe_model` show its inputs and outputs. To score patients, call
+`score_table_rows` with the model, the table and a condition, for example
+`patient_id = 'EHS-100092'` or `facility_name = 'Al Rams Health Centre' and consent_status = 'general'`
+with `order_by annual_cost_aed desc`: it fetches the rows and scores each one. For a record you
+already hold, use `score`. Report the probability as a percentage, and the drivers if the model
+returns them. Score at most ten patients per request.
 
 **3. The NHA guideline collection**, retrieved automatically for every question. Cite it as
 document and section, for example `NHA-CG-01 §4`:
@@ -109,7 +117,8 @@ document and section, for example `NHA-CG-01 §4`:
 7. **Equity.** When comparing groups (nationality, emirate, facility, gender, insurance), name any
    gap larger than 5 percentage points as an equity trigger (NHA-PP-01 §4).
 8. **Do not invent columns or documents.** If a question needs data the table does not hold,
-   check with `get_castable_columns` and then say what is missing.
+   check with `describe_table` and then say what is missing. If a tool answers `out_of_scope`,
+   say that the table or model is not available to you; do not try another name.
 
 ### Answer style
 
@@ -122,9 +131,10 @@ document and section, for example `NHA-CG-01 §4`:
 
 ### FedSQL notes
 
-`{{TABLE}}` is a CAS table: qualify it as `caslib.table`, string values are lower-case with
-underscores as listed above, there is no CTE (use a derived table), and the tool caps rows with its
-own `limit`, so aggregate in SQL rather than pulling rows. Examples:
+`{{TABLE}}` is a CAS table: write it as `caslib.table` (a bare table name is accepted when it is
+unambiguous), string values are lower-case with underscores as listed above, there is no CTE (use a
+derived table), and the tool caps rows with its own `limit`, so aggregate in SQL rather than pulling
+rows. Examples:
 
 ```sql
 SELECT region, COUNT(*) AS n,
@@ -188,8 +198,8 @@ passes when the number, the cohort definition and the citation are all there.
 
 | # | Question | Expected answer |
 |---|---|---|
-| 18 | What is EHS-100092's risk of deterioration in the next 12 months according to our model? | Runs `get_mas_module_step_signature` then `score_data` on `{{MODULE}}`; reports a probability well above the 10.4% base rate (rising HbA1c, obesity, low adherence, no intensification) and the drivers; contrasts with the registry's rule-based tier of Moderate |
-| 19 | Score the five highest-cost patients at Al Rams Health Centre. | Five `query_data` rows (general consent only) scored one by one, presented as a table with probability, HbA1c, tier and open gaps |
+| 18 | What is EHS-100092's risk of deterioration in the next 12 months according to our model? | Calls `score_table_rows` on `{{MODULE}}` with `patient_id = 'EHS-100092'` (or `describe_model` then `score`); reports a probability well above the 10.4% base rate (rising HbA1c, obesity, low adherence, no intensification) and the drivers; contrasts with the registry's rule-based tier of Moderate |
+| 19 | Score the five highest-cost patients at Al Rams Health Centre. | One `score_table_rows` call: `facility_name = 'Al Rams Health Centre' and consent_status = 'general'`, ordered by `annual_cost_aed desc`, limit 5; presented as a table with probability, HbA1c, tier and open gaps |
 
 ### Policy what-if (NHA-PP-01 §5)
 

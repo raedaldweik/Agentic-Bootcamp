@@ -1,9 +1,20 @@
-# SAS Viya MCP server: which tools to give each agent
+# Which tools each agent gets
 
-The bootcamp runs the current **SAS Viya MCP Server** (`sassoftware/sas-mcp-server` v1.15, 92 tools
-in 10 tiers). Tool names below are the ones the server registers; in RAM, pick them by name when you
-add the MCP tool source to an agent. A shorter tool list measurably improves tool selection, so do
-not connect all 92 to either agent.
+Two MCP servers, one per audience:
+
+| Server | Who uses it | Tools | Scope |
+|---|---|---|---|
+| **SAS Viya MCP Server** (`sassoftware/sas-mcp-server` v1.15, 92 tools in 10 tiers) | the facilitator's Design Thinking Agent | 24 of the 92, listed below | the whole Viya environment (it creates tables, projects and models) |
+| **Bootcamp MCP** (`../bootcamp_mcp/`, built on the SAS server) | every participant agent | 8 | only the team's `ALLOWED_TABLES` and `ALLOWED_MODELS`, set when the facilitator registers it in RAM |
+
+Participants never see the 92-tool list. Their server is registered once per team with the table and
+model the Design Thinking Agent produced for them, and every tool on it refuses anything else.
+
+## SAS Viya MCP Server
+
+Tool names below are the ones the server registers; in RAM, pick them by name when you add the MCP
+tool source to an agent. A shorter tool list measurably improves tool selection, so do not connect
+all 92 to the Design Thinking Agent.
 
 | Tier | Group | Used by |
 |---|---|---|
@@ -47,18 +58,31 @@ Optional: `describe_report_objects`, `create_report`, `apply_report_operations`,
 (tier 3) if you want the copilot to build a Visual Analytics page; the rule set and decision flow
 tools (tier 7) if you want a recall decision flow.
 
-## Population Health Agent (6 tools, plus one optional)
+## Population Health Agent: the Bootcamp MCP (8 tools)
+
+Register `bootcamp_mcp` in RAM once per team (see `../bootcamp_mcp/README.md`) with, for team 3:
+
+```
+ALLOWED_TABLES=CASUSER.REGISTRY_TEAM3,Public.EHS_FACILITIES
+ALLOWED_MODELS=deterioration_team3
+```
 
 | Tool | Why |
 |---|---|
-| `query_data` | every number: cohorts, rates, costs, group-bys, the patient a clinician asks about |
-| `get_castable_columns` | inspect columns before claiming data is missing |
-| `get_castable_info`, `list_castables` | confirm the table and its row count |
-| `get_mas_module_step_signature`, `score_data` | risk scoring through the published champion model |
-| `execute_sas_code` (optional) | only if the agent should forecast visits with PROC ESM |
+| `list_tables`, `describe_table`, `preview_table` | what the agent can see: its tables, their columns, a few rows |
+| `query_data` | every number: cohorts, rates, costs, group-bys, the patient a clinician asks about (FedSQL, scoped to the allowed tables) |
+| `list_models`, `describe_model` | the published champion model and its inputs |
+| `score`, `score_table_rows` | risk scoring: one record, or rows pulled from the table by a WHERE and scored in one call |
 
 Everything else the agent needs (the guidelines, the citations) comes from its RAM collection, not
-from a tool.
+from a tool. Authentication is the SAS server's own (`ALLOW_RAW_BEARER=true`, RAM presents the
+participant's Viya token), so the registration looks the same as the SAS server's, plus the two
+scope variables.
+
+**Fallback on the full SAS Viya MCP server** (6 tools, plus one optional), if the Bootcamp MCP is not
+deployed: `query_data`, `get_castable_columns`, `get_castable_info`, `list_castables`,
+`get_mas_module_step_signature`, `score_data`, and `execute_sas_code` only if the agent should
+forecast visits with PROC ESM. The prompt template notes the name swaps.
 
 ## Note on the fork
 

@@ -1,0 +1,48 @@
+[project]
+name = "bootcamp-mcp"
+version = "0.1.0"
+description = "A scoped SAS Viya MCP server for the EHS x SAS Agentic AI Bootcamp: eight tools, limited to the tables and models a team is allowed to use."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+authors = [{ name = "Raed Aldweik" }]
+dependencies = [
+    # The upstream SAS Viya MCP server is the library this package is built on:
+    # its OAuth proxy, raw-bearer handling, Viya HTTP client, compute-session
+    # pool and FedSQL helpers are imported as-is, so authentication and query
+    # execution behave exactly like the 92-tool server.
+    "sas-mcp-server @ git+https://github.com/sassoftware/sas-mcp-server.git@v1.15.0",
+    "fastmcp>=4.0.0,<5.0.0",
+    "httpx>=0.28.1",
+    "python-dotenv>=1.2.1",
+    "uvicorn>=0.38.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/raedaldweik/Agentic-Bootcamp/tree/main/bootcamp_mcp"
+
+[project.scripts]
+bootcamp-mcp = "bootcamp_mcp.main:main"
+bootcamp-mcp-stdio = "bootcamp_mcp.stdio_server:main"
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bootcamp_mcp"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[dependency-groups]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.24.0", "ruff>=0.6"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 110
+src = ["src", "tests"]

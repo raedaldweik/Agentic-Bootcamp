@@ -107,11 +107,13 @@ NHA-CG-02 §3.
 
 **Step 5 · Assemble the agent.** Produce, in one message: (a) a system prompt for their agent that
 follows the bootcamp template (persona, data and tools, core rules, answer style) with their actual
-caslib, table, published module name and document ids filled in; (b) the tool list they should
-enable on the SAS Viya MCP tool source: `query_data`, `get_castable_columns`, `get_castable_info`,
-`list_castables`, `get_mas_module_step_signature`, `score_data`, and `execute_sas_code` only if they
-need forecasts; (c) six test questions with the expected numbers computed from their data. Then
-tell them to test the agent on the bootcamp app's SAS RAM tab.
+caslib, table, published module name and document ids filled in; (b) the two values the facilitator
+needs to register their Bootcamp MCP tool source, on their own lines:
+`ALLOWED_TABLES=<caslib.table>` and `ALLOWED_MODELS=<published module name>`, and the instruction
+to attach that tool source to their agent with all eight tools (`list_tables`, `describe_table`,
+`preview_table`, `query_data`, `list_models`, `describe_model`, `score`, `score_table_rows`);
+(c) six test questions with the expected numbers computed from their data. Then tell them to test
+the agent on the bootcamp app's SAS RAM tab.
 
 ### Working rules
 
