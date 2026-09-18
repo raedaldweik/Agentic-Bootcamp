@@ -69,7 +69,7 @@ Regenerate the synthetic registry from scratch (deterministic, seeded): `python 
 |---|---|
 | `ANTHROPIC_API_KEY` | The language model behind the assistant (`MODEL` pins an id) |
 | `VIYA_URL`, `RAM_URL`, `MATERIALS_URL` | The three buttons on the home page (materials defaults to this repo) |
-| `EHS_LOGO_URL` | Optional absolute URL to a hosted EHS logo, used in the header instead of `frontend/public/ehs-logo.png` |
+| `EHS_LOGO_URL`, `SAS_LOGO_URL` | Optional absolute URLs to hosted logos, used in the header instead of `frontend/public/ehs-logo.png` (top left) and `sas-logo.png` (top right) |
 | `RAM_API_URL` (+ auth) | SAS Retrieval Agent Manager for the SAS RAM page; see `backend/.env.example` for the sign-in options (`RAM_TOKEN`, OAuth client, or interactive sign-in) |
 | `RAM_MOCK` | `true` = SAS RAM page on an in-memory mock (default in `.env.example`) |
 | `RAM_HIDE_HISTORY` | `true` when teams share one RAM identity, so nobody sees another team's conversations |
@@ -77,9 +77,10 @@ Regenerate the synthetic registry from scratch (deterministic, seeded): `python 
 
 ### Branding
 
-The header uses the official EHS logo (`frontend/public/ehs-logo.png`, cropped with a transparent
-background; `ehs-mark.png` is the EHS wordmark alone, used for avatars and watermarks). `EHS_LOGO_URL`
-can point the header at a hosted copy instead. Colours live in the `:root` block of
+The header carries the official EHS logo top left (`frontend/public/ehs-logo.png`, cropped with a
+transparent background; `ehs-mark.png` is the EHS wordmark alone, used for avatars and watermarks)
+and the SAS logo top right (`sas-logo.png`, the navy wordmark on a transparent background).
+`EHS_LOGO_URL` and `SAS_LOGO_URL` can point the header at hosted copies instead. Colours live in the `:root` block of
 `frontend/src/index.css`: `--brand` is the EHS blue sampled from the logo (#2B5378), `--gold` the accent.
 
 ### Deploy to Railway

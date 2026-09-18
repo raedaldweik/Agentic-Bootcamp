@@ -35,6 +35,7 @@ export const TABS = [
 function Header({ tab, setTab }) {
   const [health, setHealth] = useState(null);
   const [ehsLogo, setEhsLogo] = useState('/ehs-logo.png');
+  const [sasLogo, setSasLogo] = useState('/sas-logo.png');
   useEffect(() => {
     let timer;
     const tick = () => getHealth().then((h) => {
@@ -44,7 +45,10 @@ function Header({ tab, setTab }) {
     }).catch(() => setHealth({ status: 'down' }));
     tick();
     // A hosted logo can be plugged in through EHS_LOGO_URL without a rebuild.
-    getLinks().then((r) => { if (r?.branding?.ehs_logo_url) setEhsLogo(r.branding.ehs_logo_url); }).catch(() => {});
+    getLinks().then((r) => {
+      if (r?.branding?.ehs_logo_url) setEhsLogo(r.branding.ehs_logo_url);
+      if (r?.branding?.sas_logo_url) setSasLogo(r.branding.sas_logo_url);
+    }).catch(() => {});
     return () => clearTimeout(timer);
   }, []);
   const ok = health?.status === 'ok';
@@ -79,7 +83,7 @@ function Header({ tab, setTab }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         {(health == null || !ok || warming || keyBad) && (
           <div className="status-pill">
             <span className={`w-2 h-2 rounded-full ${ok && !warming && !keyBad ? '' : 'animate-pulse'}`}
@@ -93,6 +97,8 @@ function Header({ tab, setTab }) {
             </span>
           </div>
         )}
+        <img className="partner-logo" src={sasLogo} alt="SAS"
+          onError={(e) => { if (e.target.src.indexOf('/sas-logo.png') === -1) e.target.src = '/sas-logo.png'; }} />
       </div>
     </header>
   );

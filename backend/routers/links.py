@@ -6,6 +6,7 @@ Variables tab without a rebuild.
   RAM_URL         the SAS Retrieval Agent Manager UI
   MATERIALS_URL   the bootcamp materials (defaults to this repository on GitHub)
   EHS_LOGO_URL    optional: an absolute URL to a hosted EHS logo, used instead of /ehs-logo.png
+  SAS_LOGO_URL    optional: an absolute URL to a hosted SAS logo, used instead of /sas-logo.png
 """
 from __future__ import annotations
 
@@ -33,5 +34,8 @@ def links():
             {"id": "materials", "label": "Bootcamp materials", "sub": "Decks, labs, data and this application",
              "url": _env("MATERIALS_URL", MATERIALS_DEFAULT), "icon": "materials"},
         ],
-        "branding": {"ehs_logo_url": _env("EHS_LOGO_URL") or None},
+        "branding": {
+            "ehs_logo_url": _env("EHS_LOGO_URL") or None,
+            "sas_logo_url": _env("SAS_LOGO_URL") or None,
+        },
     }
