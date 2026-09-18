@@ -632,10 +632,16 @@ html, body, #root {
 }
 @keyframes g-drift { 0%, 100% { transform: translateY(-50%) rotate(0deg); } 50% { transform: translateY(calc(-50% - 12px)) rotate(2deg); } }
 .hero-title {
-  font-size: clamp(38px, 4.2cqw, 64px);
+  /* The text column is capped by .landing-inner (max-width 1240px), so the title's size is
+     capped with it: at 51px "Build a population-health" still fits the column on one line. */
+  font-size: clamp(38px, 3.9cqw, 51px);
   font-weight: 800; line-height: 1.02; letter-spacing: -0.025em;
   color: var(--text);
+  /* No forced line break: the sentence wraps where the column ends, and browsers that support it
+     balance the lines so no word is stranded on a line of its own. */
+  text-wrap: balance;
 }
+.nowrap { white-space: nowrap; }
 .hero-grad {
   background: linear-gradient(95deg, #2B5378 0%, #b8862e 60%, #d4a64f 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;

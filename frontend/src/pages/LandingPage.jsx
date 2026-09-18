@@ -90,8 +90,8 @@ export default function LandingPage() {
           <div className="relative z-[1]">
             <div className="section-eyebrow reveal d1">Emirates Health Services × SAS</div>
             <h1 className="hero-title reveal d2">
-              Build a population-health<br />
-              <span className="hero-grad">agent on SAS RAM.</span>
+              Build a population-health{' '}
+              <span className="hero-grad">agent on <span className="nowrap">SAS RAM.</span></span>
             </h1>
             <p className="hero-lede mt-5 reveal d3">
               Your workbench for the two days: the data, the guidelines, a finished agent to learn from,
