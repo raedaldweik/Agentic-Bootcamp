@@ -78,24 +78,59 @@ bootcamp-mcp            # HTTP on $HOST_PORT
 bootcamp-mcp-stdio      # stdio, for a desktop MCP client; signs in like the SAS server does
 ```
 
+## The image
+
+RAM runs container MCP servers from an image, the way it runs
+`ghcr.io/sassoftware/sas-mcp-server:latest`. This one is published the same way:
+
+```
+ghcr.io/raedaldweik/bootcamp-mcp:latest          rebuilt on every push that touches bootcamp_mcp/
+ghcr.io/raedaldweik/bootcamp-mcp:sha-<commit>    the same build, pinned
+ghcr.io/raedaldweik/bootcamp-mcp:<version>       from a git tag bootcamp-mcp-v<version>
+```
+
+The GitHub Actions workflow `.github/workflows/bootcamp-mcp-image.yml` builds it (Actions tab shows
+the run). Once, after the first build: GitHub → your profile → Packages → `bootcamp-mcp` → Package
+settings → Change visibility → **Public**, or RAM cannot pull it. To build locally instead:
+`cd bootcamp_mcp && docker build -t bootcamp-mcp:0.1.0 .` and push to any registry RAM can reach.
+
 ## Register it in SAS Retrieval Agent Manager
 
-One registration per team, each with its own scope:
+RAM's container MCP servers are a **template** (the image and its fixed settings, defined once) that
+you **instantiate** (one running container per instance, each with its own environment variables).
+The Bootcamp MCP is one template and one instance per team.
 
-1. RAM → Tool sources → add an MCP server. Point it at the container image (or at a running
-   `http://<host>:8134/mcp`). Follow the SAS example for the transport and token settings:
-   [container_mcp_servers/sas_mcp_server](https://github.com/sassoftware/sas-retrieval-agent-manager-examples/tree/main/examples/container_mcp_servers/sas_mcp_server);
-   the only differences are the image and the two extra variables.
-2. Environment variables: everything in `.env.sample`, with the team's `ALLOWED_TABLES` and
-   `ALLOWED_MODELS` (`Public.EHS_DIABETES,Public.EHS_FACILITIES` and the team's published module
-   name; a route-B team gets its own `Public.<TABLE>_TEAMn` instead).
-   Keep `ALLOW_RAW_BEARER=true`: RAM presents the signed-in participant's Viya token, and the
-   server accepts it after validating it against Viya's JWKS, exactly as the SAS server does.
-3. In the team's agent, add the tool source. All eight tools, or fewer; the server is already scoped,
-   so there is nothing to hide.
-4. Ask the agent "which tables can you see?" It should call `list_tables` and name only the team's.
+**The template**, the same fields as the SAS one
+([container_mcp_servers/sas_mcp_server](https://github.com/sassoftware/sas-retrieval-agent-manager-examples/tree/main/examples/container_mcp_servers/sas_mcp_server)):
 
-The Design Thinking Agent's last step tells the participant the two values to give the facilitator.
+| Field | Value |
+|---|---|
+| Container image | `ghcr.io/raedaldweik/bootcamp-mcp:latest` |
+| Transport · Port · Base path | HTTP · `8134` · `/mcp` |
+| Authentication | OAuth client credentials: the same client id and secret you use for the SAS MCP server (the template's `ram-client`), token URL `<Viya URL>/SASLogon/oauth/token`, scope empty |
+| Environment variables | `VIYA_ENDPOINT`, `ALLOW_RAW_BEARER=true`, `ALLOWED_TABLES`, `ALLOWED_MODELS`, `MCP_SERVER_NAME` (values set per instance) |
+
+RAM obtains a Viya token for that client and sends it as the bearer on every call; `ALLOW_RAW_BEARER`
+makes the server accept it after validating it against Viya's JWKS, exactly as the SAS server does.
+So every instance reaches Viya as that one client: the scope variables are what keep teams apart.
+
+**One instance per team:**
+
+| Variable | Team 1, route A | Team 2, route B |
+|---|---|---|
+| `MCP_SERVER_NAME` | `Bootcamp team 01` | `Bootcamp team 02` |
+| `ALLOWED_TABLES` | `Public.EHS_DIABETES,Public.EHS_FACILITIES` | `Public.HOSPITAL_RISK_TEAM2,Public.EHS_FACILITIES` |
+| `ALLOWED_MODELS` | the shared model's module name | `hospital_risk_team2` |
+| `VIYA_ENDPOINT`, `ALLOW_RAW_BEARER` | as on the SAS server | as on the SAS server |
+
+Then, per team: the participants create their agent (no code), attach their team's instance with all
+eight tools, and ask it "which tables can you see?". Only the team's tables may come back.
+
+**The SAS MCP server, for the Design Thinking Agent**, is the existing template instantiated four
+or five times (`sas-viya-A` … `E`, same image, same client, `MCP_TIERS=0,1,2,5,6`,
+`MCP_READ_ONLY=false`, `ALLOW_RAW_BEARER=true`). Each instance is its own container with its own
+warm compute session; make one copy of the Design Thinking Agent per instance and give each RAM user
+one copy, four or five users per instance. `bootcamp/README.md` has the counts.
 
 ## Development
 

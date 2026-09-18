@@ -31,11 +31,14 @@ idea ──► Design Thinking Agent (pre-built, on RAM, drives SAS Viya through
 
 ## Facilitator dry-run (do this yourself first)
 
-1. **MCP servers.** Deploy the SAS Viya MCP server in HTTP mode with `MCP_TIERS=0,1,2,5,6`,
-   `MCP_READ_ONLY=false`, `ALLOW_RAW_BEARER=true`, and register it in RAM as a tool source
-   (the official example: `sas-retrieval-agent-manager-examples/examples/container_mcp_servers/sas_mcp_server`).
-   Build the Bootcamp MCP image from `../bootcamp_mcp/` (`docker build -t bootcamp-mcp:0.1.0 .`);
-   you register it in step 6, once the table and model exist.
+1. **MCP servers.** In RAM's MCP Tools view, instantiate the SAS Viya MCP container template
+   (`ghcr.io/sassoftware/sas-mcp-server:latest`, the official example:
+   `sas-retrieval-agent-manager-examples/examples/container_mcp_servers/sas_mcp_server`) with
+   `MCP_TIERS=0,1,2,5,6`, `MCP_READ_ONLY=false`, `ALLOW_RAW_BEARER=true`; once for the dry-run,
+   four or five times for the day. Add a second template for the Bootcamp MCP image,
+   `ghcr.io/raedaldweik/bootcamp-mcp:latest` (built by the repo's GitHub Actions workflow; make
+   the package public once), same port, path and OAuth client; you instantiate it in step 6, once
+   the table and model exist. `../bootcamp_mcp/README.md` lists every field.
 2. **Design Thinking Agent.** In RAM: new agent → name `Design Thinking Agent` → paste the prompt
    from `agents/design_thinking_agent.md` → add the MCP tool source and tick the 24 tools in
    `tools.md` → share with all participant accounts.
@@ -59,12 +62,12 @@ idea ──► Design Thinking Agent (pre-built, on RAM, drives SAS Viya through
 5. **Collection.** In RAM: new collection `NHA_Guidelines_TEST` → upload the four PDFs from
    `documents/` → chunk 600–800 characters with overlap, top-k 4–6, citations on → test one query:
    "LDL target very high risk" must return NHA-CG-02 §3.
-6. **Population Health Agent.** Register the Bootcamp MCP in RAM as a tool source with the same
-   auth settings as the SAS server plus `ALLOWED_TABLES=Public.EHS_DIABETES,Public.EHS_FACILITIES`
-   and `ALLOWED_MODELS=<your module name>` (`../bootcamp_mcp/README.md`). New agent → paste the
+6. **Population Health Agent.** Instantiate the Bootcamp MCP template for the test team with
+   `ALLOWED_TABLES=Public.EHS_DIABETES,Public.EHS_FACILITIES`, `ALLOWED_MODELS=<your module name>`
+   and `MCP_SERVER_NAME=Bootcamp team TEST` (`../bootcamp_mcp/README.md`). New agent → paste the
    prompt from `agents/population_health_agent.md` with `Public.EHS_DIABETES` and your module name
-   filled in → attach the collection → add the Bootcamp MCP tool source (all 8 tools) → publish. Ask
-   it "which tables can you see?": only the two `Public` tables may come back.
+   filled in → attach the collection → add that instance (all 8 tools) → publish. Ask it "which
+   tables can you see?": only the two `Public` tables may come back.
 7. **Test on the app.** Set `RAM_API_URL` (and auth) on the deployed app, open the SAS RAM tab, sign
    in, pick `Population Health Agent`, and run the test questions in
    `agents/population_health_agent.md`. The numbers must match the app's Dashboard tab.
