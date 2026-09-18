@@ -82,20 +82,31 @@ export const getLlmSelection = () => fetch('/api/evals/llm').then(json);
 export const getGovernance = () => fetch('/api/evals/governance').then(json).then((d) => d.controls);
 
 // ── What-if simulator ──
+// The Simulator dashboard works on anonymous profiles (clinical archetypes, no identity); the
+// patient endpoints remain for the assistant's simulate tool.
+export const getSimProfiles = () => fetch('/api/simulate/profiles').then(json);
+export const getSimProfile = (id) => fetch(`/api/simulate/profile/${encodeURIComponent(id)}`).then(json);
+export const getSimProfilePreset = (id, preset) =>
+  fetch(`/api/simulate/profile/${encodeURIComponent(id)}/preset/${preset}`).then(json);
 export const getSimPatients = (q = '') => fetch(`/api/simulate/patients?q=${encodeURIComponent(q)}`).then(json);
 export const getSimBaseline = (id) => fetch(`/api/simulate/baseline/${encodeURIComponent(id)}`).then(json);
 export const getSimPreset = (id, preset) => fetch(`/api/simulate/preset/${encodeURIComponent(id)}/${preset}`).then(json);
-export const postSimulate = (patientId, overrides, signal) =>
+
+/** The subject of a simulation: a profile ({ profileId }) or a patient ({ patientId } or a bare id). */
+const simSubject = (who) => (typeof who === 'string' ? { patient_id: who }
+  : { profile_id: who?.profileId || undefined, patient_id: who?.patientId || undefined });
+
+export const postSimulate = (who, overrides, signal) =>
   fetch('/api/simulate', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ patient_id: patientId, overrides }), signal,
+    body: JSON.stringify({ ...simSubject(who), overrides }), signal,
   }).then(json);
 
 /** Stream the language-model explanation of a what-if: NDJSON {type:meta|token|final}. */
-export async function streamExplain({ patientId, overrides, actor }, onEvent, signal) {
+export async function streamExplain({ patientId, profileId, overrides, actor }, onEvent, signal) {
   const res = await fetch('/api/simulate/explain', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ patient_id: patientId, overrides, actor: actor || 'clinician' }), signal,
+    body: JSON.stringify({ ...simSubject({ patientId, profileId }), overrides, actor: actor || 'clinician' }), signal,
   });
   if (!res.ok || !res.body) throw new Error(`explain failed: ${res.status}`);
   const reader = res.body.getReader();

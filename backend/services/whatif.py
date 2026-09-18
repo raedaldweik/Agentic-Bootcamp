@@ -33,6 +33,8 @@ from services import hie, ml
 # kind: range | toggle. group: display grouping. Bounds follow the registry's 2nd–98th pct
 # with clinical head-room; step is what a clinician would plausibly type.
 LEVERS: list[dict] = [
+    {"key": "age", "label": "Age", "unit": "y", "kind": "range", "min": 18, "max": 90, "step": 1,
+     "group": "Profile", "hint": "Risk rises with age; everything else held equal"},
     {"key": "hba1c_latest", "label": "HbA1c", "unit": "%", "kind": "range", "min": 5.0, "max": 13.0, "step": 0.1,
      "group": "Glycaemic control", "hint": "Target <7% (individualised); ≥9% is poor control"},
     {"key": "hba1c_days_since_test", "label": "Days since last HbA1c", "unit": "d", "kind": "range", "min": 0, "max": 600, "step": 5,
@@ -73,14 +75,20 @@ FEATURE_LABELS = {
     "diabetes_medication_count": "Diabetes medicines", "care_gap_count": "Open care gaps",
 }
 
-# Rule-based gaps the simulator can re-derive from the lever state. The remaining gaps
-# (retinal / foot screening, ACR screening, therapy inertia) come from the record as-is.
+# Rule-based gaps the simulator can re-derive from the lever state, each with the levers it
+# depends on. The rules mirror scripts/generate_hie_data.py exactly, and a gap is only
+# re-derived when one of its inputs was moved; otherwise the record's state stands, so a
+# simulation with no changes scores exactly the baseline. The remaining gaps (retinal / foot
+# screening, ACR screening, therapy inertia) come from the record as-is.
 DERIVED_GAPS = {
-    "hba1c_overdue": lambda r: r["hba1c_days_since_test"] > 180,
-    "bp_uncontrolled": lambda r: bool(r["htn"]) and (r["sbp_latest"] >= 140 or r["dbp_latest"] >= 90),
-    "glp1_sglt2_gap": lambda r: r["diabetes_type"] == "type2" and r["hba1c_latest"] >= 8.0 and not r["on_sglt2_glp1"],
-    "low_adherence": lambda r: r["adherence_pdc"] < 0.8,
-    "renal_protection_gap": lambda r: (bool(r["albuminuria"]) or bool(r["ckd"])) and not r["on_raas_inhibitor"],
+    "hba1c_overdue": (lambda r: r["hba1c_days_since_test"] > 183, {"hba1c_days_since_test"}),
+    "bp_uncontrolled": (lambda r: bool(r["htn"]) and (r["sbp_latest"] >= 140 or r["dbp_latest"] >= 90), {"sbp_latest"}),
+    "glp1_sglt2_gap": (lambda r: r["diabetes_type"] == "type2" and r["hba1c_latest"] >= 8.0
+                       and (r["bmi"] >= 30 or bool(r["ckd"]) or bool(r["albuminuria"])) and not r["on_sglt2_glp1"],
+                       {"hba1c_latest", "bmi", "egfr_latest", "acr_latest", "on_sglt2_glp1"}),
+    "low_adherence": (lambda r: r["adherence_pdc"] < 0.6, {"adherence_pdc"}),
+    "renal_protection_gap": (lambda r: (bool(r["albuminuria"]) or bool(r["ckd"])) and not r["on_raas_inhibitor"],
+                             {"egfr_latest", "acr_latest", "on_raas_inhibitor"}),
 }
 
 # One-click presets applied on top of the record
@@ -101,6 +109,98 @@ PRESETS = {
         "delta": {"hba1c_latest": 1.5, "sbp_latest": 15, "adherence_pdc": -0.20, "admissions_12mo": 1},
     },
 }
+
+
+# ── Anonymous profiles ───────────────────────────────────────────────────────────────
+# The simulator is about the factors, not a person: each profile is a clinical archetype,
+# represented by the (synthetic) registry row closest to the centre of its cohort, and shown
+# without name, id, facility or nationality. The row gives the model a complete, coherent
+# feature vector; the levers are what the user moves.
+PROFILES: list[dict] = [
+    {"id": "well_controlled", "label": "Well controlled",
+     "description": "HbA1c under 7% and no open care gaps",
+     "rule": lambda s: (s["hba1c_latest"] < 7.0) & (s["care_gap_count"] == 0)},
+    {"id": "typical_t2", "label": "Typical type 2",
+     "description": "HbA1c 7 to 8.5% on metformin, not on insulin",
+     "rule": lambda s: (s["diabetes_type"] == "type2") & s["hba1c_latest"].between(7.0, 8.5)
+                       & (s["on_metformin"] == 1) & (s["on_insulin"] == 0)},
+    {"id": "uncontrolled_obese", "label": "Uncontrolled and obese",
+     "description": "HbA1c 9% or more, BMI over 30, not yet on an SGLT2i or GLP-1 RA",
+     "rule": lambda s: (s["diabetes_type"] == "type2") & (s["hba1c_latest"] >= 9.0) & (s["bmi"] > 30)
+                       & (s["on_sglt2_glp1"] == 0)},
+    {"id": "kidney_disease", "label": "Kidney disease",
+     "description": "eGFR under 60 with albuminuria",
+     "rule": lambda s: (s["egfr_latest"] < 60) & (s["albuminuria"] == 1)},
+    {"id": "recent_admission", "label": "Recent admission",
+     "description": "Admitted in the last 12 months, very high model risk",
+     "rule": lambda s: (s["admissions_12mo"] >= 1) & (s["p"] >= 0.25)},
+]
+PROFILE_IDS = {p["id"] for p in PROFILES}
+_PROFILE_FEATURES = ["age", "bmi", "hba1c_latest", "sbp_latest", "egfr_latest", "acr_latest",
+                     "adherence_pdc", "admissions_12mo", "ed_visits_12mo", "care_gap_count", "p"]
+
+
+@lru_cache(maxsize=1)
+def _profile_rows() -> dict:
+    """profile id -> the registry patient_id that represents it (deterministic)."""
+    s = hie.summary()
+    s = s[s["consent_status"] != "restricted"].copy()
+    s["p"] = ml._score(ml._feature_frame(s))
+    out = {}
+    for prof in PROFILES:
+        g = s[prof["rule"](s)]
+        if g.empty:
+            g = s
+        z = g[_PROFILE_FEATURES].astype(float)
+        z = (z - z.median()) / (z.std(ddof=0).replace(0, 1.0))
+        out[prof["id"]] = str(g.loc[(z ** 2).sum(axis=1).idxmin(), "patient_id"])
+    return out
+
+
+def resolve_profile(profile_id: str) -> str | None:
+    """The patient row behind a profile id, or None for an unknown profile."""
+    return _profile_rows().get(profile_id)
+
+
+def _profile_header(row: pd.Series, prof: dict) -> dict:
+    """What the UI may show about a profile: the archetype and its clinical factors, no identity."""
+    gaps = [g for g in str(row["open_care_gaps"] or "").split(";") if g]
+    return {
+        "id": prof["id"], "label": prof["label"], "description": prof["description"],
+        "age": int(row["age"]), "gender": row["gender"], "diabetes_type": row["diabetes_type"],
+        "years_since_diagnosis": _clean(row["years_since_diagnosis"]), "registry_tier": row["registry_risk_tier"],
+        "hba1c_12m_ago": _clean(row["hba1c_12m_ago"]), "open_care_gaps": gaps,
+        "gap_labels": [hie.GAP_LABELS.get(g, g) for g in gaps],
+        "retinopathy": int(row["retinopathy"]), "neuropathy": int(row["neuropathy"]),
+        "foot_ulcer_history": int(row["foot_ulcer_history"]), "htn": int(row["htn"]), "ckd": int(row["ckd"]),
+    }
+
+
+def profiles() -> list[dict]:
+    """The profile chips: archetype, one-line description, the model's risk for it."""
+    out = []
+    for prof in PROFILES:
+        row = _row(resolve_profile(prof["id"]))
+        prob, _ = _contribs(row)
+        out.append({"id": prof["id"], "label": prof["label"], "description": prof["description"],
+                    "probability": round(prob, 4), "band": ml._band(prob),
+                    "age": int(row["age"]), "diabetes_type": row["diabetes_type"],
+                    "hba1c_latest": _clean(row["hba1c_latest"])})
+    return out
+
+
+def profile_baseline(profile_id: str) -> dict:
+    """The baseline for a profile: the same as a patient's, with the identity replaced by the archetype."""
+    pid = resolve_profile(profile_id)
+    if pid is None:
+        return {"error": f"unknown profile {profile_id}"}
+    b = baseline(pid)
+    if b.get("error") or b.get("consent") == "DENIED":
+        return b
+    prof = next(p for p in PROFILES if p["id"] == profile_id)
+    b.pop("patient", None)
+    b["profile"] = _profile_header(_row(pid), prof)
+    return b
 
 
 def _clean(v):
@@ -167,9 +267,17 @@ def _apply(row: pd.Series, overrides: dict) -> pd.Series:
         int(r[f]) - int(row[f]) for f in ["on_metformin", "on_sglt2_glp1", "on_insulin"]))
     r["albuminuria"] = 1 if float(r["acr_latest"]) >= 3.0 else 0
     r["ckd"] = 1 if float(r["egfr_latest"]) < 60 else int(row["ckd"])
-    # Re-derive the rule-based gaps
-    gaps = [g for g in str(row["open_care_gaps"] or "").split(";") if g and g not in DERIVED_GAPS]
-    gaps += [g for g, rule in DERIVED_GAPS.items() if rule(r)]
+    # Re-derive only the rule-based gaps whose inputs moved; keep the record's state for the rest
+    moved = {k for k, v in (overrides or {}).items() if k in LEVER_KEYS and v is not None}
+    record_gaps = [g for g in str(row["open_care_gaps"] or "").split(";") if g]
+    gaps = list(record_gaps)
+    for g, (rule, inputs) in DERIVED_GAPS.items():
+        if not (moved & inputs):
+            continue
+        if rule(r) and g not in gaps:
+            gaps.append(g)
+        elif not rule(r) and g in gaps:
+            gaps.remove(g)
     r["open_care_gaps"] = ";".join(gaps)
     r["care_gap_count"] = len(gaps)
     return r
@@ -356,12 +464,19 @@ def _fmt(k: str, v) -> str:
     return str(v)
 
 
-def _explanation_context(patient_id: str, overrides: dict, result: dict) -> str:
+def _explanation_context(patient_id: str, overrides: dict, result: dict, profile: dict | None = None) -> str:
     b = baseline(patient_id)
     pt = b["patient"]
+    if profile:
+        subject = (f"Profile: {profile['label']} ({profile['description']}): {pt['age']}-year-old {pt['gender']}, "
+                   f"{pt['diabetes_type'].replace('type', 'type ')} diabetes, {pt['years_since_diagnosis']} years since "
+                   f"diagnosis. Registry rule-based tier: {pt['registry_tier']}. Do not refer to a named patient.")
+    else:
+        subject = (f"Patient: {pt['name']} ({patient_id}), {pt['age']}-year-old {pt['gender']}, "
+                   f"{pt['diabetes_type'].replace('type', 'type ')} diabetes, {pt['years_since_diagnosis']} years since "
+                   f"diagnosis, facility {pt['facility']}. Registry rule-based tier: {pt['registry_tier']}.")
     lines = [
-        f"Patient: {pt['name']} ({patient_id}), {pt['age']}-year-old {pt['gender']}, {pt['diabetes_type'].replace('type', 'type ')} diabetes, "
-        f"{pt['years_since_diagnosis']} years since diagnosis, facility {pt['facility']}. Registry rule-based tier: {pt['registry_tier']}.",
+        subject,
         f"Baseline model risk of deterioration in 12 months: {result['baseline']['probability']*100:.1f}% "
         f"(band {result['baseline']['band']}, higher than {result['baseline']['percentile']:.0f}% of the registry).",
         f"Simulated risk: {result['simulated']['probability']*100:.1f}% (band {result['simulated']['band']}, "
@@ -413,10 +528,17 @@ def deterministic_explanation(result: dict) -> str:
     return txt
 
 
-async def explain(patient_id: str, overrides: dict | None, actor: str = "clinician") -> AsyncGenerator[dict, None]:
-    """NDJSON events: {type:'meta'} then {type:'token'} ... then {type:'final'}."""
+async def explain(patient_id: str, overrides: dict | None, actor: str = "clinician",
+                  profile_id: str | None = None) -> AsyncGenerator[dict, None]:
+    """NDJSON events: {type:'meta'} then {type:'token'} ... then {type:'final'}.
+
+    With *profile_id* the subject is an anonymous archetype: the narrative and the audit
+    trail carry the profile, never the registry row behind it.
+    """
     from services import agent, llm_client as LC
 
+    profile = next((p for p in PROFILES if p["id"] == profile_id), None) if profile_id else None
+    subject_id = profile_id if profile else patient_id
     result = simulate(patient_id, overrides)
     if result.get("error") or result.get("consent") == "DENIED":
         yield {"type": "final", "text": result.get("message") or result.get("error") or "Unavailable", "mode": "error"}
@@ -425,14 +547,14 @@ async def explain(patient_id: str, overrides: dict | None, actor: str = "clinici
     if not LC.llm_available():
         text = deterministic_explanation(result)
         audit_svc.log("SIM·EXPLAIN", actor, f"What-if explanation (deterministic), risk {result['baseline']['probability']*100:.1f}% → "
-                      f"{result['simulated']['probability']*100:.1f}%", patient_id, "info")
+                      f"{result['simulated']['probability']*100:.1f}%", subject_id, "info")
         yield {"type": "meta", "mode": "deterministic", "model": None}
         for chunk in text.split(" "):
             yield {"type": "token", "text": chunk + " "}
         yield {"type": "final", "text": text, "mode": "deterministic", "model": None}
         return
 
-    context = _explanation_context(patient_id, overrides or {}, result)
+    context = _explanation_context(patient_id, overrides or {}, result, profile)
     prompt = ("Explain the change in the model's estimate to the treating clinician.\n\n" + context)
 
     async def run(model: str):
@@ -487,7 +609,7 @@ async def explain(patient_id: str, overrides: dict | None, actor: str = "clinici
                   f"What-if explanation by {model} in {time.time()-started:.1f}s, risk "
                   f"{result['baseline']['probability']*100:.1f}% → {result['simulated']['probability']*100:.1f}%; "
                   f"levers: {', '.join(FEATURE_LABELS.get(k, k) for k in result['changed']) or 'none'}",
-                  patient_id, "info")
+                  subject_id, "info")
     yield {"type": "final", "text": text, "mode": "live", "model": label}
 
 

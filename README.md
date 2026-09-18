@@ -35,7 +35,7 @@ NHA-CG-03 hypertension, NHA-PP-01 screening and recall). Not for clinical use.
 | Tab | What it shows |
 |---|---|
 | Home | The **three environment buttons** (SAS Viya, SAS RAM, bootcamp materials; each opens in a new tab; URLs come from `VIYA_URL`, `RAM_URL`, `MATERIALS_URL`, greyed out until set) and the live registry summary |
-| Dashboard | The registry overview so participants understand the population (KPIs, HbA1c trend, demand forecast, facility benchmark, risk tiers, complications) |
+| Dashboards | Three dashboards behind one tab, switched with a second row of pills. **Registry**: the population overview (KPIs, HbA1c trend, demand forecast, facility benchmark, risk tiers, complications). **Geography**: the 18 EHS facilities on a map of the Northern Emirates, coloured by control, gaps, risk or cost, with the flagged ones ranked. **Simulator**: the factors that change a patient's deterioration risk, on five anonymous profiles (no patient records): move a factor, the deployed model re-scores it, the attribution shows what moved, the assistant explains the change |
 | Data · Documents | The raw registry tables (browse, search) and the NHA guideline PDFs: what participants load into SAS Viya and index in a RAM collection |
 | Assistant | Basira, the finished population-health agent: live agent trace, scenario chips, charts, citations, drafts queued for human approval, EN/AR voice |
 | **SAS RAM** | Sign in to the participants' own RAM environment at the top of the page, pick the agent they built, and test it: every tool, LLM and retrieval call is shown. Sign-in flows for standalone RAM (Keycloak device code) and full Viya (SASLogon code). `RAM_MOCK=true` runs it against a mock without a RAM. |
@@ -110,7 +110,7 @@ backend/
   data/guidelines/       the NHA guideline PDFs (RAG corpus)
   data/evals/            golden agent evalset (10 cases)
 frontend/                React + Vite + Tailwind + Recharts + MapLibre glass UI
-  src/pages/             landing, registry dashboard, data, documents, assistant
+  src/pages/             landing, dashboards (registry, geography, simulator), data, documents, assistant
   src/ram/               the SAS RAM page (RAM chat, sign-in, traces, charts)
 ```
 

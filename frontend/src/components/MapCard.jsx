@@ -73,7 +73,7 @@ export default function MapCard({ spec, height = 340, onSelect, selectedId, comp
     if (!elRef.current || mapRef.current) return;
     const map = new maplibregl.Map({
       container: elRef.current, style: STYLE,
-      bounds: [[50.55, 24.45], [51.85, 26.25]], fitBoundsOptions: { padding: 18 },
+      bounds: VIEWS.emirates.bounds, fitBoundsOptions: { padding: VIEWS.emirates.padding },
       attributionControl: false, dragRotate: false,
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');

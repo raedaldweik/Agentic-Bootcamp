@@ -4,6 +4,8 @@ import { getHealth, getLinks } from './services/api';
 import LandingPage from './pages/LandingPage';
 import AssistantPage from './pages/AssistantPage';
 import DashboardOverview from './pages/DashboardOverview';
+import DashboardMap from './pages/DashboardMap';
+import SimulatorPage from './pages/SimulatorPage';
 import DocumentsPage from './pages/DocumentsPage';
 import DataPage from './pages/DataPage';
 import RamCopilotPage from './ram/RamCopilotPage';
@@ -28,12 +30,20 @@ function Bokeh() {
 
 export const TABS = [
   { id: 'landing', label: 'Home' },
-  { id: 'overview', label: 'Dashboard' },
+  { id: 'overview', label: 'Dashboards' },
   { id: 'data', label: 'Data' },
   { id: 'documents', label: 'Documents' },
   { id: 'assistant', label: 'Assistant' },
   { id: 'ram', label: 'SAS RAM' },
 ];
+
+// The dashboards: a second row of pills appears next to the main tabs while one of them is open.
+export const DASH_TABS = [
+  { id: 'overview', label: 'Registry' },
+  { id: 'geography', label: 'Geography' },
+  { id: 'simulator', label: 'Simulator' },
+];
+const DASH_IDS = DASH_TABS.map((t) => t.id);
 
 function Header({ tab, setTab }) {
   const [health, setHealth] = useState(null);
@@ -58,6 +68,8 @@ function Header({ tab, setTab }) {
   const selfTest = health?.warmup?.self_test;
   const warming = ok && health.mode === 'multi-agent' && !health.warmup?.ready;
   const keyBad = ok && health.mode === 'multi-agent' && selfTest && !selfTest.ok;
+  const isDash = DASH_IDS.includes(tab);
+  const activeTop = isDash ? 'overview' : tab;
 
   return (
     <header className="app-header">
@@ -78,11 +90,24 @@ function Header({ tab, setTab }) {
           <div className="seg-track">
             {TABS.map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`seg-pill ${tab === t.id ? 'active' : ''}`}>
+                className={`seg-pill ${activeTop === t.id ? 'active' : ''}`}>
                 {t.label}
               </button>
             ))}
           </div>
+          {isDash && (
+            <>
+              <span className="nav-divider" />
+              <div className="seg-track">
+                {DASH_TABS.map((t) => (
+                  <button key={t.id} onClick={() => setTab(t.id)}
+                    className={`seg-pill ${tab === t.id ? 'active' : ''}`}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -113,6 +138,8 @@ function Layout() {
     switch (tab) {
       case 'landing': return <LandingPage />;
       case 'overview': return <DashboardOverview />;
+      case 'geography': return <DashboardMap />;
+      case 'simulator': return <SimulatorPage />;
       case 'data': return <DataPage />;
       case 'documents': return <DocumentsPage />;
       case 'assistant': return <AssistantPage />;
