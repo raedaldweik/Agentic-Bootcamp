@@ -72,6 +72,40 @@ idea ──► Design Thinking Agent (pre-built, on RAM, drives SAS Viya through
 Known slow points: the first `execute_sas_code` pays compute-session start-up; AutoML runs take
 minutes (stagger teams); RAG ingestion takes a minute or two after upload.
 
+## Capacity: what the 15-person test showed
+
+Fifteen people on the Design Thinking Agent broke the SAS MCP server within five minutes with
+`errorCode 12207 / 12212: OAuth authentication failed: No user credentials could be found for OS
+process launch`, and CAS restarted. Neither is a sign-in problem. Two things combine:
+
+1. **One identity for everyone.** RAM calls the SAS MCP server with a single OAuth client
+   (client credentials), so all participants reach Viya as that client. The MCP server keeps one
+   warm compute session per identity, so fifteen people's DATA steps queued through one session
+   and each `cas mysess` / `terminate` from one person hit the others.
+2. **Viya ran out of room.** Fifteen synthetic-data runs plus AutoML projects starting at once
+   is far more than a small environment carries. When CAS and the launcher pods restart, every
+   session creation fails with exactly that launcher error until they are back. The MCP server's
+   own measurements: about 0.15 CPU and 550 MB of Viya per warm compute session (25 people ≈ 3.75
+   CPU and 13 GB before any Model Studio run), and the MCP container itself costs almost nothing.
+
+What to do, in order of effect:
+
+- **Build the model once, before the day.** The facilitator runs AutoML on `Public.EHS_DIABETES`,
+  publishes the champion, and puts its module name in the Design Thinking Agent prompt
+  (`{{SHARED_MODEL}}`). Route A teams then never run AutoML. Route B teams get AutoML only with
+  your go-ahead, one at a time across the room. The prompts now enforce this.
+- **One SAS MCP registration per team.** Each registration is its own container with its own
+  compute session, so ten teams get ten sessions instead of sharing one. Same for the Bootcamp
+  MCP, which is already per team.
+- **Short, self-contained code calls.** Unique CAS session names ended in the same call, no
+  `reset_compute_session`, `query_data` for profiling. The prompt now says so.
+- **Ask the Viya administrator for headroom for the day**: CAS memory, compute node capacity,
+  and a shorter compute-session idle timeout so abandoned sessions are reaped quickly.
+- **Recover** after an outage by restarting the SAS MCP container (its cached session is stale)
+  once CAS and the launcher pods are back.
+- **Re-run the 15-person test** with these changes before the bootcamp, and watch CAS memory
+  while it runs.
+
 Known failure, already handled in the prompts: a table in a personal caslib (`casuser`). The
 Design Thinking Agent's first dry-run created `casuser.HOSPITAL_RISK_TEAM1`, then `create_ml_project`
 failed twice with Analytics Gateway errors 92423 / 67017 / 119072 ("project data table could not be

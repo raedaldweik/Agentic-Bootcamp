@@ -43,12 +43,21 @@ MCP_READ_ONLY=false        # participants create tables, projects and models
 ALLOW_RAW_BEARER=true      # RAM authenticates with its Viya token
 ```
 
-## Design Thinking Agent (24 tools)
+**Identity and capacity.** RAM authenticates to a container MCP server with one OAuth client
+(client credentials, the RAM template's `ram-client` with its own UID/GID), so every participant
+reaches Viya as that one identity. The SAS MCP server keeps one warm compute session per identity
+per registration, which means everyone on a registration shares one session and their jobs run one
+at a time. Register the SAS MCP server once per team (each registration is its own container and
+gets its own session), keep every code call short, and never let a participant agent reset the
+session. What actually scales with people is Viya itself: about 0.15 CPU and 550 MB per warm compute
+session, plus whatever Model Studio runs need. See the capacity section in `README.md`.
+
+## Design Thinking Agent (23 tools)
 
 | Tool | Why |
 |---|---|
 | `execute_sas_code` | generate synthetic data with a DATA step, promote tables, any transformation without a dedicated tool |
-| `list_compute_contexts`, `reset_compute_session` | pick the compute context; recover from a wedged session |
+| `list_compute_contexts` | pick the compute context (`reset_compute_session` stays off the list: with one shared identity it would kill the session under every team; the facilitator resets from a separate MCP client if needed) |
 | `list_caslibs`, `list_castables`, `list_source_tables` | see what exists before creating anything |
 | `get_castable_info`, `get_castable_columns`, `get_castable_data` | confirm a table, its columns and sample rows |
 | `query_data` | profile: counts, target rate, missing values, distinct levels (FedSQL) |

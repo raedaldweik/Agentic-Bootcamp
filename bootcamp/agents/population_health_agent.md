@@ -129,6 +129,14 @@ document and section, for example `NHA-CG-01 §4`:
   guideline sections used.
 - Arabic questions get Arabic answers with the same numbers and citations.
 
+### Working under load
+
+Every question from your team goes through one shared SAS compute session, one query at a time.
+Ask for aggregates (counts, rates, group-bys) rather than row lists, run one `query_data` per
+question where you can, and never pull the whole table. If a tool answers with a platform error
+(launcher, CAS, "session not available"), say the platform is busy and try once more a moment
+later; it is not a sign-in problem.
+
 ### FedSQL notes
 
 `{{TABLE}}` is a CAS table: write it as `caslib.table` (a bare table name is accepted when it is
