@@ -12,6 +12,12 @@ model the Design Thinking Agent produced for them, and every tool on it refuses 
 
 ## SAS Viya MCP Server
 
+**Caslib rule for both servers: `Public` only.** Every table lives in `Public` on
+`cas-shared-default` at global scope (`Public.EHS_DIABETES`, `Public.EHS_FACILITIES`, and the teams'
+`Public.<NAME>_TEAMn`). A personal caslib (`casuser`) breaks the flow: `list_castables` returns
+nothing for it and Model Studio cannot resolve its data-table URI (`create_ml_project` fails with
+errorCode 119072, "project data table could not be retrieved"). The first dry-run hit both.
+
 Tool names below are the ones the server registers; in RAM, pick them by name when you add the MCP
 tool source to an agent. A shorter tool list measurably improves tool selection, so do not connect
 all 92 to the Design Thinking Agent.
@@ -63,8 +69,9 @@ tools (tier 7) if you want a recall decision flow.
 Register `bootcamp_mcp` in RAM once per team (see `../bootcamp_mcp/README.md`) with, for team 3:
 
 ```
-ALLOWED_TABLES=CASUSER.REGISTRY_TEAM3,Public.EHS_FACILITIES
-ALLOWED_MODELS=deterioration_team3
+ALLOWED_TABLES=Public.EHS_DIABETES,Public.EHS_FACILITIES     # route A: the shared registry
+ALLOWED_TABLES=Public.HOSPITAL_RISK_TEAM1,Public.EHS_FACILITIES   # route B: the team's own table
+ALLOWED_MODELS=hospital_risk_team1                            # the published module's name
 ```
 
 | Tool | Why |

@@ -9,8 +9,8 @@ server (it is a dependency, not a copy), and every tool refuses to touch anythin
 environment variables you set when you register it in RAM:
 
 ```
-ALLOWED_TABLES=CASUSER.REGISTRY_TEAM3,Public.EHS_FACILITIES
-ALLOWED_MODELS=deterioration_team3
+ALLOWED_TABLES=Public.EHS_DIABETES,Public.EHS_FACILITIES
+ALLOWED_MODELS=deterioration_team1
 ```
 
 Authentication is the SAS server's own: the same `PermissiveOAuthProxy`, the same
@@ -39,14 +39,14 @@ tools start work on Viya (a compute job, a MAS execution) but destroy nothing.
 A refusal is a structured result, not an exception, so the agent can correct itself:
 
 ```json
-{"status": "out_of_scope", "message": "PUBLIC.HMEQ is outside this server's scope. Allowed tables: CASUSER.REGISTRY_TEAM3, PUBLIC.EHS_FACILITIES."}
+{"status": "out_of_scope", "message": "PUBLIC.HMEQ is outside this server's scope. Allowed tables: PUBLIC.EHS_DIABETES, PUBLIC.EHS_FACILITIES."}
 ```
 
 ## Configuration
 
 | Variable | Meaning | Default |
 |---|---|---|
-| `ALLOWED_TABLES` | Comma-separated `caslib.table`. Case-insensitive; `*` is a wildcard (`CASUSER.*_TEAM3`) | required (or `ALLOWED_MODELS`) |
+| `ALLOWED_TABLES` | Comma-separated `caslib.table`. Case-insensitive; `*` is a wildcard (`Public.*_TEAM1`). Use global caslibs such as `Public`: a personal caslib (`casuser`) is not resolvable by the Viya data services the tools call | required (or `ALLOWED_MODELS`) |
 | `ALLOWED_MODELS` | Comma-separated SAS Micro Analytic Service module ids (the published model's name); `*` allowed | required (or `ALLOWED_TABLES`) |
 | `CAS_SERVER` | CAS server the tables live on | `cas-shared-default` |
 | `BOOTCAMP_MAX_ROWS` | Cap on rows one query or preview returns (1–10000) | `500` |
@@ -87,7 +87,8 @@ One registration per team, each with its own scope:
    [container_mcp_servers/sas_mcp_server](https://github.com/sassoftware/sas-retrieval-agent-manager-examples/tree/main/examples/container_mcp_servers/sas_mcp_server);
    the only differences are the image and the two extra variables.
 2. Environment variables: everything in `.env.sample`, with the team's `ALLOWED_TABLES` and
-   `ALLOWED_MODELS` (`CASUSER.REGISTRY_TEAM3` and `deterioration_team3` for team 3, and so on).
+   `ALLOWED_MODELS` (`Public.EHS_DIABETES,Public.EHS_FACILITIES` and the team's published module
+   name; a route-B team gets its own `Public.<TABLE>_TEAMn` instead).
    Keep `ALLOW_RAW_BEARER=true`: RAM presents the signed-in participant's Viya token, and the
    server accepts it after validating it against Viya's JWKS, exactly as the SAS server does.
 3. In the team's agent, add the tool source. All eight tools, or fewer; the server is already scoped,

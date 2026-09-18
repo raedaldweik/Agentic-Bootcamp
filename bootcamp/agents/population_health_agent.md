@@ -26,7 +26,7 @@ Placeholders to fill in before pasting:
 
 | Placeholder | Meaning | Dry-run value |
 |---|---|---|
-| `{{TABLE}}` | the promoted registry table, `caslib.table` | `CASUSER.REGISTRY_TEST` |
+| `{{TABLE}}` | the registry table, `caslib.table`, in the `Public` caslib | `Public.EHS_DIABETES` |
 | `{{MODULE}}` | the MAS module id of the published champion model (from `publish_ml_champion_model` or `list_mas_modules`) | e.g. `deterioration_test` |
 | `{{TEAM}}` | the team suffix, used only in the agent's own name | `TEST` |
 

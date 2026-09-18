@@ -39,8 +39,10 @@ idea ──► Design Thinking Agent (pre-built, on RAM, drives SAS Viya through
 2. **Design Thinking Agent.** In RAM: new agent → name `Design Thinking Agent` → paste the prompt
    from `agents/design_thinking_agent.md` → add the MCP tool source and tick the 24 tools in
    `tools.md` → share with all participant accounts.
-3. **Data.** Host the two CSVs where the Viya server can reach them. The raw GitHub URLs work if the
-   environment has outbound internet:
+3. **Data.** Load the two CSVs into the `Public` caslib as `EHS_DIABETES` and `EHS_FACILITIES`,
+   promoted to global scope (already done on the bootcamp Viya). Use `Public` for everything, never
+   a personal caslib: Model Studio cannot read `casuser`. If you need to reload, `upload_data` from
+   the raw GitHub URLs (if the environment has outbound internet):
    - `https://raw.githubusercontent.com/raedaldweik/Agentic-Bootcamp/claude/ehs-bootcamp-repo-setup-xxxwca/bootcamp/data/ehs_diabetes_registry.csv`
    - `https://raw.githubusercontent.com/raedaldweik/Agentic-Bootcamp/claude/ehs-bootcamp-repo-setup-xxxwca/bootcamp/data/ehs_facilities.csv`
    (replace the branch segment with `main` once merged). Otherwise copy them to a server path and
@@ -48,8 +50,8 @@ idea ──► Design Thinking Agent (pre-built, on RAM, drives SAS Viya through
 4. **Walk the path** with the Design Thinking Agent using suffix `_TEST`:
    - "My idea: an agent that tells a programme lead which diabetic patients will deteriorate and
      what the guideline says to do. Team name TEST."
-   - Route A: "Load the registry from <URL> into CASUSER.REGISTRY_TEST and profile it." Expect
-     4,000 rows, target rate 10.4%, 54 columns.
+   - Route A: "Use the registry, Public.EHS_DIABETES, and profile it." Expect 4,000 rows, target
+     rate 10.4%, 54 columns, and no table created.
    - "Build the model." Expect a Model Studio project, a gradient boosting or forest champion, the
      champion registered and published to MAS, a module name back, and a `score_data` check.
    - "Design the knowledge base." Expect the four NHA documents and the retrieval settings.
@@ -58,17 +60,22 @@ idea ──► Design Thinking Agent (pre-built, on RAM, drives SAS Viya through
    `documents/` → chunk 600–800 characters with overlap, top-k 4–6, citations on → test one query:
    "LDL target very high risk" must return NHA-CG-02 §3.
 6. **Population Health Agent.** Register the Bootcamp MCP in RAM as a tool source with the same
-   auth settings as the SAS server plus `ALLOWED_TABLES=CASUSER.REGISTRY_TEST` and
-   `ALLOWED_MODELS=<your module name>` (`../bootcamp_mcp/README.md`). New agent → paste the prompt
-   from `agents/population_health_agent.md` with `REGISTRY_TEST` and your module name filled in →
-   attach the collection → add the Bootcamp MCP tool source (all 8 tools) → publish. Ask it "which
-   tables can you see?": only `CASUSER.REGISTRY_TEST` may come back.
+   auth settings as the SAS server plus `ALLOWED_TABLES=Public.EHS_DIABETES,Public.EHS_FACILITIES`
+   and `ALLOWED_MODELS=<your module name>` (`../bootcamp_mcp/README.md`). New agent → paste the
+   prompt from `agents/population_health_agent.md` with `Public.EHS_DIABETES` and your module name
+   filled in → attach the collection → add the Bootcamp MCP tool source (all 8 tools) → publish. Ask
+   it "which tables can you see?": only the two `Public` tables may come back.
 7. **Test on the app.** Set `RAM_API_URL` (and auth) on the deployed app, open the SAS RAM tab, sign
    in, pick `Population Health Agent`, and run the test questions in
    `agents/population_health_agent.md`. The numbers must match the app's Dashboard tab.
 
 Known slow points: the first `execute_sas_code` pays compute-session start-up; AutoML runs take
 minutes (stagger teams); RAG ingestion takes a minute or two after upload.
+
+Known failure, already handled in the prompts: a table in a personal caslib (`casuser`). The
+Design Thinking Agent's first dry-run created `casuser.HOSPITAL_RISK_TEAM1`, then `create_ml_project`
+failed twice with Analytics Gateway errors 92423 / 67017 / 119072 ("project data table could not be
+retrieved"), and `list_castables` on `casuser` came back empty. Everything now goes to `Public`.
 
 ## On the day
 
