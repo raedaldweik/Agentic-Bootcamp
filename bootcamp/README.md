@@ -106,6 +106,16 @@ What to do, in order of effect:
 - **Re-run the 15-person test** with these changes before the bootcamp, and watch CAS memory
   while it runs.
 
+### How many of what, for 20 RAM users
+
+| Thing | How many | Why |
+|---|---|---|
+| Viya users | **0 new** | RAM never uses a RAM user's identity towards Viya. Every tool-source registration authenticates with one OAuth client (the template's `ram-client`, with its own UID/GID), and that client is the only identity Viya sees. Your RAM users matter inside RAM only: who sees which agent and conversations |
+| OAuth client | **1** | the same `ram-client` on every registration; a second client buys nothing |
+| SAS MCP server registrations (Design Thinking) | **4 to 5** | each registration is its own container with its own warm compute session (about 550 MB on Viya each). Make that many copies of the Design Thinking Agent (`Design Thinking A` … `E`), attach one registration to each, and give each RAM user one copy. Four or five people per session keeps the queueing invisible; twenty registrations would work too but cost 11 GB of Viya for nothing |
+| Bootcamp MCP registrations | **one per team** | this is where `ALLOWED_TABLES` / `ALLOWED_MODELS` live, so it is per team by design; 20 RAM users as 20 teams means 20, five teams sharing logins means 5 |
+| Model Studio runs | **1 before the day** | the shared model; Route B teams only with your go-ahead, one at a time |
+
 Known failure, already handled in the prompts: a table in a personal caslib (`casuser`). The
 Design Thinking Agent's first dry-run created `casuser.HOSPITAL_RISK_TEAM1`, then `create_ml_project`
 failed twice with Analytics Gateway errors 92423 / 67017 / 119072 ("project data table could not be
