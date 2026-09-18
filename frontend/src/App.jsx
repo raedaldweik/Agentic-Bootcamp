@@ -7,6 +7,9 @@ import DashboardOverview from './pages/DashboardOverview';
 import DocumentsPage from './pages/DocumentsPage';
 import DataPage from './pages/DataPage';
 import RamCopilotPage from './ram/RamCopilotPage';
+// Imported (not served from /public) so Vite gives it a hashed URL under /assets: a browser or edge
+// cache can never show a stale copy of the partner mark after the file changes.
+import sasLogoUrl from './assets/sas-logo.png';
 
 function Bokeh() {
   return (
@@ -35,7 +38,7 @@ export const TABS = [
 function Header({ tab, setTab }) {
   const [health, setHealth] = useState(null);
   const [ehsLogo, setEhsLogo] = useState('/ehs-logo.png');
-  const [sasLogo, setSasLogo] = useState('/sas-logo.png');
+  const [sasLogo, setSasLogo] = useState(sasLogoUrl);
   useEffect(() => {
     let timer;
     const tick = () => getHealth().then((h) => {
@@ -98,7 +101,7 @@ function Header({ tab, setTab }) {
           </div>
         )}
         <img className="partner-logo" src={sasLogo} alt="SAS"
-          onError={(e) => { if (e.target.src.indexOf('/sas-logo.png') === -1) e.target.src = '/sas-logo.png'; }} />
+          onError={(e) => { if (e.target.src !== sasLogoUrl) e.target.src = sasLogoUrl; }} />
       </div>
     </header>
   );

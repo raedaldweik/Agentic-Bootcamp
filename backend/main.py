@@ -126,9 +126,13 @@ def health():
 if FRONTEND_DIST.exists():
     app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
 
+    # Root-level files (index.html, the logos in /public) are not content-hashed, so tell browsers
+    # to revalidate them on every load; /assets carries hashed filenames and can be cached freely.
+    _REVALIDATE = {"Cache-Control": "no-cache"}
+
     @app.get("/{path:path}")
     def spa(path: str):
         candidate = FRONTEND_DIST / path
         if path and candidate.is_file():
-            return FileResponse(candidate)
-        return FileResponse(FRONTEND_DIST / "index.html")
+            return FileResponse(candidate, headers=_REVALIDATE)
+        return FileResponse(FRONTEND_DIST / "index.html", headers=_REVALIDATE)
