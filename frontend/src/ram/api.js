@@ -20,6 +20,17 @@ export const pollDeviceAuth = () => req('/auth/device/poll', { method: 'POST' })
 export const submitViyaCode = (code) =>
   req('/auth/viya/code', { method: 'POST', body: JSON.stringify({ code }) });
 
+// Staying signed in: the backend keeps this browser's RAM session under a
+// cookie and refreshes it in the background. After a sign-in it also hands the
+// browser a copy of the session; if the backend ever comes back without it
+// (a redeploy on a fresh container), the browser hands it back and carries on.
+const SESSION_KEY = 'ram_session_v1';
+export const saveSession = (s) => { try { if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch { /* private mode */ } };
+export const loadSession = () => { try { const r = localStorage.getItem(SESSION_KEY); return r ? JSON.parse(r) : null; } catch { return null; } };
+export const clearSession = () => { try { localStorage.removeItem(SESSION_KEY); } catch { /* ignore */ } };
+export const restoreSession = (session) =>
+  req('/auth/restore', { method: 'POST', body: JSON.stringify({ session }) });
+
 // Extract text from an uploaded file (multipart — no JSON headers)
 export const extractAttachment = async (file) => {
   const fd = new FormData();

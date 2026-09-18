@@ -38,7 +38,7 @@ NHA-CG-03 hypertension, NHA-PP-01 screening and recall). Not for clinical use.
 | Dashboards | Three dashboards behind one tab, switched with a second row of pills. **Registry**: the population overview (KPIs, HbA1c trend, demand forecast, facility benchmark, risk tiers, complications). **Geography**: the 18 EHS facilities on a map of the Northern Emirates, coloured by control, gaps, risk or cost, with the flagged ones ranked. **Simulator**: the factors that change a patient's deterioration risk, on five anonymous profiles (no patient records): move a factor, the deployed model re-scores it, the attribution shows what moved, the assistant explains the change |
 | Data · Documents | The raw registry tables (browse, search) and the NHA guideline PDFs: what participants load into SAS Viya and index in a RAM collection |
 | Assistant | Basira, the finished population-health agent: live agent trace, scenario chips, charts, citations, drafts queued for human approval, EN/AR voice |
-| **SAS RAM** | Sign in to the participants' own RAM environment at the top of the page, pick the agent they built, and test it: every tool, LLM and retrieval call is shown. Sign-in flows for standalone RAM (Keycloak device code) and full Viya (SASLogon code). `RAM_MOCK=true` runs it against a mock without a RAM. |
+| **SAS RAM** | Sign in to the participants' own RAM environment at the top of the page, pick the agent they built, and test it: every tool, LLM and retrieval call is shown. Sign-in flows for standalone RAM (Keycloak device code) and full Viya (SASLogon code). One sign-in per browser, kept alive in the background and persisted across restarts. `RAM_MOCK=true` runs it against a mock without a RAM. |
 
 ### Quickstart
 
@@ -72,7 +72,9 @@ Regenerate the synthetic registry from scratch (deterministic, seeded): `python 
 | `EHS_LOGO_URL`, `SAS_LOGO_URL` | Optional absolute URLs to hosted logos, used in the header instead of the bundled `frontend/public/ehs-logo.png` (top left) and `frontend/src/assets/sas-logo.png` (top right). Leave unset to get the official transparent logos in the repo |
 | `RAM_API_URL` (+ auth) | SAS Retrieval Agent Manager for the SAS RAM page; see `backend/.env.example` for the sign-in options (`RAM_TOKEN`, OAuth client, or interactive sign-in) |
 | `RAM_MOCK` | `true` = SAS RAM page on an in-memory mock (default in `.env.example`) |
-| `RAM_HIDE_HISTORY` | `true` when teams share one RAM identity, so nobody sees another team's conversations |
+| `RAM_HIDE_HISTORY` | `true` when several people share one RAM login, so nobody sees another team's conversations (each browser otherwise has its own RAM identity) |
+| `RAM_SESSION_FILE` | Where signed-in RAM sessions are kept so a restart does not sign anyone out (default `backend/data/runtime/ram_sessions.json`). On Railway, mount a volume and point this at it to survive redeploys too |
+| `RAM_BROWSER_RESTORE` | `false` to stop the browser keeping a copy of its own RAM session; by default it hands the copy back after a redeploy so nobody signs in twice |
 | `GEMINI_API_KEY` | Optional: builds the semantic guideline index; otherwise retrieval is BM25 |
 
 ### Branding

@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import threading
 import time
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -92,7 +93,13 @@ async def lifespan(app: FastAPI):
     audit.log("SYSTEM·START", "basira",
               f"Backend started, mode={'multi-agent' if agent.llm_enabled() else 'direct-tools'}")
     print(f"✓ Startup complete in {time.time() - t0:.1f}s · listening on port {os.getenv('PORT', '8000')}", flush=True)
-    yield
+    # Keep every signed-in RAM session alive (refresh before expiry) for as long as the app runs.
+    from services import ram_client
+    keepalive = asyncio.create_task(ram_client.keepalive_loop())
+    try:
+        yield
+    finally:
+        keepalive.cancel()
 
 
 app = FastAPI(title="Basira: EHS Population Health Intelligence (SAS Agentic AI Bootcamp)", lifespan=lifespan)

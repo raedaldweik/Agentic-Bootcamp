@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { LanguageProvider, useLanguage } from './LanguageContext';
 import { ChatProvider, useChat } from './ChatContext';
 import ResponseCard from './components/ResponseCard';
@@ -9,6 +9,7 @@ import VoiceInput from './components/VoiceInput';
 import SignIn from './SignIn';
 import {
   getHealth, getAgents, getCollections, submitQuery, getQueryStatus, getQueryTrace, extractAttachment,
+  loadSession, saveSession, clearSession, restoreSession,
 } from './api';
 import './ram.css';
 
@@ -43,9 +44,29 @@ function RamControls() {
   const { t, toggle } = useLanguage();
   const [health, setHealth] = useState(null);
 
-  useEffect(() => {
-    getHealth().then(setHealth).catch(() => setHealth({ status: 'down' }));
+  // Health, re-checked every minute and whenever a call comes back "not signed
+  // in". If the backend lost this browser's session (a redeploy), the copy the
+  // browser kept is handed back before anyone is asked to sign in again.
+  const check = useCallback(async () => {
+    let h;
+    try { h = await getHealth(); } catch { setHealth({ status: 'down' }); return; }
+    if (h.status === 'signin_required') {
+      const saved = loadSession();
+      if (saved) {
+        try {
+          const r = await restoreSession(saved);
+          if (r.ok) { saveSession(r.session); window.location.reload(); return; }
+        } catch { clearSession(); }
+      }
+    }
+    setHealth(h);
   }, []);
+  useEffect(() => {
+    check();
+    const timer = setInterval(check, 60000);
+    window.addEventListener('ram:signin-required', check);
+    return () => { clearInterval(timer); window.removeEventListener('ram:signin-required', check); };
+  }, [check]);
 
   const ok = health?.status === 'ok';
   const needsSignin = health?.status === 'signin_required';
@@ -193,6 +214,8 @@ function ChatBody() {
       }
     } catch (err) {
       addMessage(activeChatId, { role: 'assistant', type: 'text', content: `${t('errorPrefix')} ${err.message}`, isError: true });
+      // Lost session: let the controls restore it (or show Sign in) right away.
+      if (/not signed in/i.test(err.message)) window.dispatchEvent(new Event('ram:signin-required'));
     }
     setLoading(false);
     setLiveTrace(null);

@@ -15,6 +15,14 @@ Auth options (checked in order):
                            "sas-ram-api") with PKCE, and the backend keeps the
                            session alive with the refresh token.
 
+Staying signed in (interactive flows): each browser gets its own RAM identity
+(an HttpOnly cookie the router maps to a token entry), the entries are written
+to RAM_SESSION_FILE so a backend restart does not sign anyone out, a keep-alive
+loop refreshes every session before its access token expires so an idle
+conversation does not either, and the browser keeps a copy of its own session
+(localStorage) to hand back after a redeploy on a fresh container
+(RAM_BROWSER_RESTORE=false disables that last part).
+
 Other env vars:
     RAM_API_URL     — base URL, e.g. https://host/SASRetrievalAgentManager/api/v1
     SAS_LOGON_URL   — override the OAuth token endpoint (default derived from RAM_API_URL)
@@ -23,7 +31,12 @@ Other env vars:
     RAM_AUTH_FLOW   — force "device" (Keycloak) or "code" (Viya SASLogon paste-the-code)
     RAM_VERIFY_SSL  — "false" to skip TLS verification (self-signed certs)
     RAM_MOCK        — "true" to run against an in-memory mock (UI demo without RAM)
-    RAM_HIDE_HISTORY — "true" to hide RAM's (shared-identity) session history
+    RAM_HIDE_HISTORY — "true" to hide RAM's session history (only needed when several
+                       people share one RAM login)
+    RAM_SESSION_FILE — where signed-in sessions are persisted (default data/runtime/ram_sessions.json;
+                       point it at a mounted volume on Railway to survive redeploys)
+    RAM_BROWSER_RESTORE — "false" to stop handing the browser a copy of its own session
+    RAM_KEEPALIVE_SECONDS — how often the keep-alive loop looks for tokens to refresh (default 60)
     RAM_QUERY_TIMEOUT / RAM_QUERY_POLL_INTERVAL — async query wait bounds (seconds)
 """
 from __future__ import annotations
@@ -31,10 +44,13 @@ from __future__ import annotations
 import asyncio
 import base64
 import hashlib
+import json
 import os
 import secrets
 import time
 import uuid
+from contextvars import ContextVar
+from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
@@ -61,17 +77,160 @@ class RamError(Exception):
 
 
 # ─── Token management ────────────────────────────────────────────────
-_token_cache: dict[str, Any] = {"token": None, "expires_at": 0.0, "refresh_token": None}
-_device_state: dict[str, str] = {}  # in-flight device authorization (verifier + device_code)
-# Serializes token refreshes. While a query runs the frontend polls the result
-# plus three trace endpoints every couple of seconds, so ~4 RAM calls are always
-# in flight. When the access token expires mid-query they would otherwise all
-# refresh at once — and Keycloak rotates the refresh token on every use and
-# revokes the whole family if a used token is presented again, so a concurrent
-# stampede invalidates everyone's session and the UI drops to the sign-in screen
-# (the "logged out on a long question" bug). With this lock one coroutine
-# refreshes and the rest reuse the token it stored.
-_token_lock = asyncio.Lock()
+# One RAM identity per browser. The router puts the browser's session id (an
+# HttpOnly cookie) into _current_sid before every call and the tokens live
+# under that id, so two people signed in as different users never overwrite
+# each other. The static (RAM_TOKEN) and service-account (SAS_CLIENT_ID)
+# modes are one shared identity and use the "_shared" entry.
+#
+# Entries that hold a refresh token are persisted to RAM_SESSION_FILE (mode
+# 0600) so a restart does not sign anyone out, and keepalive_loop() refreshes
+# them before they expire so an idle conversation does not either.
+_current_sid: ContextVar[str | None] = ContextVar("ram_sid", default=None)
+_sessions: dict[str, dict[str, Any]] = {}
+_locks: dict[str, asyncio.Lock] = {}
+_SHARED = "_shared"
+SESSION_FILE = os.getenv("RAM_SESSION_FILE") or str(
+    Path(__file__).resolve().parent.parent / "data" / "runtime" / "ram_sessions.json")
+_PERSISTED_KEYS = ("token", "expires_at", "refresh_token", "token_url", "client_id", "auth_style")
+# Refresh when this little lifetime is left: comfortably more than one keep-alive
+# tick, so a token never expires between two ticks.
+KEEPALIVE_INTERVAL = float(os.getenv("RAM_KEEPALIVE_SECONDS", "60"))
+KEEPALIVE_MARGIN = max(120.0, 2 * KEEPALIVE_INTERVAL)
+_loaded = False
+
+
+def set_session_id(sid: str | None) -> None:
+    """Bind the current request to a browser session (called by the router)."""
+    _current_sid.set(sid)
+
+
+def _sid() -> str:
+    if os.getenv("RAM_TOKEN") or os.getenv("SAS_CLIENT_ID"):
+        return _SHARED
+    return _current_sid.get() or _SHARED
+
+
+def _new_entry() -> dict[str, Any]:
+    return {"token": None, "expires_at": 0.0, "refresh_token": None, "device": {}}
+
+
+def _entry(sid: str | None = None) -> dict[str, Any]:
+    _load_sessions()
+    sid = sid or _sid()
+    e = _sessions.get(sid)
+    if e is None:
+        e = _sessions[sid] = _new_entry()
+    return e
+
+
+def _lock(sid: str) -> asyncio.Lock:
+    # Serializes token refreshes per session. While a query runs the frontend
+    # polls the result plus the trace endpoints every couple of seconds, so
+    # several RAM calls are always in flight. When the access token expires
+    # mid-query they would otherwise all refresh at once — and Keycloak rotates
+    # the refresh token on every use and revokes the whole family if a used
+    # token is presented again, so a stampede signs the user out (the "logged
+    # out on a long question" bug). With the lock one coroutine refreshes and
+    # the rest reuse the token it stored.
+    lock = _locks.get(sid)
+    if lock is None:
+        lock = _locks[sid] = asyncio.Lock()
+    return lock
+
+
+def _load_sessions() -> None:
+    global _loaded
+    if _loaded or MOCK:
+        return
+    _loaded = True
+    try:
+        data = json.loads(Path(SESSION_FILE).read_text())
+    except (OSError, ValueError):
+        return
+    if not isinstance(data, dict):
+        return
+    for sid, e in data.items():
+        if isinstance(e, dict) and e.get("refresh_token") and sid not in _sessions:
+            _sessions[sid] = {**_new_entry(), **{k: e.get(k) for k in _PERSISTED_KEYS if k in e}}
+
+
+def _save_sessions() -> None:
+    if MOCK:
+        return
+    data = {sid: {k: e.get(k) for k in _PERSISTED_KEYS}
+            for sid, e in _sessions.items() if e.get("refresh_token")}
+    try:
+        path = Path(SESSION_FILE)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(path.name + ".tmp")
+        tmp.write_text(json.dumps(data))
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, path)
+    except OSError:
+        pass  # read-only filesystem: sessions simply live in memory
+
+
+def export_session() -> dict | None:
+    """The current browser's session, for it to keep and hand back after a
+    redeploy (see restore_session). None when disabled or not signed in."""
+    if os.getenv("RAM_BROWSER_RESTORE", "true").lower() == "false":
+        return None
+    e = _entry()
+    if not e.get("refresh_token"):
+        return None
+    return {k: e.get(k) for k in _PERSISTED_KEYS}
+
+
+async def restore_session(data: Any) -> dict:
+    """Install a session the browser saved earlier, validating it with the
+    identity provider (one refresh). Only sessions minted for this RAM
+    environment's token endpoints are accepted."""
+    if os.getenv("RAM_BROWSER_RESTORE", "true").lower() == "false":
+        raise RamError(403, "Session restore is disabled on this server.")
+    if not isinstance(data, dict) or not data.get("refresh_token") or not data.get("token_url"):
+        raise RamError(400, "Nothing to restore.")
+    allowed = {f"{_oidc_base()}/token", f"{_viya_logon_base()}/oauth/token", _logon_url()}
+    if data["token_url"] not in allowed:
+        raise RamError(400, "The saved session belongs to a different RAM environment.")
+    sid = _sid()
+    async with _lock(sid):
+        e = _entry(sid)
+        if e.get("refresh_token") and e["token"] and time.time() < e["expires_at"]:
+            return {"ok": True, "session": export_session()}  # already signed in here
+        e.update({k: data.get(k) for k in _PERSISTED_KEYS})
+        e["expires_at"] = 0.0  # force the validating refresh
+        token = await _refresh_token_grant(e)
+    if not token:
+        raise RamError(401, "The saved session has expired — sign in again.")
+    return {"ok": True, "session": export_session()}
+
+
+async def _keepalive_once() -> None:
+    _load_sessions()
+    for sid, e in list(_sessions.items()):
+        if not e.get("refresh_token"):
+            if not e.get("token") and not e.get("device"):
+                _sessions.pop(sid, None)  # signed out and idle: forget it
+            continue
+        if e["expires_at"] - time.time() < KEEPALIVE_MARGIN:
+            async with _lock(sid):
+                if e["expires_at"] - time.time() < KEEPALIVE_MARGIN:
+                    await _refresh_token_grant(e)
+
+
+async def keepalive_loop() -> None:
+    """Refresh every signed-in session before its access token expires, which
+    also keeps the identity provider's idle timer from signing it out.
+    Started by the app's lifespan; harmless when nothing is signed in."""
+    if MOCK or os.getenv("RAM_TOKEN") or not RAM_API_URL:
+        return
+    while True:
+        await asyncio.sleep(KEEPALIVE_INTERVAL)
+        try:
+            await _keepalive_once()
+        except Exception:
+            pass  # a transient IdP error; the next tick tries again
 
 
 def _oidc_base() -> str:
@@ -96,16 +255,19 @@ def _logon_url() -> str:
 
 
 def _store_tokens(body: dict, *, token_url: str | None = None,
-                  client_id: str | None = None, auth_style: str = "body") -> None:
-    _token_cache["token"] = body["access_token"]
+                  client_id: str | None = None, auth_style: str = "body",
+                  entry: dict | None = None) -> None:
+    e = entry if entry is not None else _entry()
+    e["token"] = body["access_token"]
     # Refresh shortly before actual expiry
-    _token_cache["expires_at"] = time.time() + int(body.get("expires_in", 300)) - 30
+    e["expires_at"] = time.time() + int(body.get("expires_in", 300)) - 30
     if body.get("refresh_token"):
-        _token_cache["refresh_token"] = body["refresh_token"]
+        e["refresh_token"] = body["refresh_token"]
     if token_url:
-        _token_cache["token_url"] = token_url
-        _token_cache["client_id"] = client_id
-        _token_cache["auth_style"] = auth_style  # "basic" (UAA/SASLogon) or "body" (Keycloak public)
+        e["token_url"] = token_url
+        e["client_id"] = client_id
+        e["auth_style"] = auth_style  # "basic" (UAA/SASLogon) or "body" (Keycloak public)
+    _save_sessions()
 
 
 # ─── Sign-in flow detection ──────────────────────────────────────────
@@ -182,7 +344,7 @@ async def device_start() -> dict:
     if r.status_code != 200:
         raise RamError(r.status_code, f"Device authorization failed: {r.text[:300]}")
     body = r.json()
-    _device_state.update({"verifier": verifier, "device_code": body["device_code"]})
+    _entry()["device"] = {"verifier": verifier, "device_code": body["device_code"]}
     return {
         "userCode": body.get("user_code"),
         "verificationUri": body.get("verification_uri"),
@@ -194,14 +356,15 @@ async def device_start() -> dict:
 
 async def device_poll() -> dict:
     """Poll Keycloak until the user approves the device authorization."""
-    if not _device_state.get("device_code"):
+    device = _entry().get("device") or {}
+    if not device.get("device_code"):
         raise RamError(400, "No device authorization in progress — start a sign-in first.")
     client_id = os.getenv("RAM_CLIENT_ID", "sas-ram-api")
     async with httpx.AsyncClient(verify=VERIFY_SSL, timeout=TIMEOUT) as client:
         r = await client.post(f"{_oidc_base()}/token", data={
             "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
-            "device_code": _device_state["device_code"],
-            "code_verifier": _device_state["verifier"],
+            "device_code": device["device_code"],
+            "code_verifier": device["verifier"],
             "client_id": client_id,
         })
     try:
@@ -212,27 +375,28 @@ async def device_poll() -> dict:
         error = body.get("error", "")
         if error in ("authorization_pending", "slow_down"):
             return {"pending": True, "slowDown": error == "slow_down"}
-        _device_state.clear()
+        _entry()["device"] = {}
         raise RamError(r.status_code, body.get("error_description") or error or r.text[:300])
     _store_tokens(body, token_url=f"{_oidc_base()}/token", client_id=client_id, auth_style="body")
-    _device_state.clear()
+    _entry()["device"] = {}
     return {"ok": True}
 
 
-async def _refresh_token_grant() -> str | None:
+async def _refresh_token_grant(entry: dict | None = None) -> str | None:
     """Renew the access token with the stored refresh token (any sign-in flow).
 
-    The caller holds _token_lock, so this is the only refresh in flight — the
-    stored refresh token is therefore used exactly once, which is what
-    Keycloak's rotation/reuse-detection requires."""
-    refresh = _token_cache.get("refresh_token")
-    token_url = _token_cache.get("token_url")
+    The caller holds the session's lock, so this is the only refresh in flight
+    for it — the stored refresh token is therefore used exactly once, which is
+    what Keycloak's rotation/reuse-detection requires."""
+    e = entry if entry is not None else _entry()
+    refresh = e.get("refresh_token")
+    token_url = e.get("token_url")
     if not refresh or not token_url:
         return None
-    client_id = _token_cache.get("client_id") or os.getenv("RAM_CLIENT_ID", "sas-ram-api")
+    client_id = e.get("client_id") or os.getenv("RAM_CLIENT_ID", "sas-ram-api")
     data = {"grant_type": "refresh_token", "refresh_token": refresh}
     auth = None
-    if _token_cache.get("auth_style") == "basic":
+    if e.get("auth_style") == "basic":
         auth = (client_id, os.getenv("SAS_AUTH_CLIENT_SECRET", ""))
     else:
         data["client_id"] = client_id
@@ -244,12 +408,13 @@ async def _refresh_token_grant() -> str | None:
         # instead of forcing the user to sign in again.
         return None
     if r.status_code == 200:
-        _store_tokens(r.json())
-        return _token_cache["token"]
+        _store_tokens(r.json(), entry=e)
+        return e["token"]
     if r.status_code in (400, 401):
         # invalid_grant: the refresh token is genuinely expired or revoked —
         # only now drop it so the UI prompts for a fresh sign-in.
-        _token_cache["refresh_token"] = None
+        e["refresh_token"] = None
+        _save_sessions()
     # 5xx / other transient errors: leave the refresh token in place to retry.
     return None
 
@@ -277,10 +442,11 @@ async def _fetch_oauth_token() -> str:
     if r.status_code != 200:
         raise RamError(r.status_code, f"Token request failed: {r.text[:300]}")
     body = r.json()
-    _token_cache["token"] = body["access_token"]
+    e = _entry(_SHARED)
+    e["token"] = body["access_token"]
     # Refresh a minute before actual expiry
-    _token_cache["expires_at"] = time.time() + int(body.get("expires_in", 3600)) - 60
-    return _token_cache["token"]
+    e["expires_at"] = time.time() + int(body.get("expires_in", 3600)) - 60
+    return e["token"]
 
 
 async def _get_token(invalid_token: str | None = None) -> str:
@@ -289,23 +455,25 @@ async def _get_token(invalid_token: str | None = None) -> str:
     Pass the token that just drew a 401 as `invalid_token`: a coroutine whose
     request was rejected then either reuses a token another coroutine already
     refreshed, or — if it's the first to notice — does the single refresh
-    itself. The refresh path is serialized by _token_lock so concurrent callers
-    never stampede the (single-use, rotating) refresh token."""
+    itself. The refresh path is serialized by the session's lock so concurrent
+    callers never stampede the (single-use, rotating) refresh token."""
     static = os.getenv("RAM_TOKEN")
     if static:
         return static
+    sid = _sid()
+    e = _entry(sid)
     # Fast path: a valid, not-just-rejected cached token. No lock, no refresh —
     # so normal operation pays nothing for the serialization below.
-    cached = _token_cache["token"]
-    if cached and cached != invalid_token and time.time() < _token_cache["expires_at"]:
+    cached = e["token"]
+    if cached and cached != invalid_token and time.time() < e["expires_at"]:
         return cached
-    async with _token_lock:
+    async with _lock(sid):
         # Re-check under the lock: another coroutine may have refreshed while we
         # waited, in which case we just reuse its freshly stored token.
-        cached = _token_cache["token"]
-        if cached and cached != invalid_token and time.time() < _token_cache["expires_at"]:
+        cached = e["token"]
+        if cached and cached != invalid_token and time.time() < e["expires_at"]:
             return cached
-        refreshed = await _refresh_token_grant()
+        refreshed = await _refresh_token_grant(e)
         if refreshed:
             return refreshed
         if os.getenv("SAS_CLIENT_ID"):
@@ -619,10 +787,8 @@ def status() -> dict:
     else:
         # Standalone RAM: device sign-in through the UI
         auth = "device"
-        authenticated = bool(
-            _token_cache.get("refresh_token")
-            or (_token_cache["token"] and time.time() < _token_cache["expires_at"])
-        )
+        e = _entry()
+        authenticated = bool(e.get("refresh_token") or (e["token"] and time.time() < e["expires_at"]))
     if not RAM_API_URL:
         state = "unconfigured"
     elif auth == "device" and not authenticated:

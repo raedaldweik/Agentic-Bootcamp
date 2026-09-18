@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { startDeviceAuth, pollDeviceAuth, submitViyaCode } from './api';
+import { startDeviceAuth, pollDeviceAuth, submitViyaCode, saveSession } from './api';
 import { useLanguage } from './LanguageContext';
 
 /**
@@ -34,7 +34,7 @@ export default function SignIn({ health }) {
       const tick = async () => {
         try {
           const res = await pollDeviceAuth();
-          if (res.ok) { window.location.reload(); return; }
+          if (res.ok) { saveSession(res.session); window.location.reload(); return; }
           if (res.slowDown) interval += 2000;
         } catch (e) {
           setSigninError(e.message);
@@ -67,7 +67,7 @@ export default function SignIn({ health }) {
     setSigninError(null);
     try {
       const res = await submitViyaCode(viyaCode);
-      if (res.ok) { window.location.reload(); return; }
+      if (res.ok) { saveSession(res.session); window.location.reload(); return; }
     } catch (e) {
       setSigninError(e.message);
     }

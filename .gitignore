@@ -25,6 +25,7 @@ backend/data/runtime/queue.json
 backend/data/runtime/audit.json
 backend/data/runtime/agent_eval_results.json
 backend/data/runtime/model_state.json
+backend/data/runtime/ram_sessions.json*
 
 # Full FHIR export is regenerated on demand (only the sample is committed)
 backend/data/fhir_full/

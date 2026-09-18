@@ -5,13 +5,30 @@ Thin layer over services.ram_client — the browser never talks to RAM directly.
 from __future__ import annotations
 
 import io
+import secrets
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile, File
 from pydantic import BaseModel
 
 from services import ram_client as ram
 
-router = APIRouter(prefix="/api/ram", tags=["ram"])
+# Each browser carries its own RAM identity: an HttpOnly cookie names the
+# session the client keeps that browser's tokens under. Set on the first call
+# (the health check), read on every call after.
+SESSION_COOKIE = "ram_sid"
+SESSION_MAX_AGE = 60 * 60 * 24 * 30
+
+
+async def _bind_session(request: Request, response: Response) -> None:
+    sid = request.cookies.get(SESSION_COOKIE)
+    if not sid or len(sid) < 16:
+        sid = secrets.token_urlsafe(24)
+        response.set_cookie(SESSION_COOKIE, sid, max_age=SESSION_MAX_AGE, httponly=True, samesite="lax",
+                            secure=request.url.scheme == "https", path="/api/ram")
+    ram.set_session_id(sid)
+
+
+router = APIRouter(prefix="/api/ram", tags=["ram"], dependencies=[Depends(_bind_session)])
 
 # Attached documents are inlined into the query text — keep them inside a
 # sane prompt budget for the agent's LLM.
@@ -38,6 +55,10 @@ class AuthCode(BaseModel):
     code: str
 
 
+class SavedSession(BaseModel):
+    session: dict
+
+
 def _wrap(coro):
     async def run():
         try:
@@ -62,14 +83,28 @@ async def auth_device_start():
 
 @router.post("/auth/device/poll")
 async def auth_device_poll():
-    return await _wrap(ram.device_poll())
+    res = await _wrap(ram.device_poll())
+    if res.get("ok"):
+        res["session"] = ram.export_session()
+    return res
 
 
 @router.post("/auth/viya/code")
 async def auth_viya_code(body: AuthCode):
     if not body.code.strip():
         raise HTTPException(status_code=400, detail="Paste the authorization code first.")
-    return await _wrap(ram.viya_code_exchange(body.code))
+    res = await _wrap(ram.viya_code_exchange(body.code))
+    if res.get("ok"):
+        res["session"] = ram.export_session()
+    return res
+
+
+@router.post("/auth/restore")
+async def auth_restore(body: SavedSession):
+    """Hand back the session this browser saved after signing in, so a
+    backend that restarted on a fresh container picks it up without a new
+    sign-in. Validated with the identity provider before it is accepted."""
+    return await _wrap(ram.restore_session(body.session))
 
 
 # ─── Attachments (ad-hoc documents, inlined into the query) ─────────
