@@ -99,6 +99,15 @@ async def auth_viya_code(body: AuthCode):
     return res
 
 
+@router.post("/auth/signout")
+async def auth_signout(response: Response):
+    """Sign this browser out of RAM: revoke and forget its session, and drop
+    the session cookie so the next visit starts a fresh identity."""
+    res = await _wrap(ram.sign_out())
+    response.delete_cookie(SESSION_COOKIE, path="/api/ram")
+    return res
+
+
 @router.post("/auth/restore")
 async def auth_restore(body: SavedSession):
     """Hand back the session this browser saved after signing in, so a

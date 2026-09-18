@@ -30,6 +30,12 @@ export const loadSession = () => { try { const r = localStorage.getItem(SESSION_
 export const clearSession = () => { try { localStorage.removeItem(SESSION_KEY); } catch { /* ignore */ } };
 export const restoreSession = (session) =>
   req('/auth/restore', { method: 'POST', body: JSON.stringify({ session }) });
+// Sign this browser out of RAM: the backend revokes and forgets the session
+// and drops the cookie; the saved copy goes too so nothing restores it.
+export const signOut = async () => {
+  clearSession();
+  return req('/auth/signout', { method: 'POST' });
+};
 
 // Extract text from an uploaded file (multipart — no JSON headers)
 export const extractAttachment = async (file) => {

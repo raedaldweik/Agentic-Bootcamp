@@ -206,6 +206,34 @@ async def restore_session(data: Any) -> dict:
     return {"ok": True, "session": export_session()}
 
 
+async def sign_out() -> dict:
+    """End the current browser's RAM session: revoke its refresh token at the
+    identity provider where that is possible (Keycloak's logout endpoint takes
+    the refresh token; SASLogon has no equivalent for a public client, so
+    there the tokens are simply forgotten and left to expire), then drop the
+    entry from memory and from the session file."""
+    sid = _sid()
+    if sid == _SHARED:
+        raise RamError(400, "This deployment signs in with a configured token, so there is nothing to sign out of.")
+    async with _lock(sid):
+        e = _sessions.pop(sid, None) or {}
+        _locks.pop(sid, None)
+        _save_sessions()
+    refresh, token_url = e.get("refresh_token"), e.get("token_url") or ""
+    revoked = False
+    if refresh and "/protocol/openid-connect/" in token_url and e.get("auth_style") != "basic":
+        try:
+            async with httpx.AsyncClient(verify=VERIFY_SSL, timeout=TIMEOUT) as client:
+                r = await client.post(token_url.rsplit("/token", 1)[0] + "/logout", data={
+                    "client_id": e.get("client_id") or os.getenv("RAM_CLIENT_ID", "sas-ram-api"),
+                    "refresh_token": refresh,
+                })
+            revoked = r.status_code in (200, 204)
+        except httpx.HTTPError:
+            revoked = False  # best effort: the session is gone locally either way
+    return {"ok": True, "revoked": revoked}
+
+
 async def _keepalive_once() -> None:
     _load_sessions()
     for sid, e in list(_sessions.items()):

@@ -16,6 +16,8 @@ const STR = {
 
   // Sign-in (Keycloak device flow / Viya paste-the-code flow)
   signIn: { en: 'Sign in', ar: 'تسجيل الدخول' },
+  signOut: { en: 'Sign out', ar: 'تسجيل الخروج' },
+  signOutTitle: { en: 'Sign out of SAS RAM on this browser', ar: 'تسجيل الخروج من SAS RAM على هذا المتصفح' },
   signInTitle: { en: 'Sign in to your assistant', ar: 'سجّل الدخول إلى مساعدك' },
   signInSso: { en: 'Authenticate through single sign-on', ar: 'المصادقة عبر تسجيل الدخول الموحّد' },
   signInRam: { en: 'Authenticate with your RAM credentials', ar: 'المصادقة ببيانات اعتماد RAM الخاصة بك' },

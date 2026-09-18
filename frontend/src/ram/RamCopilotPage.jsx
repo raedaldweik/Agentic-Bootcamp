@@ -9,7 +9,7 @@ import VoiceInput from './components/VoiceInput';
 import SignIn from './SignIn';
 import {
   getHealth, getAgents, getCollections, submitQuery, getQueryStatus, getQueryTrace, extractAttachment,
-  loadSession, saveSession, clearSession, restoreSession,
+  loadSession, saveSession, clearSession, restoreSession, signOut,
 } from './api';
 import './ram.css';
 
@@ -70,6 +70,15 @@ function RamControls() {
 
   const ok = health?.status === 'ok';
   const needsSignin = health?.status === 'signin_required';
+  // Sign out only makes sense for an interactive sign-in (not a configured token or the mock)
+  const canSignOut = ok && health?.mode === 'live' && health?.auth === 'device';
+  const [signingOut, setSigningOut] = useState(false);
+  const doSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try { await signOut(); } catch { /* the local copy is gone either way */ }
+    window.location.reload();
+  };
   const label = health == null ? t('connecting')
     : health.mode === 'mock' ? t('mockMode')
     : ok ? t('connected')
@@ -85,6 +94,11 @@ function RamControls() {
         <span>{label}</span>
       </div>
       {needsSignin && <SignIn health={health} />}
+      {canSignOut && (
+        <button onClick={doSignOut} disabled={signingOut} className="ram-lang-btn" title={t('signOutTitle')}>
+          {signingOut ? '…' : t('signOut')}
+        </button>
+      )}
       <button onClick={toggle} className="ram-lang-btn" title="English / عربي">{t('langButton')}</button>
     </div>
   );
