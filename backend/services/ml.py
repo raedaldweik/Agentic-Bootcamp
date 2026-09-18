@@ -45,6 +45,10 @@ INTERVENTION_COSTS = {          # annual programme cost per patient (from the HI
 def _risk():
     booster = Booster()
     booster.load_model(str(MODELS / "complication_risk.xgb.json"))
+    # Every prediction here is one row (simulator) or a few thousand (cached once), so a
+    # single thread per call is fastest; with fifty simultaneous callers the default of
+    # "all cores per call" oversubscribes the machine instead.
+    booster.set_param({"nthread": 1})
     spec = json.loads((MODELS / "complication_risk.features.json").read_text())
     return booster, spec["features"], spec["intervenable"]
 

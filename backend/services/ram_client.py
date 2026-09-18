@@ -510,6 +510,20 @@ async def _get_token(invalid_token: str | None = None) -> str:
 
 
 # ─── HTTP helper ─────────────────────────────────────────────────────
+# One pooled client for every proxied RAM call. Fifty browsers polling a running
+# query is a few hundred requests a minute; a fresh TLS connection for each was
+# the single biggest cost under that load. Created lazily on the running loop.
+_http: httpx.AsyncClient | None = None
+_HTTP_LIMITS = httpx.Limits(max_connections=200, max_keepalive_connections=50)
+
+
+def _client() -> httpx.AsyncClient:
+    global _http
+    if _http is None or _http.is_closed:
+        _http = httpx.AsyncClient(verify=VERIFY_SSL, timeout=TIMEOUT, limits=_HTTP_LIMITS)
+    return _http
+
+
 async def _request(method: str, path: str, *, params: dict | None = None, json: dict | None = None,
                    with_response: bool = False) -> Any:
     if MOCK:
@@ -529,18 +543,18 @@ async def _request(method: str, path: str, *, params: dict | None = None, json: 
     last_exc: Exception | None = None
     for attempt in range(3):
         try:
-            async with httpx.AsyncClient(verify=VERIFY_SSL, timeout=TIMEOUT) as client:
+            client = _client()
+            r = await client.request(method, url, params=params, json=json,
+                                     headers={"Authorization": f"Bearer {token}"})
+            # One retry on 401 in case the access token just expired. Hand the
+            # rejected token to _get_token so the refresh stays single-flight:
+            # if a concurrent call already refreshed we reuse its token, and we
+            # never refresh a token that's already been rotated (which Keycloak
+            # would treat as reuse and revoke the whole session).
+            if r.status_code == 401 and not os.getenv("RAM_TOKEN"):
+                token = await _get_token(invalid_token=token)
                 r = await client.request(method, url, params=params, json=json,
                                          headers={"Authorization": f"Bearer {token}"})
-                # One retry on 401 in case the access token just expired. Hand the
-                # rejected token to _get_token so the refresh stays single-flight:
-                # if a concurrent call already refreshed we reuse its token, and we
-                # never refresh a token that's already been rotated (which Keycloak
-                # would treat as reuse and revoke the whole session).
-                if r.status_code == 401 and not os.getenv("RAM_TOKEN"):
-                    token = await _get_token(invalid_token=token)
-                    r = await client.request(method, url, params=params, json=json,
-                                             headers={"Authorization": f"Bearer {token}"})
             break  # got an HTTP response (any status) — stop retrying
         except httpx.TransportError as e:
             last_exc = e

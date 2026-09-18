@@ -85,6 +85,21 @@ async def lifespan(app: FastAPI):
           f"({time.time() - t0:.1f}s)", flush=True)
     rag.ensure_loaded()
     print(f"✓ Guideline corpus: {rag.status()}", flush=True)
+    # Warm the payloads a room full of people opens at the same time (the unfiltered
+    # dashboards, the simulator's profiles), so the first burst is served from cache
+    # instead of fifty threads computing the same thing at once.
+    t1 = time.time()
+    try:
+        from routers import dashboards as _dash
+        from services import whatif as _whatif
+        _dash._overview_cached("")
+        _dash._geography_cached()
+        _whatif.profiles()
+        for _p in _whatif.PROFILES:
+            _whatif.profile_baseline(_p["id"])
+        print(f"✓ Dashboard and simulator caches warm ({time.time() - t1:.1f}s)", flush=True)
+    except Exception as e:  # never block startup on a warm-up problem
+        print(f"! Cache warm-up skipped: {e}", flush=True)
     if agent.llm_enabled():
         print(f"✓ Model credentials present ({LC.describe()}), warming the agent graph in the background", flush=True)
         threading.Thread(target=_warm_up, name="basira-warmup", daemon=True).start()
@@ -93,6 +108,10 @@ async def lifespan(app: FastAPI):
     audit.log("SYSTEM·START", "basira",
               f"Backend started, mode={'multi-agent' if agent.llm_enabled() else 'direct-tools'}")
     print(f"✓ Startup complete in {time.time() - t0:.1f}s · listening on port {os.getenv('PORT', '8000')}", flush=True)
+    # Sync endpoints (dashboards, simulator, static files) run on anyio's worker threads; the
+    # default 40 is tight for a room of 50 opening the app at once.
+    import anyio
+    anyio.to_thread.current_default_thread_limiter().total_tokens = 96
     # Keep every signed-in RAM session alive (refresh before expiry) for as long as the app runs.
     from services import ram_client
     keepalive = asyncio.create_task(ram_client.keepalive_loop())

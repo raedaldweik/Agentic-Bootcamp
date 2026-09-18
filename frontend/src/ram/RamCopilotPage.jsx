@@ -195,9 +195,12 @@ function ChatBody() {
         const interval = Math.max((sub.pollInterval || 2) * 1000, 1000);
         const deadline = Date.now() + (sub.timeout || 600) * 1000;
         let consecutiveErrors = 0;
+        let tick = 0;
         for (;;) {
           await sleep(interval);
-          getQueryTrace(sub.queryId).then(setLiveTrace).catch(() => {});
+          // The live trace is three RAM calls; with a room full of people polling,
+          // fetching it every other tick halves that traffic without a visible difference.
+          if (tick++ % 2 === 0) getQueryTrace(sub.queryId).then(setLiveTrace).catch(() => {});
           let st;
           try {
             st = await getQueryStatus(sub.queryId);

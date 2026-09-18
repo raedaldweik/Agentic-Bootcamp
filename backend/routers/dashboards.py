@@ -4,7 +4,9 @@ endpoint accepts the dashboard cross-filter (`filters`, a JSON object such as
 in the UI narrows the patient frame, and every panel is recomputed from that frame."""
 from __future__ import annotations
 
+import copy
 import json
+from functools import lru_cache
 
 import pandas as pd
 from fastapi import APIRouter, HTTPException
@@ -32,8 +34,7 @@ def _frame(raw: str):
     return df, info
 
 
-@router.get("/api/dashboards/overview")
-def overview(filters: str = ""):
+def _overview(filters: str):
     df, info = _frame(filters)
     kpi = hie.cohort_stats(df)
     fc = ml.visit_forecast()
@@ -62,8 +63,7 @@ def overview(filters: str = ""):
     }
 
 
-@router.get("/api/dashboards/clinical")
-def clinical(filters: str = ""):
+def _clinical(filters: str):
     s, info = _frame(filters)
     bands = pd.cut(s["hba1c_latest"], [0, 7, 8, 9, 100], right=False,
                    labels=[b[0] for b in hie.HBA1C_BANDS])
@@ -98,8 +98,7 @@ def tables_gap_matrix(df=None):
                      for idx, row in m.iterrows()]}
 
 
-@router.get("/api/dashboards/risk")
-def risk(filters: str = ""):
+def _risk(filters: str):
     df, info = _frame(filters)
     strat = ml.stratify_cohort(top_n=8, df=df)
     cards = ml.model_cards()
@@ -119,8 +118,7 @@ def risk(filters: str = ""):
     }
 
 
-@router.get("/api/dashboards/cost")
-def cost(filters: str = ""):
+def _cost(filters: str):
     s, info = _frame(filters)
     by_fac = (s.groupby("facility_name")["annual_cost_aed"].agg(["sum", "mean", "count"])
               .round(0).sort_values("sum", ascending=False).reset_index())
@@ -139,7 +137,44 @@ def cost(filters: str = ""):
     }
 
 
-@router.get("/api/dashboards/map")
-def geography():
+def _geography():
     from services import geo
     return geo.map_payload()
+
+
+# ── Payload cache ─────────────────────────────────────────────────────────────
+# The registry is static for the life of the process, so a dashboard payload is a
+# pure function of its filter string. Without this, a room of 50 opening the app
+# at once recomputed the same overview 50 times and queued every other request
+# (the health check included) behind it. Each route hands out a copy so nothing
+# downstream can mutate the cached object.
+_overview_cached = lru_cache(maxsize=64)(_overview)
+_clinical_cached = lru_cache(maxsize=64)(_clinical)
+_risk_cached = lru_cache(maxsize=64)(_risk)
+_cost_cached = lru_cache(maxsize=64)(_cost)
+_geography_cached = lru_cache(maxsize=1)(_geography)
+
+
+@router.get("/api/dashboards/overview")
+def overview(filters: str = ""):
+    return copy.deepcopy(_overview_cached(filters))
+
+
+@router.get("/api/dashboards/clinical")
+def clinical(filters: str = ""):
+    return copy.deepcopy(_clinical_cached(filters))
+
+
+@router.get("/api/dashboards/risk")
+def risk(filters: str = ""):
+    return copy.deepcopy(_risk_cached(filters))
+
+
+@router.get("/api/dashboards/cost")
+def cost(filters: str = ""):
+    return copy.deepcopy(_cost_cached(filters))
+
+
+@router.get("/api/dashboards/map")
+def geography():
+    return copy.deepcopy(_geography_cached())

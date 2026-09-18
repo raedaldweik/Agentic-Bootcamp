@@ -17,6 +17,7 @@ numbers, so the simulator works in direct tool mode too.
 """
 from __future__ import annotations
 
+import copy
 import json
 import time
 from functools import lru_cache
@@ -178,6 +179,11 @@ def _profile_header(row: pd.Series, prof: dict) -> dict:
 
 def profiles() -> list[dict]:
     """The profile chips: archetype, one-line description, the model's risk for it."""
+    return copy.deepcopy(_profiles_cached())
+
+
+@lru_cache(maxsize=1)
+def _profiles_cached() -> list[dict]:
     out = []
     for prof in PROFILES:
         row = _row(resolve_profile(prof["id"]))
@@ -191,6 +197,11 @@ def profiles() -> list[dict]:
 
 def profile_baseline(profile_id: str) -> dict:
     """The baseline for a profile: the same as a patient's, with the identity replaced by the archetype."""
+    return copy.deepcopy(_profile_baseline_cached(profile_id))
+
+
+@lru_cache(maxsize=16)
+def _profile_baseline_cached(profile_id: str) -> dict:
     pid = resolve_profile(profile_id)
     if pid is None:
         return {"error": f"unknown profile {profile_id}"}
