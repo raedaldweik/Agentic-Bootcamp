@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { LanguageProvider, useLanguage } from './LanguageContext';
 import { ChatProvider, useChat } from './ChatContext';
-import { DEFAULT_SUGGESTIONS } from './i18n';
 import ResponseCard from './components/ResponseCard';
 import SourceViewer from './components/SourceViewer';
 import QueryDetails from './components/QueryDetails';
@@ -223,10 +222,6 @@ function ChatBody() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target]);
 
-  // Suggested prompts: the agent's own (if it publishes any) or the bootcamp defaults
-  const suggestions = (target?.type === 'agent' && agents.find(a => a.id === target.id)?.suggestions?.[lang])
-    || DEFAULT_SUGGESTIONS[lang] || DEFAULT_SUGGESTIONS.en;
-
   return (
     <div className="ram-chat">
 
@@ -423,20 +418,6 @@ function ChatBody() {
                 <button onClick={() => setAttachment(null)} className="font-bold hover:opacity-70" style={{ color: 'var(--text-dim)' }}>✕</button>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Suggested prompts — fresh conversation only */}
-        {!loading && messages.length <= 1 && suggestions.length > 0 && (
-          <div className="px-5 pb-1 pt-1 relative z-[1]">
-            <p className="text-[9px] tracking-widest uppercase font-bold mb-2 px-1" style={{ color: 'var(--text-dim)' }}>
-              {t('suggestedPrompts')}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {suggestions.map((q, i) => (
-                <button key={i} onClick={() => send(q)} className="suggestion-chip">{q}</button>
-              ))}
-            </div>
           </div>
         )}
 

@@ -38,7 +38,6 @@ const STR = {
   recentConversations: { en: 'Recent conversations', ar: 'المحادثات الأخيرة' },
   newConversation: { en: '+ New conversation', ar: '+ محادثة جديدة' },
   newConversationTitle: { en: 'New conversation', ar: 'محادثة جديدة' },
-  suggestedPrompts: { en: 'Suggested prompts', ar: 'أسئلة مقترحة' },
   rename: { en: 'Rename', ar: 'إعادة تسمية' },
   delete: { en: 'Delete', ar: 'حذف' },
 
@@ -98,24 +97,6 @@ const STR = {
   promptCompletion: { en: '{p} prompt · {c} completion', ar: '{p} إدخال · {c} إخراج' },
 };
 
-// RAM agents carry no per-agent `suggestions`; these are shown on a fresh
-// conversation when the selected agent has none of its own.
-export const DEFAULT_SUGGESTIONS = {
-  en: [
-    'How is our diabetic population doing this year?',
-    'Which facilities have the most open care gaps?',
-    'What does NHA-CG-01 say about intensifying therapy when HbA1c is above 9%?',
-    'Simulate funding the GLP-1 programme for eligible patients next year',
-    'Show glycaemic control by facility as a chart',
-  ],
-  ar: [
-    'كيف حال مرضى السكري لدينا هذا العام؟',
-    'ما المنشآت التي لديها أكبر عدد من فجوات الرعاية المفتوحة؟',
-    'ماذا يقول الدليل NHA-CG-01 عن تكثيف العلاج عندما يتجاوز HbA1c نسبة 9%؟',
-    'حاكِ تمويل برنامج GLP-1 للمرضى المؤهلين في العام القادم',
-    'اعرض التحكم في سكر الدم حسب المنشأة في رسم بياني',
-  ],
-};
 
 export function translate(lang, key, vars) {
   const entry = STR[key];

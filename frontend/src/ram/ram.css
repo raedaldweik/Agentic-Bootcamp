@@ -4,8 +4,7 @@
    SAS RAM page (src/ram/) — everything is scoped under .ram-page so the
    SAS blue skin never leaks into the rest of the host app, and the host's
    maroon/teal brand never leaks in here. The shared glass recipe classes
-   (glass-card, status-pill, msg-*-bubble, trace-*, suggestion-chip,
-   animate-*, pop) come from the host index.css; the SAS-coloured bits are
+   (glass-card, status-pill, msg-*-bubble, trace-*,    animate-*, pop) come from the host index.css; the SAS-coloured bits are
    overridden below.
    ═══════════════════════════════════════════════════════════════════════ */
 
@@ -83,26 +82,6 @@
   border-top-right-radius: 4px;
 }
 
-/* Suggested prompt chips — SAS index.css recipe, hover in SAS blue */
-.ram-page .suggestion-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 14px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(244,248,246,0.75));
-  border: 1px solid rgba(43,83,120,0.18);
-  border-radius: 999px;
-  font-size: 12px; font-weight: 600;
-  color: var(--text-md);
-  cursor: pointer; transition: all 0.18s;
-  box-shadow: 0 1px 2px rgba(15,23,42,0.05), inset 0 1px 0 rgba(255,255,255,0.9);
-  text-align: start;
-}
-.ram-page .suggestion-chip:hover {
-  background: var(--sas); color: #fff; border-color: var(--sas);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(43,83,120,0.28);
-}
-.ram-page .suggestion-chip .chip-tag { color: var(--sas); }
-.ram-page .suggestion-chip:hover .chip-tag { color: rgba(255,255,255,0.8); }
 
 /* Reasoning trace — SAS teal (the host's version is bronze) */
 .ram-page .trace-panel {
