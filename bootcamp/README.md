@@ -109,12 +109,40 @@ What to do, in order of effect:
 - **Re-run the 15-person test** with these changes before the bootcamp, and watch CAS memory
   while it runs.
 
+### The deployment decision, checked against the SAS docs
+
+The SAS MCP server documents four ways to run it (stdio, HTTP with browser PKCE, Docker, Kubernetes
+behind an ingress). Its multi-user mode, Kubernetes with each user signing in through a browser
+PKCE flow, is built for people using an MCP client such as VS Code or Claude Code. It does not
+apply to RAM: RAM is the MCP client here, and RAM's tool sources support exactly two
+authentications, none (the Remote MCP template) or OAuth client credentials (the container
+template). So the mode you use, the container template with client credentials and
+`ALLOW_RAW_BEARER=true`, is the supported one. Nothing is being missed there.
+
+What the docs do offer, and the kit now uses:
+
+- **One OAuth client per team, not one for the room.** The template's own script creates a client
+  with its own UID, GID and Viya group; run it once per team
+  (`CLIENT_ID=ram-team01 CUID=2101 CGID=2101 python create_viya_oauth_client.py`, then
+  `ram-team02` with `2102`, and so on) and give each team's instances that client. Each team is
+  then its own Viya identity: its own compute sessions, its own CASUSER, its own audit trail, and a
+  runaway job in one team cannot block or reset another's. If the administrator has an hour,
+  a per-team caslib with an authorization rule limiting each client to its own caslib makes the
+  isolation platform-enforced as well.
+- **One instance per team, single replica each.** The server's compute-session cache is
+  in-process and its Kubernetes guide says to stay at one replica; RAM's container instances are
+  exactly that.
+- **The MCP container is not the cost.** Measured at 113m CPU and 23 MB for 40 concurrent
+  clients; the cost is Viya, about 0.15 CPU and 550 MB per warm compute session plus whatever
+  Model Studio runs need. That is why the runbook removes the heavy work from the day rather than
+  adding servers.
+
 ### How many of what, for 20 RAM users
 
 | Thing | How many | Why |
 |---|---|---|
 | Viya users | **0 new** | RAM never uses a RAM user's identity towards Viya. Every tool-source registration authenticates with one OAuth client (the template's `ram-client`, with its own UID/GID), and that client is the only identity Viya sees. Your RAM users matter inside RAM only: who sees which agent and conversations |
-| OAuth client | **1** | the same `ram-client` on every registration; a second client buys nothing |
+| OAuth clients | **1 per team** (or 1 for the room) | created with the template's script, each with its own UID/GID and group, so each team is its own Viya identity; one shared client also works but then every team is one identity |
 | SAS MCP server registrations (Design Thinking) | **4 to 5** | each registration is its own container with its own warm compute session (about 550 MB on Viya each). Make that many copies of the Design Thinking Agent (`Design Thinking A` … `E`), attach one registration to each, and give each RAM user one copy. Four or five people per session keeps the queueing invisible; twenty registrations would work too but cost 11 GB of Viya for nothing |
 | Bootcamp MCP registrations | **one per team** | this is where `ALLOWED_TABLES` / `ALLOWED_MODELS` live, so it is per team by design; 20 RAM users as 20 teams means 20, five teams sharing logins means 5 |
 | Model Studio runs | **1 before the day** | the shared model; Route B teams only with your go-ahead, one at a time |
@@ -134,9 +162,11 @@ and scoring calls; the synthetic data and the model exist before anyone walks in
    `Public.EHS_DIABETES` (or AutoML in Model Studio), register and publish the champion, and put
    the module name in the Design Thinking prompt as `{{SHARED_MODEL}}`. Route A is now the only
    path the room takes; Route B is an extension you unlock for one team at a time.
-2. Make the `bootcamp-mcp` package public on GitHub. In RAM: instantiate the SAS MCP template 4
-   or 5 times (`sas-viya-A`…`E`), duplicate the Design Thinking Agent per instance, assign each
-   RAM user one copy; create the Bootcamp MCP template and one instance per team.
+2. Create one OAuth client per team with the template's script (`ram-team01`…, own UID/GID and
+   group). Make the `bootcamp-mcp` package public on GitHub. In RAM: instantiate the SAS MCP
+   template 4 or 5 times (`sas-viya-A`…`E`), duplicate the Design Thinking Agent per instance,
+   assign each RAM user one copy; create the Bootcamp MCP template and one instance per team,
+   each instance with its team's client.
 3. Ask the Viya administrator, with the timestamps of the test: were the CAS and launcher pods
    OOM-killed or restarted? Ask for CAS memory and compute headroom for the day, a compute-session
    idle timeout of about 15 minutes, and a look at any per-user session limit.

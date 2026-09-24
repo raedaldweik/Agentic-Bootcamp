@@ -107,7 +107,7 @@ The Bootcamp MCP is one template and one instance per team.
 |---|---|
 | Container image | `ghcr.io/raedaldweik/bootcamp-mcp:latest` |
 | Transport · Port · Base path | HTTP · `8134` · `/mcp` |
-| Authentication | OAuth client credentials: the same client id and secret you use for the SAS MCP server (the template's `ram-client`), token URL `<Viya URL>/SASLogon/oauth/token`, scope empty |
+| Authentication | OAuth client credentials, token URL `<Viya URL>/SASLogon/oauth/token`, scope empty. Best: one client per team (`ram-team01`…, created with the SAS template's `create_viya_oauth_client.py`, each with its own UID/GID and group), so each team is its own Viya identity; the single shared client works too |
 | Environment variables | `VIYA_ENDPOINT`, `ALLOW_RAW_BEARER=true`, `ALLOWED_TABLES`, `ALLOWED_MODELS`, `MCP_SERVER_NAME` (values set per instance) |
 
 RAM obtains a Viya token for that client and sends it as the bearer on every call; `ALLOW_RAW_BEARER`
