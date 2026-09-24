@@ -10,7 +10,7 @@ pip install httpx
 export VIYA_URL=https://your-viya.example.com     # add SSL_VERIFY=false only for a self-signed certificate
 ```
 
-## 1. Create the team clients (administrator, once)
+## 1. Create the team clients (you, as Viya administrator, once)
 
 ```
 export ACCESS_TOKEN=<administrator token>     # or CODE=<authorization code>, see below
@@ -26,7 +26,7 @@ Getting an administrator token when Viya sign-in is through Microsoft: open
 `$VIYA_URL/SASLogon/oauth/authorize?client_id=sas.cli&response_type=code` in a browser that is
 signed in as an administrator, copy the code it shows, `export CODE=<code>` (ten minutes, one use).
 
-## 2. Grant the rights (administrator, once, to the parent group)
+## 2. Grant the rights (you, once, to the parent group)
 
 In SAS Environment Manager, give **`bootcamp-clients`** what a participant needs. The verify
 script in step 3 tells you exactly which of these is still missing.
@@ -54,7 +54,7 @@ way `query_data` does it, a table created and dropped in `Public`, the MAS modul
 shared model's signature, and Model Studio's project list. Every FAIL comes with the Viya message
 and the grant that fixes it. All PASS on all clients is the go for step 4.
 
-## 4. Load-test Viya with the day's pattern (you and the administrator, ten minutes)
+## 4. Load-test Viya with the day's pattern (you, ten minutes, with CAS memory on a second screen)
 
 ```
 python load_test.py --csv clients.csv --workers-per-team 5 --iterations 4 --model <shared module id>
