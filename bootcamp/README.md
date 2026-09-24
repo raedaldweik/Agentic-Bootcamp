@@ -237,20 +237,26 @@ and scoring calls; the synthetic data and the model exist before anyone walks in
    `Public.EHS_DIABETES` (or AutoML in Model Studio), register and publish the champion, and put
    the module name in the Design Thinking prompt as `{{SHARED_MODEL}}`. Route A is now the only
    path the room takes; Route B is an extension you unlock for one team at a time.
-2. Create one OAuth client per team with the template's script (`ram-team01`…, own UID/GID and
-   group). Make the `bootcamp-mcp` package public on GitHub. In RAM: instantiate the SAS MCP
-   template 4 or 5 times (`sas-viya-A`…`E`), duplicate the Design Thinking Agent per instance,
-   assign each RAM user one copy; create the Bootcamp MCP template and one instance per team,
-   each instance with its team's client.
+2. **Track A, step by step in `viya/README.md`**: the administrator runs
+   `viya/create_team_clients.py` (one client per team, one parent group `bootcamp-clients`),
+   grants the parent group the compute context, `Public` and the model services, you run
+   `viya/verify_team_client.py` until every client passes every check, then
+   `viya/load_test.py` puts the day's traffic on Viya with no room and no LLM. Then switch the
+   RAM templates: `MCP_MODE=http`, `ALLOW_RAW_BEARER=true`, no refresh token, CPU 1, the team's
+   client in the Authentication tab. Make the `bootcamp-mcp` package public on GitHub. In RAM:
+   instantiate the SAS MCP template 4 or 5 times (`sas-viya-A`…`E`), duplicate the Design
+   Thinking Agent per instance, assign each RAM user one copy; create the Bootcamp MCP template
+   and one instance per team, each instance with its team's client.
 3. Ask the Viya administrator, with the timestamps of the test: were the CAS and launcher pods
    OOM-killed or restarted? Ask for CAS memory and compute headroom for the day, a compute-session
    idle timeout of about 15 minutes, and a look at any per-user session limit.
 
 **Rehearsal (T-3), with a go/no-go**
-4. Repeat the 15-person test on the new setup: shared model, Route A only, 4 SAS instances, one
-   driver per team. The admin watches CAS memory and pod restarts while it runs. Pass means no
-   launcher or CAS errors and every agent turn under 30 seconds. If it passes at 15, it passes
-   at 20 RAM users, because the load is per team and staggered, not per person.
+4. `viya/load_test.py` first (ten teams, fifty simulated participants, no LLM): pass is zero
+   errors and a query p95 under 30 seconds while the admin watches CAS memory. Then repeat the
+   15-person test on the new setup: shared model, Route A only, 4 SAS instances, one driver per
+   team. Pass means no launcher or CAS errors and every agent turn under 30 seconds. If it passes
+   at 15, it passes at 20 RAM users, because the load is per team and staggered, not per person.
 5. If it fails, drop to five teams live on Viya at a time (the others build their collection and
    prompt meanwhile), and re-test. If it still fails, run the day on Plan B below.
 

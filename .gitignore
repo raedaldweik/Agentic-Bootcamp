@@ -36,3 +36,6 @@ frontend/dist/
 
 # Misc
 *.log
+
+# per-team OAuth client secrets written by bootcamp/viya/create_team_clients.py
+bootcamp/viya/clients*.csv
