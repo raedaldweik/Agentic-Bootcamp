@@ -137,13 +137,39 @@ What the docs do offer, and the kit now uses:
   Model Studio runs need. That is why the runbook removes the heavy work from the day rather than
   adding servers.
 
+### Two environments, two identity systems that never meet
+
+RAM is standalone with its own Keycloak; Viya is a separate environment with Microsoft sign-in
+for people. Nothing crosses from one identity system to the other:
+
+```
+participant ──(Keycloak user)──► RAM ──(Viya OAuth client, id + secret)──► SAS MCP / Bootcamp MCP containers ──(client's Viya token)──► Viya
+participant ──(Keycloak user, device code)──► the app's SAS RAM tab ──► RAM
+admin / facilitator ──(Microsoft login)──► Viya UIs, once, before the day
+```
+
+- The 20 RAM users live in Keycloak. They are never Viya users.
+- The MCP tool-source clients (`ram-team01`…) live in Viya's SASLogon, created by the template's
+  script. Their token URL is `https://<viya>/SASLogon/oauth/token`, not Keycloak's. RAM stores the
+  id and secret and mints Viya tokens itself.
+- The MCP containers run in RAM's environment and call Viya across the network: that path (RAM's
+  cluster egress to Viya's ingress) already works, since the first test ran; if Viya's certificate
+  is from a private CA, the template's `SSL_CERT_FILE=/tmp/config/bundle.pem` option is where the
+  bundle goes.
+- The app on Railway talks only to RAM (`RAM_API_URL`, `RAM_AUTH_FLOW=device`, `RAM_REALM`,
+  `RAM_CLIENT_ID` for the device-code client). It never talks to Viya.
+- Keycloak realm settings worth checking before the day (Realm settings → Sessions): SSO Session
+  Idle at least 1 hour and SSO Session Max at least 12 hours, so nobody is signed out of RAM
+  mid-afternoon; the app refreshes tokens in the background, so the idle timer is never the
+  problem, but the max is a hard stop. A two-day bootcamp means one sign-in each morning.
+
 ### Who logs in where (and where Microsoft Authenticator is not involved)
 
 | Path | Identity | How the token is obtained | Human login? |
 |---|---|---|---|
 | RAM → SAS MCP / Bootcamp MCP → Viya | an OAuth **client** (`ram-team01`…), not a user | RAM mints a Viya token from the client id and secret whenever it needs one, and again when it expires, for as long as the secret is valid | **No.** A client has no email, no MFA and no expiry to babysit; the compute launcher starts its SAS sessions under the client's UID/GID |
-| Participant → RAM | the 20 RAM users | RAM's own login | Yes, RAM's login page |
-| Participant → the app's SAS RAM tab | the same RAM user | device-code sign-in once per browser; the app keeps it alive and restores it after restarts | Yes, once |
+| Participant → RAM | the 20 Keycloak users | RAM's Keycloak login page | Yes, RAM's login page; Microsoft never involved |
+| Participant → the app's SAS RAM tab | the same Keycloak user | Keycloak device-code sign-in once per browser; the app keeps it alive and restores it after restarts | Yes, once; Microsoft never involved |
 | Administrator creating the clients | a Viya admin | one browser login (Authenticator included) to run `create_viya_oauth_client.py`, once per client | Yes, once, before the day |
 | Facilitator building the shared model | a Viya user | normal Viya login to Model Studio | Yes, before the day |
 
