@@ -137,6 +137,20 @@ What the docs do offer, and the kit now uses:
   Model Studio runs need. That is why the runbook removes the heavy work from the day rather than
   adding servers.
 
+### Who logs in where (and where Microsoft Authenticator is not involved)
+
+| Path | Identity | How the token is obtained | Human login? |
+|---|---|---|---|
+| RAM → SAS MCP / Bootcamp MCP → Viya | an OAuth **client** (`ram-team01`…), not a user | RAM mints a Viya token from the client id and secret whenever it needs one, and again when it expires, for as long as the secret is valid | **No.** A client has no email, no MFA and no expiry to babysit; the compute launcher starts its SAS sessions under the client's UID/GID |
+| Participant → RAM | the 20 RAM users | RAM's own login | Yes, RAM's login page |
+| Participant → the app's SAS RAM tab | the same RAM user | device-code sign-in once per browser; the app keeps it alive and restores it after restarts | Yes, once |
+| Administrator creating the clients | a Viya admin | one browser login (Authenticator included) to run `create_viya_oauth_client.py`, once per client | Yes, once, before the day |
+| Facilitator building the shared model | a Viya user | normal Viya login to Model Studio | Yes, before the day |
+
+So the two-week-token workaround from earlier work is not needed anywhere here: the only identities
+that reach Viya during the bootcamp are OAuth clients, which never need a person to sign in. Do
+not create Viya user accounts for participants; nothing would ever log in as them.
+
 ### How many of what, for 20 RAM users
 
 | Thing | How many | Why |
