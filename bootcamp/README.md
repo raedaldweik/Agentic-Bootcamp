@@ -124,6 +124,48 @@ Design Thinking Agent's first dry-run created `casuser.HOSPITAL_RISK_TEAM1`, the
 failed twice with Analytics Gateway errors 92423 / 67017 / 119072 ("project data table could not be
 retrieved"), and `list_castables` on `casuser` came back empty. Everything now goes to `Public`.
 
+## The plan after the 15-person test: runbook
+
+**Principle: on the day Viya does no heavy work.** Every participant flow is a few FedSQL queries
+and scoring calls; the synthetic data and the model exist before anyone walks in.
+
+**This week (T-7)**
+1. Build the model once: run the Design Thinking Agent's Route B path yourself on
+   `Public.EHS_DIABETES` (or AutoML in Model Studio), register and publish the champion, and put
+   the module name in the Design Thinking prompt as `{{SHARED_MODEL}}`. Route A is now the only
+   path the room takes; Route B is an extension you unlock for one team at a time.
+2. Make the `bootcamp-mcp` package public on GitHub. In RAM: instantiate the SAS MCP template 4
+   or 5 times (`sas-viya-A`…`E`), duplicate the Design Thinking Agent per instance, assign each
+   RAM user one copy; create the Bootcamp MCP template and one instance per team.
+3. Ask the Viya administrator, with the timestamps of the test: were the CAS and launcher pods
+   OOM-killed or restarted? Ask for CAS memory and compute headroom for the day, a compute-session
+   idle timeout of about 15 minutes, and a look at any per-user session limit.
+
+**Rehearsal (T-3), with a go/no-go**
+4. Repeat the 15-person test on the new setup: shared model, Route A only, 4 SAS instances, one
+   driver per team. The admin watches CAS memory and pod restarts while it runs. Pass means no
+   launcher or CAS errors and every agent turn under 30 seconds. If it passes at 15, it passes
+   at 20 RAM users, because the load is per team and staggered, not per person.
+5. If it fails, drop to five teams live on Viya at a time (the others build their collection and
+   prompt meanwhile), and re-test. If it still fails, run the day on Plan B below.
+
+**The day**
+6. Pre-warm: before the room starts, open each Design Thinking copy and ask it one question, so
+   its compute session exists and the first team does not pay the spin-up.
+7. Waves: teams start the Design Thinking flow five at a time, ten minutes apart. One person per
+   team drives the agent; the rest watch the screen. That is 5 concurrent sessions, never 50.
+8. The AutoML "moment" happens once, live, on your screen, not twenty times in the room.
+9. Recovery: a launcher error (12207/12212) or a CAS error means wait a minute and retry once;
+   if it persists, the admin checks the pods, and you restart the affected SAS MCP instance in
+   RAM once CAS is back (its cached session is stale). The prompts already tell the agent not to
+   send anyone to sign in again.
+
+**Plan B, if Viya cannot hold even the light load**
+The bootcamp still runs. The app's Dashboards and Simulator carry the data story without Viya;
+the Assistant tab is a finished agent with no Viya behind it; and every team can still build a
+real agent in RAM with the NHA collection and the system prompt, tested on the app's SAS RAM
+tab, with the Viya tools attached only for the teams you let through one at a time.
+
 ## On the day
 
 Teams of three or four, one RAM login per team (RAM history is per identity; a shared login means
