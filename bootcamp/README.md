@@ -109,6 +109,41 @@ What to do, in order of effect:
 - **Re-run the 15-person test** with these changes before the bootcamp, and watch CAS memory
   while it runs.
 
+### What the RAM template runs today, and the two ways forward
+
+The template `SAS MCP` in RAM runs `ghcr.io/raedaldweik/sas-mcp-server:ram`: the fork's
+**direct-HTTP mode**, where the server signs in to Viya on its own behalf with `VIYA_REFRESH_TOKEN`.
+That token was minted by a person, so the identity behind every participant is that person:
+one compute session per instance keyed on that user, every table in their CASUSER, every Model
+Studio project and audit entry in their name, and a hard stop when the refresh token reaches its
+validity. The compute launcher also has to start each session as a federated (Microsoft) user
+through the identities service, which is the lookup that failed under load with "No user
+credentials could be found for OS process launch". Two template settings need changing whatever
+else happens: **Requested CPU 10 → 1** (the server needs about a quarter of a core; a 10-core
+request can keep a second instance from scheduling) and memory 1G stays.
+
+**Track A, the mode SAS documents for RAM (test it first).** The fork's image already supports it:
+set `MCP_MODE=http` and `ALLOW_RAW_BEARER=true`, remove `VIYA_REFRESH_TOKEN`, and fill RAM's
+Authentication tab with OAuth client credentials: the client the template's
+`create_viya_oauth_client.py` creates (one per team, each with its own UID/GID and group), token
+URL `<viya>/SASLogon/oauth/token`. RAM mints the client's Viya token and the server accepts it.
+Why it is better: no human identity, nothing expires, per-team isolation, and the launcher starts
+sessions under the client's UID/GID with no federated-user lookup. What the administrator must
+grant the clients' group: the compute context, read/write on `Public`, and Model Studio. Verify with
+one instance before the day: a query, a DATA step into `Public`, a score, one AutoML project.
+
+**Track B, keep refresh tokens but harden them (if Track A cannot be arranged in time).** Mint one
+fresh refresh token per instance the day before (separate chains, so rotation in one instance
+cannot invalidate another), with a long `refresh-token-validity` on the client; keep Requested CPU
+at 1; and know that an instance restart re-seeds from the environment's token, so if SAS Logon
+rotates refresh tokens a restarted instance needs a newly minted one. Everything still runs as
+one person, so the team suffixes and the scope variables are the only separation.
+
+On either track the runbook stands: the shared model, waves of five teams, one driver per team,
+admin headroom. Your own use-case edition (`ghcr.io/raedaldweik/sas-mcp-usecase`, `ALLOWED_TABLES`,
+`ALLOWED_MODELS`, `SCOPE_ENFORCE`) does the participant-agent job on Track B; `bootcamp_mcp/` does
+it on Track A, since it authenticates the way the SAS template does.
+
 ### The deployment decision, checked against the SAS docs
 
 The SAS MCP server documents four ways to run it (stdio, HTTP with browser PKCE, Docker, Kubernetes
