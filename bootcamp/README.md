@@ -43,9 +43,10 @@ idea ──► Design Thinking Agent (pre-built, on RAM, drives SAS Viya through
    from `agents/design_thinking_agent.md` → add the MCP tool source and tick the 24 tools in
    `tools.md` → share with all participant accounts.
 3. **Data.** Load the two CSVs into the `Public` caslib as `EHS_DIABETES` and `EHS_FACILITIES`,
-   promoted to global scope (already done on the bootcamp Viya). Use `Public` for everything, never
-   a personal caslib: Model Studio cannot read `casuser`. If you need to reload, `upload_data` from
-   the raw GitHub URLs (if the environment has outbound internet):
+   promoted to global scope: `python viya/load_registry.py --csv viya/clients.csv` does it in one
+   minute and is the reload after a CAS restart (`viya/README.md`, step 3). Use `Public` for
+   everything, never a personal caslib: Model Studio cannot read `casuser`. The manual fallback is
+   `upload_data` from the raw GitHub URLs (if the environment has outbound internet):
    - `https://raw.githubusercontent.com/raedaldweik/Agentic-Bootcamp/claude/ehs-bootcamp-repo-setup-xxxwca/bootcamp/data/ehs_diabetes_registry.csv`
    - `https://raw.githubusercontent.com/raedaldweik/Agentic-Bootcamp/claude/ehs-bootcamp-repo-setup-xxxwca/bootcamp/data/ehs_facilities.csv`
    (replace the branch segment with `main` once merged). Otherwise copy them to a server path and

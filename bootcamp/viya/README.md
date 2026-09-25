@@ -41,7 +41,20 @@ script in step 3 tells you exactly which of these is still missing.
 A client identity is not a member of SASUSERS, so it inherits none of the defaults a person gets.
 That is why the parent group exists: grant once, every team has it.
 
-## 3. Verify every client (you, five minutes)
+## 3. Load the registry into Public (you, one minute, again after any CAS restart)
+
+```
+python load_registry.py --csv clients.csv
+```
+
+Uploads the two CSVs from `../data` and, in one compute session, loads them as promoted tables
+`Public.EHS_DIABETES` (4,000 × 54) and `Public.EHS_FACILITIES` (18 × 4). Column types and
+lengths come from the CSV itself, not from guessing. It authenticates as the first team client, so
+it also proves that a team can create tables in `Public`. Running it again replaces the tables,
+which is the fix when CAS has restarted and the in-memory tables are gone. A copy is saved to the
+caslib's disk as `.sashdat` when the identity may write there; otherwise the script says so.
+
+## 4. Verify every client (you, five minutes)
 
 ```
 python verify_team_client.py --csv clients.csv --write --model <shared module id> --automl
@@ -55,9 +68,9 @@ module list and the shared model's signature, and Model Studio's project list. O
 environment where the registry is not loaded yet, the read and the FedSQL count run against the
 table the script just created, so the rights are proven either way; a SKIP line means the step
 had nothing to run against, not that a right is missing. Every FAIL comes with the Viya message
-and the grant that fixes it. All PASS on all clients is the go for step 4.
+and the grant that fixes it. All PASS on all clients is the go for step 5.
 
-## 4. Load-test Viya with the day's pattern (you, ten minutes, with CAS memory on a second screen)
+## 5. Load-test Viya with the day's pattern (you, ten minutes, with CAS memory on a second screen)
 
 ```
 python load_test.py --csv clients.csv --workers-per-team 5 --iterations 4 --model <shared module id>
@@ -70,7 +83,7 @@ is the Viya half of the day in isolation. Pass is zero errors and a query p95 un
 The administrator watches CAS memory and the compute pods while it runs. Push it harder
 (`--workers-per-team 8 --think 1`) once it passes; that is your safety margin.
 
-## 5. Switch the RAM templates to Track A
+## 6. Switch the RAM templates to Track A
 
 Both templates use the same Authentication tab settings: OAuth client credentials, the team's
 client id and secret from `clients.csv`, token URL `$VIYA_URL/SASLogon/oauth/token`, scope empty.
@@ -93,7 +106,7 @@ Instantiate it four or five times, one Design Thinking Agent copy per instance.
 `VIYA_ENDPOINT`, `ALLOW_RAW_BEARER=true`, `ALLOWED_TABLES`, `ALLOWED_MODELS`, `MCP_SERVER_NAME`, CPU 1,
 memory 1G; one instance per team, each with its own client.
 
-## 6. Tear down after the bootcamp
+## 7. Tear down after the bootcamp
 
 ```
 python create_team_clients.py --teams 10 --delete
