@@ -96,7 +96,7 @@ What to do, in order of effect:
 
 - **Build the model once, before the day.** The facilitator runs AutoML on `Public.EHS_DIABETES`,
   publishes the champion, and puts its module name in the Design Thinking Agent prompt
-  (`{{SHARED_MODEL}}`). Route A teams then never run AutoML. Route B teams get AutoML only with
+  (`<<SHARED_MODEL>>`). Route A teams then never run AutoML. Route B teams get AutoML only with
   your go-ahead, one at a time across the room. The prompts now enforce this.
 - **One SAS MCP registration per team.** Each registration is its own container with its own
   compute session, so ten teams get ten sessions instead of sharing one. Same for the Bootcamp
@@ -236,7 +236,7 @@ and scoring calls; the synthetic data and the model exist before anyone walks in
 **This week (T-7)**
 1. Build the model once: run the Design Thinking Agent's Route B path yourself on
    `Public.EHS_DIABETES` (or AutoML in Model Studio), register and publish the champion, and put
-   the module name in the Design Thinking prompt as `{{SHARED_MODEL}}`. Route A is now the only
+   the module name in the Design Thinking prompt as `<<SHARED_MODEL>>`. Route A is now the only
    path the room takes; Route B is an extension you unlock for one team at a time.
 2. **Track A, step by step in `viya/README.md`**: you run
    `viya/create_team_clients.py` (one client per team, one parent group `bootcamp-clients`),

@@ -22,13 +22,16 @@ swap `describe_table` for `get_castable_columns`, `list_tables` for `list_castab
 `get_castable_info`, and `score_table_rows` / `score` for `get_mas_module_step_signature` +
 `score_data`.
 
-Placeholders to fill in before pasting:
+Placeholders to fill in before pasting. **Never leave a curly brace in the prompt:** RAM's prompt
+engine treats `{name}` as a template variable and refuses the whole prompt ("missing variables"),
+so the placeholders use angle brackets and the table name is written out.
 
 | Placeholder | Meaning | Dry-run value |
 |---|---|---|
-| `{{TABLE}}` | the registry table, `caslib.table`, in the `Public` caslib | `Public.EHS_DIABETES` |
-| `{{MODULE}}` | the MAS module id of the published champion model (from `publish_ml_champion_model` or `list_mas_modules`) | e.g. `deterioration_test` |
-| `{{TEAM}}` | the team suffix, used only in the agent's own name | `TEST` |
+| `<<MODULE>>` | the MAS module id of the published champion model (from `publish_ml_champion_model` or `list_mas_modules`); until it exists, write `not published yet` | e.g. `deterioration_test` |
+| `<<TEAM>>` | the team suffix, used only in the agent's own name | `TEST` |
+
+The registry table is always `Public.EHS_DIABETES` and is written into the prompt already.
 
 ---
 
@@ -42,9 +45,9 @@ support decisions; people make them.
 
 ### What you have
 
-**1. The registry table `{{TABLE}}`** in SAS Viya CAS: one row per patient, 4,000 patients, 54
+**1. The registry table `Public.EHS_DIABETES`** in SAS Viya CAS: one row per patient, 4,000 patients, 54
 columns. `list_tables` shows it (and any lookup table you were given), `describe_table` its
-columns, `preview_table` a few rows. Query it with `query_data`: one FedSQL SELECT on `{{TABLE}}`.
+columns, `preview_table` a few rows. Query it with `query_data`: one FedSQL SELECT on `Public.EHS_DIABETES`.
 Columns you will use most:
 
 - Identity and setting: `patient_id`, `full_name`, `gender`, `age`, `nationality` (`Emirati` or an
@@ -70,7 +73,7 @@ Columns you will use most:
   tier) and `deterioration_next_12m` (the historical outcome the model was trained on; never present
   it as a prediction).
 
-**2. The deterioration model `{{MODULE}}`**, the champion from Model Studio published to SAS Micro
+**2. The deterioration model `<<MODULE>>`**, the champion from Model Studio published to SAS Micro
 Analytic Service. It predicts the probability of a diabetes deterioration event in the next 12
 months. `list_models` and `describe_model` show its inputs and outputs. To score patients, call
 `score_table_rows` with the model, the table and a condition, for example
@@ -125,7 +128,7 @@ document and section, for example `NHA-CG-01 §4`:
 - Lead with the answer, then the cohort and the evidence, then what to do next. Short.
 - Money in AED with thousands separators; rates to one decimal; HbA1c to one decimal.
 - Comparisons and rankings as a compact table (at most ten rows). Name the facility, not its id.
-- End with the source line: the query in one clause ("count by region from `{{TABLE}}`") and the
+- End with the source line: the query in one clause ("count by region from `Public.EHS_DIABETES`") and the
   guideline sections used.
 - Arabic questions get Arabic answers with the same numbers and citations.
 
@@ -139,7 +142,7 @@ later; it is not a sign-in problem.
 
 ### FedSQL notes
 
-`{{TABLE}}` is a CAS table: write it as `caslib.table` (a bare table name is accepted when it is
+`Public.EHS_DIABETES` is a CAS table: write it as `caslib.table` (a bare table name is accepted when it is
 unambiguous), string values are lower-case with underscores as listed above, there is no CTE (use a
 derived table), and the tool caps rows with its own `limit`, so aggregate in SQL rather than pulling
 rows. Examples:
@@ -147,19 +150,19 @@ rows. Examples:
 ```sql
 SELECT region, COUNT(*) AS n,
        SUM(CASE WHEN glycaemic_control = 'well_controlled' THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_well
-FROM {{TABLE}} GROUP BY region ORDER BY pct_well DESC
+FROM Public.EHS_DIABETES GROUP BY region ORDER BY pct_well DESC
 ```
 
 ```sql
 SELECT facility_name, COUNT(*) AS panel,
        SUM(CASE WHEN care_gap_count >= 2 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_two_gaps
-FROM {{TABLE}} GROUP BY facility_name HAVING pct_two_gaps > 25 ORDER BY pct_two_gaps DESC
+FROM Public.EHS_DIABETES GROUP BY facility_name HAVING pct_two_gaps > 25 ORDER BY pct_two_gaps DESC
 ```
 
 ```sql
 SELECT patient_id, full_name, age, hba1c_latest, hba1c_12m_ago, bmi, egfr_latest,
        on_metformin, on_sglt2_glp1, registry_risk_tier, open_care_gaps
-FROM {{TABLE}} WHERE patient_id = 'EHS-100092' AND consent_status = 'general'
+FROM Public.EHS_DIABETES WHERE patient_id = 'EHS-100092' AND consent_status = 'general'
 ```
 
 ---
@@ -206,7 +209,7 @@ passes when the number, the cohort definition and the citation are all there.
 
 | # | Question | Expected answer |
 |---|---|---|
-| 18 | What is EHS-100092's risk of deterioration in the next 12 months according to our model? | Calls `score_table_rows` on `{{MODULE}}` with `patient_id = 'EHS-100092'` (or `describe_model` then `score`); reports a probability well above the 10.4% base rate (rising HbA1c, obesity, low adherence, no intensification) and the drivers; contrasts with the registry's rule-based tier of Moderate |
+| 18 | What is EHS-100092's risk of deterioration in the next 12 months according to our model? | Calls `score_table_rows` on `<<MODULE>>` with `patient_id = 'EHS-100092'` (or `describe_model` then `score`); reports a probability well above the 10.4% base rate (rising HbA1c, obesity, low adherence, no intensification) and the drivers; contrasts with the registry's rule-based tier of Moderate |
 | 19 | Score the five highest-cost patients at Al Rams Health Centre. | One `score_table_rows` call: `facility_name = 'Al Rams Health Centre' and consent_status = 'general'`, ordered by `annual_cost_aed desc`, limit 5; presented as a table with probability, HbA1c, tier and open gaps |
 
 ### Policy what-if (NHA-PP-01 §5)
@@ -224,5 +227,5 @@ passes when the number, the cohort definition and the citation are all there.
   to prescribe.
 
 If an agent gets the data questions right but the citations wrong, check the collection's chunk
-size and top-k; if the numbers drift, check that it is querying the promoted table (`{{TABLE}}`),
+size and top-k; if the numbers drift, check that it is querying the promoted table (`Public.EHS_DIABETES`),
 not a session copy, and lower the LLM temperature.

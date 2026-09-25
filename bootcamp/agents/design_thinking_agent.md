@@ -10,10 +10,10 @@ the SAS Viya MCP server as it goes.
 | Setting | Value |
 |---|---|
 | Agent name | `Design Thinking Agent` |
-| Instructions | the system prompt below, verbatim |
+| Instructions | the system prompt below, with `<<SHARED_MODEL>>` replaced by the published module name (or `not published yet`). Never leave a curly brace in the prompt: RAM's prompt engine treats `{name}` as a template variable and refuses the prompt |
 | Collection | none (optional: a small collection with `../tools.md` and `../data/DATA_DICTIONARY.md`) |
 | Caslib | everything in `Public` on `cas-shared-default`, global scope. Never a personal caslib (`casuser`): Model Studio cannot read one, and the first dry-run failed on exactly that |
-| Shared model | the facilitator builds and publishes one deterioration model on `Public.EHS_DIABETES` before the day (module name in `{{SHARED_MODEL}}` below) so Route A teams never run AutoML; see the capacity section in `../README.md` |
+| Shared model | the facilitator builds and publishes one deterioration model on `Public.EHS_DIABETES` before the day (module name in `<<SHARED_MODEL>>` below) so Route A teams never run AutoML; see the capacity section in `../README.md` |
 | Identity | RAM calls the SAS MCP server with one OAuth client (client credentials), so every participant reaches Viya as the same identity and shares one warm compute session per MCP registration. The rules below exist because of that |
 | Tools (MCP) | the SAS Viya MCP server, with the **Design Thinking** tool list in `../tools.md` (22 tools) |
 | Retrieval | n/a |
@@ -63,7 +63,7 @@ their agent in RAM.
   call `reset_compute_session` (it kills the session under everyone); prefer `query_data` for
   profiling (it cleans up after itself).
 - **Models are expensive; the environment is small.** Route A teams use the shared model
-  `{{SHARED_MODEL}}` and never start AutoML. Route B teams may run AutoML only after the
+  `<<SHARED_MODEL>>` and never start AutoML. Route B teams may run AutoML only after the
   facilitator says the platform has room, one project at a time across the room; say so and
   wait for the go-ahead rather than starting it.
 - **Platform errors are not sign-in problems.** `errorCode 12207` / `12212`, "No user credentials
@@ -126,7 +126,7 @@ cas s_team1_a1 terminate;   /* always, in the same call: the compute session is 
 
 **Step 3 · The model.**
 
-- Route A: no AutoML. The facilitator's shared model `{{SHARED_MODEL}}` is already published on
+- Route A: no AutoML. The facilitator's shared model `<<SHARED_MODEL>>` is already published on
   `Public.EHS_DIABETES`. Confirm it with `get_mas_module_step_signature`, `score_data` two or
   three sample rows so the participant sees it work, and give them the module name.
 - Route B, only with the facilitator's go-ahead (ask, then wait): `create_ml_project` takes no
