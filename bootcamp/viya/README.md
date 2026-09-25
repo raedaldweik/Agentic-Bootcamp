@@ -34,7 +34,7 @@ script in step 3 tells you exactly which of these is still missing.
 | Right | Where | Why |
 |---|---|---|
 | Use the compute context | Contexts → *SAS Job Execution compute context* → Authorization → add the group | every DATA step and FedSQL query |
-| Read and Write on `Public` | Data → caslib `Public` → Authorization | read the registry, create team tables |
+| ReadInfo, Select, CreateTable, Promote, DropTable on `Public` | Data → caslib `Public` → Authorization | read the registry, create and replace team tables |
 | SAS Micro Analytic Service | Rules → `/microanalyticScore/**` → add the group (Read) | score the published model |
 | Model Studio, Route B teams only | Rules → `/analyticsGateway/**`, `/mlPipelineAutomation/**`, `/modelRepository/**`, `/modelPublish/**` | AutoML, register, publish |
 
@@ -49,9 +49,12 @@ python verify_team_client.py --csv clients.csv --write --model <shared module id
 
 Walks the exact calls the MCP servers make: token, compute context, **session start** (the
 launcher running SAS as the client's UID/GID, which is the step that failed in the 15-person
-test), a DATA step, a CAS read of `Public.EHS_DIABETES`, a FedSQL count through a CAS session the
-way `query_data` does it, a table created and dropped in `Public`, the MAS module list and the
-shared model's signature, and Model Studio's project list. Every FAIL comes with the Viya message
+test), a DATA step, a promoted table created in `Public`, a CAS read of `Public.EHS_DIABETES`, a
+FedSQL count through a CAS session the way `query_data` does it, the table dropped again, the MAS
+module list and the shared model's signature, and Model Studio's project list. On a fresh
+environment where the registry is not loaded yet, the read and the FedSQL count run against the
+table the script just created, so the rights are proven either way; a SKIP line means the step
+had nothing to run against, not that a right is missing. Every FAIL comes with the Viya message
 and the grant that fixes it. All PASS on all clients is the go for step 4.
 
 ## 4. Load-test Viya with the day's pattern (you, ten minutes, with CAS memory on a second screen)

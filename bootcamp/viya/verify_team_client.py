@@ -10,12 +10,15 @@ exact calls the MCP servers make, in the order they fail on an under-authorised 
                     this is the step that says "No user credentials could be found for OS
                     process launch" when the identity cannot launch)
   4. sas            a DATA step runs and the log names the identity SAS runs as
-  5. cas read       Public.<table> is visible through casManagement (row count)
-  6. fedsql         a FedSQL count through a CAS session inside the compute session, the
-                    way query_data works
-  7. cas write      (--write) a tiny table is created in Public with promote=yes and dropped
-  8. mas            published models are listed; (--model) the step signature is readable
-  9. model studio   (--automl) the Analytics Gateway project list is readable
+  5. cas write      (--write) a one-row table is created in the caslib with promote=yes
+  6. cas read       Public.<table> is visible through casManagement (row count); when that
+                    table is not loaded on this server yet, the table from step 5 is read
+                    instead, so a fresh environment still proves the rights
+  7. fedsql         a FedSQL count through a CAS session inside the compute session, the
+                    way query_data works, against the same table as step 6
+  8. cas drop       (--write) the table from step 5 is dropped again
+  9. mas            published models are listed; (--model) the step signature is readable
+ 10. model studio   (--automl) the Analytics Gateway project list is readable
 
     export VIYA_URL=https://viya.example.com
     python verify_team_client.py --csv clients.csv --write --model deterioration_ehs
@@ -41,9 +44,10 @@ HINTS = {
     "context": "grant the parent group access to the compute context (Environment Manager → Contexts → the context → Authorization)",
     "session": "the launcher cannot start SAS as this identity: check the client's uid/gid, then ask the administrator to read the launcher and identities logs for this client id",
     "sas": "the session started but the job failed: see the log lines above",
-    "cas read": "grant the parent group Read on the Public caslib (Environment Manager → Data → Public → Authorization)",
+    "cas read": "403/404 on the caslib: grant the parent group Read on Public (Environment Manager → Data → Public → Authorization); 404 on the table only: load the registry into Public first",
     "fedsql": "the CAS session could not run FedSQL: CAS authorization on Public, or CAS itself is down",
-    "cas write": "grant the parent group Write/Manage on Public, or use a per-team caslib",
+    "cas write": "grant the parent group Write and Promote on Public (Environment Manager → Data → Public → Authorization), or use a per-team caslib",
+    "cas drop": "grant the parent group Manage on Public, and drop the leftover ZZ_VERIFY_* table by hand in Data Explorer",
     "mas": "grant the parent group access to SAS Micro Analytic Service (/microanalyticScore/**)",
     "model studio": "grant the parent group access to Model Studio (/analyticsGateway/** and /mlPipelineAutomation/**)",
 }
@@ -66,6 +70,9 @@ class Check:
 
     def fail(self, step: str, detail: str) -> None:
         self.rows.append((step, "FAIL", detail)); print(f"  FAIL  {step:13s} {detail[:300]}\n        → {HINTS.get(step, '')}")
+
+    def skip(self, step: str, detail: str) -> None:
+        self.rows.append((step, "SKIP", detail)); print(f"  SKIP  {step:13s} {detail[:300]}")
 
 
 def run_job(client: httpx.Client, sid: str, code: str, timeout: float = 180) -> tuple[str, str, str]:
@@ -124,33 +131,60 @@ def verify(client_id: str, secret: str, a: argparse.Namespace) -> Check:
                 c.ok("sas", who.strip())
             else:
                 c.fail("sas", f"state={st} {errors_in(log)}")
-            # 5. cas read
+            # 5. cas write: a promoted one-row table (kept until step 8, so 6 and 7 can use it)
             caslib, table = a.table.split(".", 1)
-            r = v.get(f"{VIYA_URL}/casManagement/servers/{a.cas_server}/caslibs/{caslib}/tables/{table}")
-            if r.status_code == 200:
-                c.ok("cas read", f"{a.table}: {r.json().get('rowCount')} rows, {r.json().get('columnCount')} columns")
-            else:
-                c.fail("cas read", f"{r.status_code} {r.text[:200]}")
-            # 6. fedsql through compute, like query_data
-            code = (f"cas v; proc fedsql sessref=v; select count(*) as n from {a.table}; quit; cas v terminate;")
-            st, log, listing = run_job(v, sid, code)
-            if st == "completed" and not errors_in(log):
-                c.ok("fedsql", " ".join(listing.split())[:80])
-            else:
-                c.fail("fedsql", f"state={st} {errors_in(log)}")
-            # 7. cas write
+            base = f"{VIYA_URL}/casManagement/servers/{a.cas_server}/caslibs/{caslib}"
+            own = f"ZZ_VERIFY_{client_id.replace('-', '_').upper()}"
+            created = False
             if a.write:
-                name = f"ZZ_VERIFY_{client_id.replace('-', '_').upper()}"
                 code = (f'cas w; libname wl cas caslib="{caslib}" sessref=w;\n'
-                        f"data wl.{name} (promote=yes); x=1; run;\n"
-                        f'proc casutil sessref=w; droptable casdata="{name}" incaslib="{caslib}" quiet; run;\n'
+                        f"data wl.{own} (promote=yes); x=1; run;\n"
                         f"cas w terminate;")
-                st, log, listing = run_job(v, sid, code)
+                st, log, _ = run_job(v, sid, code)
                 if st == "completed" and not errors_in(log):
-                    c.ok("cas write", f"created and dropped {caslib}.{name}")
+                    created = True; c.ok("cas write", f"created {caslib}.{own} (promote=yes)")
                 else:
                     c.fail("cas write", f"state={st} {errors_in(log)}")
-            # 8. mas
+            # 6. cas read: the registry, or our own table when the registry is not loaded here yet
+            probe = ""
+            r = v.get(f"{base}/tables/{table}")
+            if r.status_code == 200:
+                probe = a.table
+                c.ok("cas read", f"{a.table}: {r.json().get('rowCount')} rows, {r.json().get('columnCount')} columns")
+            elif r.status_code == 404 and v.get(f"{base}/tables", params={"limit": 1}).status_code == 200:
+                if created:
+                    r2 = v.get(f"{base}/tables/{own}")
+                    if r2.status_code == 200:
+                        probe = f"{caslib}.{own}"
+                        c.ok("cas read", f"{a.table} is not loaded on {a.cas_server} yet; read {probe} instead: "
+                                         f"{r2.json().get('rowCount')} rows")
+                    else:
+                        c.fail("cas read", f"{r2.status_code} on the table this client just created: {r2.text[:200]}")
+                else:
+                    c.skip("cas read", f"{a.table} is not loaded on {a.cas_server} yet (caslib {caslib} is visible): "
+                                       "load the registry into Public, or rerun with --write")
+            else:
+                c.fail("cas read", f"{r.status_code} {r.text[:200]}")
+            # 7. fedsql through compute, like query_data
+            if probe:
+                code = f"cas v; proc fedsql sessref=v; select count(*) as n from {probe}; quit; cas v terminate;"
+                st, log, listing = run_job(v, sid, code)
+                if st == "completed" and not errors_in(log):
+                    c.ok("fedsql", f"{probe}: " + " ".join(listing.split())[:70])
+                else:
+                    c.fail("fedsql", f"state={st} {errors_in(log)}")
+            else:
+                c.skip("fedsql", "no table to query (see cas read)")
+            # 8. cas drop
+            if created:
+                code = (f'cas w; proc casutil sessref=w; droptable casdata="{own}" incaslib="{caslib}" quiet; quit;\n'
+                        f"cas w terminate;")
+                st, log, _ = run_job(v, sid, code)
+                if st == "completed" and not errors_in(log):
+                    c.ok("cas drop", f"dropped {caslib}.{own}")
+                else:
+                    c.fail("cas drop", f"state={st} {errors_in(log)}")
+            # 9. mas
             r = v.get(f"{VIYA_URL}/microanalyticScore/modules", params={"limit": 5})
             if r.status_code == 200:
                 names = [m.get("id") for m in r.json().get("items", [])]
@@ -163,7 +197,7 @@ def verify(client_id: str, secret: str, a: argparse.Namespace) -> Check:
                         c.fail("mas", f"{a.model}: {r.status_code} {r.text[:200]}")
             else:
                 c.fail("mas", f"{r.status_code} {r.text[:200]}")
-            # 9. model studio
+            # 10. model studio
             if a.automl:
                 r = v.get(f"{VIYA_URL}/mlPipelineAutomation/projects", params={"limit": 1})
                 if r.status_code == 200:
