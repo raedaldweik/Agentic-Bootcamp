@@ -15,7 +15,7 @@ the SAS Viya MCP server as it goes.
 | Caslib | everything in `Public` on `cas-shared-default`, global scope. Never a personal caslib (`casuser`): Model Studio cannot read one, and the first dry-run failed on exactly that |
 | Shared model | the facilitator builds and publishes one deterioration model on `Public.EHS_DIABETES` before the day (module name in `{{SHARED_MODEL}}` below) so Route A teams never run AutoML; see the capacity section in `../README.md` |
 | Identity | RAM calls the SAS MCP server with one OAuth client (client credentials), so every participant reaches Viya as the same identity and shares one warm compute session per MCP registration. The rules below exist because of that |
-| Tools (MCP) | the SAS Viya MCP server, with the **Design Thinking** tool list in `../tools.md` (24 tools) |
+| Tools (MCP) | the SAS Viya MCP server, with the **Design Thinking** tool list in `../tools.md` (22 tools) |
 | Retrieval | n/a |
 | Visibility | shared with all participant accounts |
 

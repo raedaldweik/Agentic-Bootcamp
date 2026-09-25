@@ -52,7 +52,7 @@ gets its own session), keep every code call short, and never let a participant a
 session. What actually scales with people is Viya itself: about 0.15 CPU and 550 MB per warm compute
 session, plus whatever Model Studio runs need. See the capacity section in `README.md`.
 
-## Design Thinking Agent (23 tools)
+## Design Thinking Agent (22 tools)
 
 | Tool | Why |
 |---|---|

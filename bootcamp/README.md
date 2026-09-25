@@ -22,7 +22,7 @@ idea ──► Design Thinking Agent (pre-built, on RAM, drives SAS Viya through
 
 | Component | Where | Material |
 |---|---|---|
-| Design Thinking Agent | RAM, pre-built by the facilitator | `agents/design_thinking_agent.md` (prompt + config), `tools.md` (24 tools) |
+| Design Thinking Agent | RAM, pre-built by the facilitator | `agents/design_thinking_agent.md` (prompt + config), `tools.md` (22 tools) |
 | Structured data | SAS Viya CAS | `data/ehs_diabetes_registry.csv` (4,000 patients, 54 columns), `data/ehs_facilities.csv`, `data/DATA_DICTIONARY.md` |
 | ML model | Model Studio via MCP | target `deterioration_next_12m`; leakage columns listed in the data dictionary |
 | Knowledge (RAG) | RAM collection | `documents/NHA_*.pdf` (4 synthetic guideline PDFs, section-numbered) |
@@ -40,7 +40,7 @@ idea ──► Design Thinking Agent (pre-built, on RAM, drives SAS Viya through
    the package public once), same port, path and OAuth client; you instantiate it in step 6, once
    the table and model exist. `../bootcamp_mcp/README.md` lists every field.
 2. **Design Thinking Agent.** In RAM: new agent → name `Design Thinking Agent` → paste the prompt
-   from `agents/design_thinking_agent.md` → add the MCP tool source and tick the 24 tools in
+   from `agents/design_thinking_agent.md` → add the MCP tool source and tick the 22 tools in
    `tools.md` → share with all participant accounts.
 3. **Data.** Load the two CSVs into the `Public` caslib as `EHS_DIABETES` and `EHS_FACILITIES`,
    promoted to global scope: `python viya/load_registry.py --csv viya/clients.csv` does it in one
