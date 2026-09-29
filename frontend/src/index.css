@@ -949,16 +949,22 @@ a.btn-primary, a.btn-secondary { text-decoration: none; }
 /* ═══ Teams: sign in as a team; its SAS Viya + SAS RAM follow ═══ */
 .team-gate {
   position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px;
-  background: rgba(20, 32, 48, 0.42); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  background: rgba(15, 27, 42, 0.62); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   animation: fade-in .25s ease;
 }
-.team-gate-card { width: min(420px, 100%); padding: 30px 30px 26px; display: flex; flex-direction: column; }
+.team-gate-card {
+  width: min(420px, 100%); padding: 30px 30px 26px; display: flex; flex-direction: column;
+  background: #fdfcfa; border: 1px solid rgba(43,83,120,0.18); border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(8, 18, 32, 0.45), 0 2px 6px rgba(8, 18, 32, 0.12);
+  animation: rise-in .3s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes rise-in { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
 .team-gate-title { font-size: 24px; font-weight: 900; letter-spacing: -0.01em; color: var(--brand-lo); margin: 6px 0 4px; }
 .team-gate-lede { font-size: 13px; line-height: 1.5; color: var(--text-muted, #475569); margin-bottom: 18px; }
 .team-gate-label { font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--text-faint); margin: 8px 0 5px; }
 .team-gate-input {
   width: 100%; padding: 11px 13px; border-radius: 12px; font-size: 14px; outline: none;
-  background: rgba(255,255,255,0.75); border: 1px solid rgba(43,83,120,0.3); color: var(--text);
+  background: #fff; border: 1px solid rgba(43,83,120,0.3); color: var(--text);
   transition: border-color .15s, box-shadow .15s;
 }
 .team-gate-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(43,83,120,0.15); }

@@ -27,7 +27,7 @@ export default function TeamGate() {
 
   return (
     <div className="team-gate" role="dialog" aria-modal="true" aria-labelledby="team-gate-title">
-      <form className="team-gate-card glass-card" onSubmit={submit}>
+      <form className="team-gate-card" onSubmit={submit}>
         <div className="section-eyebrow">Emirates Health Services × SAS</div>
         <h2 id="team-gate-title" className="team-gate-title">Sign in as your team</h2>
         <p className="team-gate-lede">
