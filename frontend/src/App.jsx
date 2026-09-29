@@ -47,7 +47,7 @@ export const DASH_TABS = [
 const DASH_IDS = DASH_TABS.map((t) => t.id);
 
 function Header({ tab, setTab }) {
-  const { team, teamsEnabled, signOutTeam } = useApp();
+  const { team, teamsEnabled, signOutTeam, openGate } = useApp();
   const [health, setHealth] = useState(null);
   const [ehsLogo, setEhsLogo] = useState('/ehs-logo.png');
   const [sasLogo, setSasLogo] = useState(sasLogoUrl);
@@ -114,12 +114,16 @@ function Header({ tab, setTab }) {
       </div>
 
       <div className="flex items-center gap-4">
-        {teamsEnabled && team && (
+        {teamsEnabled && (team ? (
           <button className="team-chip" onClick={() => { signOutTeam(); setTab('landing'); }}
             title="Signed in as this team: its SAS Viya and SAS RAM. Click to switch team.">
             {team.name} <span className="team-chip-sub">switch</span>
           </button>
-        )}
+        ) : (
+          <button className="team-chip unset" onClick={openGate} title="Sign in as your team to use its SAS Viya and SAS RAM">
+            Sign in as a team
+          </button>
+        ))}
         {(health == null || !ok || warming || keyBad) && (
           <div className="status-pill">
             <span className={`w-2 h-2 rounded-full ${ok && !warming && !keyBad ? '' : 'animate-pulse'}`}
