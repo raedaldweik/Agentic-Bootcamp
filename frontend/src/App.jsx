@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import TeamGate from './components/TeamGate';
 import { getHealth, getLinks } from './services/api';
 import LandingPage from './pages/LandingPage';
 import AssistantPage from './pages/AssistantPage';
@@ -46,7 +47,7 @@ export const DASH_TABS = [
 const DASH_IDS = DASH_TABS.map((t) => t.id);
 
 function Header({ tab, setTab }) {
-  const { team, teams } = useApp();
+  const { team, teamsEnabled, signOutTeam } = useApp();
   const [health, setHealth] = useState(null);
   const [ehsLogo, setEhsLogo] = useState('/ehs-logo.png');
   const [sasLogo, setSasLogo] = useState(sasLogoUrl);
@@ -113,10 +114,10 @@ function Header({ tab, setTab }) {
       </div>
 
       <div className="flex items-center gap-4">
-        {teams.length > 0 && (
-          <button className={`team-chip ${team ? '' : 'unset'}`} onClick={() => setTab('landing')}
-            title={team ? 'Your team: its SAS Viya and SAS RAM. Click to change on the home page.' : 'Pick your team on the home page'}>
-            {team ? team.name : 'Pick your team'}
+        {teamsEnabled && team && (
+          <button className="team-chip" onClick={() => { signOutTeam(); setTab('landing'); }}
+            title="Signed in as this team: its SAS Viya and SAS RAM. Click to switch team.">
+            {team.name} <span className="team-chip-sub">switch</span>
           </button>
         )}
         {(health == null || !ok || warming || keyBad) && (
@@ -159,6 +160,7 @@ function Layout() {
   return (
     <div className="app-shell">
       <Bokeh />
+      <TeamGate />
       <Header tab={tab} setTab={setTab} />
       <main className="flex-1 min-h-0 relative z-[1]">
         {page()}

@@ -1,4 +1,4 @@
-"""Pick a team: which SAS Viya and SAS RAM pair this browser talks to."""
+"""Team sign-in: which SAS Viya and SAS RAM pair this browser talks to."""
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request, Response
@@ -10,34 +10,34 @@ router = APIRouter(prefix="/api/teams", tags=["teams"])
 
 
 def bind_team(request: Request) -> None:
-    """Read the team cookie into the request context. Used as a dependency by
-    every router whose answers depend on the team (links, RAM)."""
+    """Read the team cookie into the request context. Every router whose answers
+    depend on the team (links, RAM) does this first."""
     teams.set_current(request.cookies.get(teams.COOKIE))
 
 
-class Choice(BaseModel):
-    id: str
+class Login(BaseModel):
+    username: str
+    password: str
 
 
 @router.get("")
-def list_teams(request: Request):
+def state(request: Request):
     bind_team(request)
-    cur = teams.current()
-    return {"enabled": teams.enabled(), "teams": teams.public(),
-            "current": {"id": cur["id"], "name": cur["name"]} if cur else None}
+    return {"enabled": teams.enabled(), "count": len(teams.teams()),
+            "current": teams.public(teams.current())}
 
 
-@router.post("/select")
-def select_team(choice: Choice, request: Request, response: Response):
-    t = teams.get(choice.id)
+@router.post("/login")
+def login(body: Login, request: Request, response: Response):
+    t = teams.authenticate(body.username, body.password)
     if not t:
-        raise HTTPException(status_code=404, detail=f"No team {choice.id!r}.")
+        raise HTTPException(status_code=401, detail="Wrong team name or password.")
     response.set_cookie(teams.COOKIE, t["id"], max_age=teams.COOKIE_MAX_AGE, httponly=True,
                         samesite="lax", secure=request.url.scheme == "https", path="/")
-    return {"ok": True, "current": {"id": t["id"], "name": t["name"]}}
+    return {"ok": True, "current": teams.public(t)}
 
 
-@router.delete("/select")
-def clear_team(response: Response):
+@router.post("/logout")
+def logout(response: Response):
     response.delete_cookie(teams.COOKIE, path="/")
     return {"ok": True, "current": None}

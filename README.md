@@ -15,28 +15,28 @@ Health Services (facilitators: EHS, BITS Pilani, SAS).
 
 ## Teams: one SAS Viya and SAS RAM pair per team
 
-The hackathon can run every team on its own environments. `backend/data/teams.json` lists the
-teams; each row carries the URLs that differ per team and nothing secret:
+The hackathon can run every team on its own environments, configured entirely from the deployment's
+variables (Railway's Variables tab, no commit):
 
-```json
-{"id": "3", "name": "Team 3",
- "viya_url": "https://viya-....engage.sas.com",
- "ram_url": "https://ram-3.example.com/SASRetrievalAgentManager",
- "ram_api_url": "https://ram-3.example.com/SASRetrievalAgentManager/api/v1",
- "ram_realm": "sas-iot", "ram_client_id": "sas-ram-api"}
+```
+TEAM_COUNT=10
+TEAM3_VIYA_URL=https://viya-....engage.sas.com
+TEAM3_RAM_URL=https://ram-3.example.com/SASRetrievalAgentManager
+TEAM3_RAM_API_URL=https://ram-3.example.com/SASRetrievalAgentManager/api/v1
 ```
 
-A participant picks their team once on the home page. The choice is a cookie in their browser, and
-from then on the SAS Viya and SAS RAM buttons open that team's environments and the **SAS RAM** tab
-signs in to that team's RAM. Each team's sign-in is kept separately, so changing team means signing in
-to the new RAM, and switching back finds the old sign-in still there. The header shows the team;
-clicking it goes back to the picker.
+When teams are configured the app opens with a team sign-in: username `team3`, password `team3`
+(`TEAM3_PASSWORD` changes it). The sign-in is a cookie in that browser. From then on the SAS Viya and
+SAS RAM buttons open that team's environments and the **SAS RAM** tab signs in to that team's RAM,
+where each participant still uses their own RAM account. The header shows the team; clicking it
+switches team. RAM sign-ins are kept per browser per team, so switching back finds the old one.
 
-A field a team leaves empty falls back to `VIYA_URL`, `RAM_URL`, `RAM_API_URL` and the other
-variables, so the file can start with names only and get its URLs as the environments come up; a team
-without URLs shows as dashed in the picker. `TEAMS_JSON` (the same list as one JSON string) overrides
-the file, which is the way to change teams on Railway without a commit. An empty list means one
-environment for everyone and the picker stays hidden.
+A variable a team does not have falls back to the plain one (`VIYA_URL`, `RAM_URL`, `RAM_API_URL`,
+`RAM_REALM`, `RAM_CLIENT_ID`), so the variables can be added team by team as environments come up,
+and a team without any still works on the shared environment. `TEAM_COUNT` unset and no `TEAMn_`
+variable means one environment for everyone and no team sign-in at all. `TEAMS_JSON` (a JSON list of
+rows with `id`, `name`, `password` and the same fields in lower case) is an alternative for bulk
+configuration.
 
 ## The hackathon app
 

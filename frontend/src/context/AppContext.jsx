@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { getTeams, selectTeam } from '../services/api';
+import { getTeams, loginTeam, logoutTeam } from '../services/api';
 import { setSessionScope } from '../ram/api';
 
 export const PERSONAS = {
@@ -32,23 +32,29 @@ const Ctx = createContext(null);
 export function AppProvider({ children }) {
   const stored = loadStored();
   const [persona, setPersona] = useState('executive');
-  // Teams: which SAS Viya + SAS RAM pair this browser uses. `teams` is empty when the
-  // deployment runs one environment for everyone, and the picker stays hidden.
-  const [teams, setTeams] = useState([]);
-  const [team, setTeam] = useState(null);           // {id, name} or null
+  // Teams: which SAS Viya + SAS RAM pair this browser uses. A team signs in once (a
+  // cookie); `teamsEnabled` is false when the deployment runs one environment for
+  // everyone, and then there is no sign-in at all.
+  const [teamsEnabled, setTeamsEnabled] = useState(false);
+  const [team, setTeam] = useState(null);           // {id, name, username} or null
   const [teamsLoaded, setTeamsLoaded] = useState(false);
   useEffect(() => {
     getTeams().then((r) => {
-      setTeams(r?.teams || []);
+      setTeamsEnabled(!!r?.enabled);
       setTeam(r?.current || null);
       setSessionScope(r?.current?.id || null);
     }).catch(() => {}).finally(() => setTeamsLoaded(true));
   }, []);
-  const chooseTeam = useCallback(async (id) => {
-    const r = await selectTeam(id);
+  const signInTeam = useCallback(async (username, password) => {
+    const r = await loginTeam(username, password);
     setTeam(r.current);
     setSessionScope(r.current?.id || null);
     return r.current;
+  }, []);
+  const signOutTeam = useCallback(async () => {
+    try { await logoutTeam(); } catch { /* the cookie is gone either way on the next load */ }
+    setTeam(null);
+    setSessionScope(null);
   }, []);
   // Dashboard cross-filter: {tier: 'High', facility: '...'}; shared by every dashboard tab.
   const [dashFilter, setDashFilter] = useState({});
@@ -118,7 +124,7 @@ export function AppProvider({ children }) {
   }, [persona]);
 
   return (
-    <Ctx.Provider value={{ teams, team, teamsLoaded, chooseTeam,
+    <Ctx.Provider value={{ teamsEnabled, team, teamsLoaded, signInTeam, signOutTeam,
       persona, setPersona, personaInfo: PERSONAS[persona],
       chats: visibleChats, activeChat, activeChatId: activeChat?.id,
       setActiveChatId, createNewChat, addMessage, renameChat, deleteChat,
