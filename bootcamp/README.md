@@ -1,4 +1,4 @@
-# Bootcamp kit: build the population-health agent on SAS RAM
+# Hackathon kit: build the population-health agent on SAS RAM
 
 How the two days work, and the material each step needs. The app in this repo is the participants'
 workbench (data, documents, a finished agent, and a SAS RAM tab that signs in to their environment);
@@ -65,7 +65,7 @@ idea ──► Design Thinking Agent (pre-built, on RAM, drives SAS Viya through
    "LDL target very high risk" must return NHA-CG-02 §3.
 6. **Population Health Agent.** Instantiate the Bootcamp MCP template for the test team with
    `ALLOWED_TABLES=Public.EHS_DIABETES,Public.EHS_FACILITIES`, `ALLOWED_MODELS=<your module name>`
-   and `MCP_SERVER_NAME=Bootcamp team TEST` (`../bootcamp_mcp/README.md`). New agent → paste the
+   and `MCP_SERVER_NAME=Hackathon team TEST` (`../bootcamp_mcp/README.md`). New agent → paste the
    prompt from `agents/population_health_agent.md` with `Public.EHS_DIABETES` and your module name
    filled in → attach the collection → add that instance (all 8 tools) → publish. Ask it "which
    tables can you see?": only the two `Public` tables may come back.
@@ -107,7 +107,7 @@ What to do, in order of effect:
   and a shorter compute-session idle timeout so abandoned sessions are reaped quickly.
 - **Recover** after an outage by restarting the SAS MCP container (its cached session is stale)
   once CAS and the launcher pods are back.
-- **Re-run the 15-person test** with these changes before the bootcamp, and watch CAS memory
+- **Re-run the 15-person test** with these changes before the hackathon, and watch CAS memory
   while it runs.
 
 ### What the RAM template runs today, and the two ways forward
@@ -197,7 +197,7 @@ admin / facilitator ──(Microsoft login)──► Viya UIs, once, before the 
 - Keycloak realm settings worth checking before the day (Realm settings → Sessions): SSO Session
   Idle at least 1 hour and SSO Session Max at least 12 hours, so nobody is signed out of RAM
   mid-afternoon; the app refreshes tokens in the background, so the idle timer is never the
-  problem, but the max is a hard stop. A two-day bootcamp means one sign-in each morning.
+  problem, but the max is a hard stop. A two-day hackathon means one sign-in each morning.
 
 ### Who logs in where (and where Microsoft Authenticator is not involved)
 
@@ -210,7 +210,7 @@ admin / facilitator ──(Microsoft login)──► Viya UIs, once, before the 
 | Facilitator building the shared model | a Viya user | normal Viya login to Model Studio | Yes, before the day |
 
 So the two-week-token workaround from earlier work is not needed anywhere here: the only identities
-that reach Viya during the bootcamp are OAuth clients, which never need a person to sign in. Do
+that reach Viya during the hackathon are OAuth clients, which never need a person to sign in. Do
 not create Viya user accounts for participants; nothing would ever log in as them.
 
 ### How many of what, for 20 RAM users
@@ -273,7 +273,7 @@ and scoring calls; the synthetic data and the model exist before anyone walks in
    send anyone to sign in again.
 
 **Plan B, if Viya cannot hold even the light load**
-The bootcamp still runs. The app's Dashboards and Simulator carry the data story without Viya;
+The hackathon still runs. The app's Dashboards and Simulator carry the data story without Viya;
 the Assistant tab is a finished agent with no Viya behind it; and every team can still build a
 real agent in RAM with the NHA collection and the system prompt, tested on the app's SAS RAM
 tab, with the Viya tools attached only for the teams you let through one at a time.

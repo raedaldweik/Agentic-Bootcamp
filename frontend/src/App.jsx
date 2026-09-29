@@ -33,7 +33,7 @@ export const TABS = [
   { id: 'overview', label: 'Dashboards' },
   { id: 'data', label: 'Data' },
   { id: 'documents', label: 'Documents' },
-  { id: 'assistant', label: 'Assistant' },
+  { id: 'assistant', label: 'Population Health Agent' },
   { id: 'ram', label: 'SAS RAM' },
 ];
 
@@ -82,7 +82,7 @@ function Header({ tab, setTab }) {
         <div className="header-eyebrow">Emirates Health Services × SAS</div>
         <div className="title-row">
           <h1 className="app-title">
-            <b>Agentic AI Bootcamp</b> <span className="title-sep">·</span> SAS Retrieval Agent Manager
+            <b>Agentic AI Hackathon</b> <span className="title-sep">·</span> SAS Retrieval Agent Manager
           </h1>
           <div className="accent-line" />
         </div>

@@ -35,7 +35,7 @@ all 92 to the Design Thinking Agent.
 | 8 | Workbench (execute code only) | no |
 | 9 | Business glossary | no |
 
-Server environment for the bootcamp deployment:
+Server environment for the hackathon deployment:
 
 ```
 MCP_TIERS=0,1,2,5,6        # add 3 for the Visual Analytics step, 7 for Intelligent Decisioning rules

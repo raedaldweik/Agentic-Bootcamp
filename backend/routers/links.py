@@ -31,7 +31,7 @@ def links():
              "url": _env("VIYA_URL"), "icon": "viya"},
             {"id": "ram", "label": "SAS RAM environment", "sub": "Retrieval Agent Manager: agents, collections, tools",
              "url": _env("RAM_URL"), "icon": "ram"},
-            {"id": "materials", "label": "Bootcamp materials", "sub": "Decks, labs, data and this application",
+            {"id": "materials", "label": "Hackathon materials", "sub": "Decks, labs, data and this application",
              "url": _env("MATERIALS_URL", MATERIALS_DEFAULT), "icon": "materials"},
         ],
         "branding": {

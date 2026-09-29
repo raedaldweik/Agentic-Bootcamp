@@ -39,7 +39,7 @@ const ECG_D = (() => {
 const FALLBACK_LINKS = [
   { id: 'viya', label: 'SAS Viya environment', url: '' },
   { id: 'ram', label: 'SAS RAM environment', url: '' },
-  { id: 'materials', label: 'Bootcamp materials', url: 'https://github.com/raedaldweik/Agentic-Bootcamp' },
+  { id: 'materials', label: 'Hackathon materials', url: 'https://github.com/raedaldweik/Agentic-Bootcamp' },
 ];
 
 /* One of the three environment buttons. Opens in a new tab; greyed out until its URL is set. */

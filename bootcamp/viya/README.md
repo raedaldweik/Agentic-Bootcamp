@@ -106,7 +106,7 @@ Instantiate it four or five times, one Design Thinking Agent copy per instance.
 `VIYA_ENDPOINT`, `ALLOW_RAW_BEARER=true`, `ALLOWED_TABLES`, `ALLOWED_MODELS`, `MCP_SERVER_NAME`, CPU 1,
 memory 1G; one instance per team, each with its own client.
 
-## 7. Tear down after the bootcamp
+## 7. Tear down after the hackathon
 
 ```
 python create_team_clients.py --teams 10 --delete

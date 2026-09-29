@@ -1,19 +1,19 @@
-# Agentic AI Bootcamp — SAS × EHS
+# Agentic AI Hackathon — SAS × EHS
 
-Material and the demo application for the two-day Agentic AI Bootcamp delivered with Emirates
+Material and the demo application for the two-day Agentic AI Hackathon delivered with Emirates
 Health Services (facilitators: EHS, BITS Pilani, SAS).
 
 | Path | What it is |
 |---|---|
-| `backend/`, `frontend/`, `Dockerfile` | **The bootcamp app**: the participants' workbench for the two days. The three environment links, the registry dashboard, the raw data and guideline documents, a working population-health assistant (Basira) to learn from, and a **SAS RAM** page that signs in to the participants' own Retrieval Agent Manager environment. Details below. |
-| `bootcamp/` | **The bootcamp kit**: the flow, the pre-built Design Thinking Agent (prompt + config), the Population Health Agent template and test questions, the CAS-ready registry CSVs with a data dictionary, the NHA guideline PDFs for the RAM collection, and the SAS Viya MCP tool selection for each agent. |
+| `backend/`, `frontend/`, `Dockerfile` | **The hackathon app**: the participants' workbench for the two days. The three environment links, the registry dashboard, the raw data and guideline documents, a working population-health assistant (Basira) to learn from, and a **SAS RAM** page that signs in to the participants' own Retrieval Agent Manager environment. Details below. |
+| `bootcamp/` | **The hackathon kit**: the flow, the pre-built Design Thinking Agent (prompt + config), the Population Health Agent template and test questions, the CAS-ready registry CSVs with a data dictionary, the NHA guideline PDFs for the RAM collection, and the SAS Viya MCP tool selection for each agent. |
 | `bootcamp_mcp/` | **The Bootcamp MCP server**: a pip-installable, containerised MCP server built on the SAS Viya MCP server, with eight tools scoped by `ALLOWED_TABLES` / `ALLOWED_MODELS` so each team's agent sees only its own table and model. Registered in RAM once per team. |
 | `Day1/Session2_How_an_AI_Agent_Works/` | Session 2 deck (10:45 – 11:30): *How an AI agent works and makes decisions*. Speaker notes and the build script included. |
 | `templates/SAS_External_Template.pptx` | Clean SAS EXTERNAL PowerPoint template (SAS-2023 palette, Anova fonts embedded). Base for every SAS-delivered session. |
 
 ---
 
-## The bootcamp app
+## The hackathon app
 
 Participants build a population-health agent on SAS Retrieval Agent Manager (RAM) over two days.
 This app replaces the slides-only approach: it carries the use case they build, the data and
@@ -27,14 +27,14 @@ approval queue, an audit trail and a population-health MCP server.
 All patient data is synthetic: 4,000 people living with diabetes across 18 EHS hospitals and
 primary healthcare centres in Sharjah, Ajman, Umm Al Quwain, Ras Al Khaimah and Fujairah, with
 36 months of coded longitudinal records and a FHIR R4 export sample. The guideline corpus is the
-bootcamp's synthetic "National Health Authority" set (NHA-CG-01 diabetes, NHA-CG-02 lipids,
+hackathon's synthetic "National Health Authority" set (NHA-CG-01 diabetes, NHA-CG-02 lipids,
 NHA-CG-03 hypertension, NHA-PP-01 screening and recall). Not for clinical use.
 
 ### The pages
 
 | Tab | What it shows |
 |---|---|
-| Home | The **three environment buttons** (SAS Viya, SAS RAM, bootcamp materials; each opens in a new tab; URLs come from `VIYA_URL`, `RAM_URL`, `MATERIALS_URL`, greyed out until set) and the live registry summary |
+| Home | The **three environment buttons** (SAS Viya, SAS RAM, hackathon materials; each opens in a new tab; URLs come from `VIYA_URL`, `RAM_URL`, `MATERIALS_URL`, greyed out until set) and the live registry summary |
 | Dashboards | Three dashboards behind one tab, switched with a second row of pills. **Registry**: the population overview (KPIs, HbA1c trend, demand forecast, facility benchmark, risk tiers, complications). **Geography**: the 18 EHS facilities on a map of the Northern Emirates, coloured by control, gaps, risk or cost, with the flagged ones ranked. **Simulator**: the factors that change a patient's deterioration risk, on five anonymous profiles (no patient records): move a factor, the deployed model re-scores it, the attribution shows what moved, the assistant explains the change |
 | Data · Documents | The raw registry tables (browse, search) and the NHA guideline PDFs: what participants load into SAS Viya and index in a RAM collection |
 | Assistant | Basira, the finished population-health agent: live agent trace, scenario chips, charts, citations, drafts queued for human approval, EN/AR voice |

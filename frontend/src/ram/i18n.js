@@ -44,8 +44,8 @@ const STR = {
   delete: { en: 'Delete', ar: 'حذف' },
 
   welcome: {
-    en: 'Welcome to the EHS Agentic AI Bootcamp assistant on SAS Retrieval Agent Manager (RAM). Pick an agent published in RAM from the dropdown above and ask about the diabetes population, care gaps, guidelines or a policy simulation. Every answer shows its tool calls, retrieval and sources.',
-    ar: 'مرحباً بك في مساعد معسكر EHS للذكاء الاصطناعي الوكيل على SAS Retrieval Agent Manager. اختر وكيلاً منشوراً في RAM من القائمة أعلاه واسأل عن مرضى السكري، أو فجوات الرعاية، أو الإرشادات السريرية، أو محاكاة سياسة. كل إجابة تعرض استدعاءات أدواتها وعمليات الاسترجاع ومصادرها.',
+    en: 'Welcome to the EHS Agentic AI Hackathon agent on SAS Retrieval Agent Manager (RAM). Pick an agent published in RAM from the dropdown above and ask about the diabetes population, care gaps, guidelines or a policy simulation. Every answer shows its tool calls, retrieval and sources.',
+    ar: 'مرحباً بك في وكيل هاكاثون EHS للذكاء الاصطناعي الوكيل على SAS Retrieval Agent Manager. اختر وكيلاً منشوراً في RAM من القائمة أعلاه واسأل عن مرضى السكري، أو فجوات الرعاية، أو الإرشادات السريرية، أو محاكاة سياسة. كل إجابة تعرض استدعاءات أدواتها وعمليات الاسترجاع ومصادرها.',
   },
 
   selectAgent: { en: 'Select an agent', ar: 'اختر وكيلاً' },

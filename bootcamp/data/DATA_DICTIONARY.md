@@ -8,7 +8,7 @@ an agent built on it in SAS Viya answers with the same numbers participants see 
 `ehs_facilities.csv`: the 18 facilities (id, name, type, emirate). `region` on the registry is the
 facility's emirate, so most questions need no join.
 
-On the bootcamp Viya the two tables are loaded in the `Public` caslib at global scope as
+On the hackathon Viya the two tables are loaded in the `Public` caslib at global scope as
 `Public.EHS_DIABETES` and `Public.EHS_FACILITIES`. Keep every team table in `Public` too: Model
 Studio cannot read a personal caslib.
 

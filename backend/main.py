@@ -121,7 +121,7 @@ async def lifespan(app: FastAPI):
         keepalive.cancel()
 
 
-app = FastAPI(title="Basira: EHS Population Health Intelligence (SAS Agentic AI Bootcamp)", lifespan=lifespan)
+app = FastAPI(title="Basira: EHS Population Health Intelligence (SAS Agentic AI Hackathon)", lifespan=lifespan)
 
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                    allow_headers=["*"])
@@ -138,7 +138,7 @@ app.include_router(ram.router)
 @app.get("/api/health")
 def health():
     live = agent.llm_enabled()
-    return {"status": "ok", "app": "basira", "edition": "sas-ehs-bootcamp",
+    return {"status": "ok", "app": "basira", "edition": "sas-ehs-hackathon",
             "mode": "multi-agent" if live else "direct-tools",
             "model": (agent.display_model(agent.active_model()) if WARM["ready"] else "warming") if live else None,
             "model_switches": agent._active["switches"] if live else None,

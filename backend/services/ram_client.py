@@ -662,8 +662,7 @@ async def list_session_queries(session_id: str) -> list[dict]:
     # Order chronologically — RAM doesn't guarantee an order on this endpoint,
     # and an unordered list reconstructs the conversation with turns scrambled.
     # ISO-8601 timestamps sort lexically; undated items sink to the top stably.
-    items.sort(key=lambda q: (q.get("creationTimeStamp") or q.get("creationTimestamp")
-                              or q.get("insertTimestamp") or q.get("modifiedTimeStamp") or ""))
+    items.sort(key=_query_timestamp)
     # A conversation turn is a top-level *user* query. Querying an agent also
     # records the agent's own internal sub-queries (origin "agent", each with a
     # parentQueryId) under the same session id — rendering those as chat bubbles
@@ -797,6 +796,28 @@ async def _fetch_query(query_id: str) -> dict | None:
     body = await _request("GET", "/query", params={"filter": f"eq(id,'{query_id}')", "limit": 1})
     items = body.get("items") or []
     return items[0] if items else None
+
+
+_TS_KEYS = ("insert_timestamp", "update_timestamp", "insertTimestamp", "updateTimestamp",
+            "creationTimeStamp", "creationTimestamp", "modifiedTimeStamp")
+
+
+def _query_timestamp(q: dict) -> str:
+    """The time a query record carries, whatever RAM calls the field.
+
+    RAM's query records are stamped in snake case (`update_timestamp`), unlike
+    its sessions (`insertTimestamp`, `updateTimestamp`); older builds guessed
+    camel-case names only, matched nothing, and left history in RAM's own order,
+    which is not chronological. Try the known names first, then any key that
+    looks like a timestamp, so a renamed field cannot scramble history again."""
+    for k in _TS_KEYS:
+        v = q.get(k)
+        if v:
+            return str(v)
+    for k, v in q.items():
+        if v and isinstance(v, (str, int, float)) and "timestamp" in k.lower():
+            return str(v)
+    return ""
 
 
 def _normalize_query(q: dict) -> dict:
@@ -998,7 +1019,7 @@ async def _mock_request(method: str, path: str, *, params: dict | None = None, j
 
         query = {
             "id": str(uuid.uuid4()), "content": json["content"], "errorCode": 0, "errorText": None,
-            "origin": "user", "querySessionId": sid,
+            "origin": "user", "querySessionId": sid, "update_timestamp": now,
             "target": "agent" if agent_id else "collection",
             "targetId": {"agentId": agent_id} if agent_id else {"configurationIds": json.get("collectionIds", [])},
             "response": {
