@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AppProvider } from './context/AppContext';
+import { AppProvider, useApp } from './context/AppContext';
 import { getHealth, getLinks } from './services/api';
 import LandingPage from './pages/LandingPage';
 import AssistantPage from './pages/AssistantPage';
@@ -46,6 +46,7 @@ export const DASH_TABS = [
 const DASH_IDS = DASH_TABS.map((t) => t.id);
 
 function Header({ tab, setTab }) {
+  const { team, teams } = useApp();
   const [health, setHealth] = useState(null);
   const [ehsLogo, setEhsLogo] = useState('/ehs-logo.png');
   const [sasLogo, setSasLogo] = useState(sasLogoUrl);
@@ -112,6 +113,12 @@ function Header({ tab, setTab }) {
       </div>
 
       <div className="flex items-center gap-4">
+        {teams.length > 0 && (
+          <button className={`team-chip ${team ? '' : 'unset'}`} onClick={() => setTab('landing')}
+            title={team ? 'Your team: its SAS Viya and SAS RAM. Click to change on the home page.' : 'Pick your team on the home page'}>
+            {team ? team.name : 'Pick your team'}
+          </button>
+        )}
         {(health == null || !ok || warming || keyBad) && (
           <div className="status-pill">
             <span className={`w-2 h-2 rounded-full ${ok && !warming && !keyBad ? '' : 'animate-pulse'}`}
@@ -134,6 +141,7 @@ function Header({ tab, setTab }) {
 
 function Layout() {
   const [tab, setTab] = useState('landing');
+  const { team } = useApp();
   const page = () => {
     switch (tab) {
       case 'landing': return <LandingPage />;
@@ -143,7 +151,7 @@ function Layout() {
       case 'data': return <DataPage />;
       case 'documents': return <DocumentsPage />;
       case 'assistant': return <AssistantPage />;
-      case 'ram': return <RamCopilotPage />;
+      case 'ram': return <RamCopilotPage key={team?.id || 'one'} />;  // a new team means a new RAM: start the page over
       default: return <LandingPage />;
     }
   };

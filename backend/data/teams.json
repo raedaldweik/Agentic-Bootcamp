@@ -1,0 +1,15 @@
+{
+  "_comment": "One SAS Viya + SAS RAM pair per team. Fill the URLs when the environments exist; an empty field falls back to VIYA_URL / RAM_URL / RAM_API_URL in the environment. Delete rows for teams that do not exist, or set TEAMS_JSON on the server to override this file.",
+  "teams": [
+    {"id": "1",  "name": "Team 1",  "viya_url": "", "ram_url": "", "ram_api_url": "", "ram_realm": "", "ram_client_id": ""},
+    {"id": "2",  "name": "Team 2",  "viya_url": "", "ram_url": "", "ram_api_url": "", "ram_realm": "", "ram_client_id": ""},
+    {"id": "3",  "name": "Team 3",  "viya_url": "", "ram_url": "", "ram_api_url": "", "ram_realm": "", "ram_client_id": ""},
+    {"id": "4",  "name": "Team 4",  "viya_url": "", "ram_url": "", "ram_api_url": "", "ram_realm": "", "ram_client_id": ""},
+    {"id": "5",  "name": "Team 5",  "viya_url": "", "ram_url": "", "ram_api_url": "", "ram_realm": "", "ram_client_id": ""},
+    {"id": "6",  "name": "Team 6",  "viya_url": "", "ram_url": "", "ram_api_url": "", "ram_realm": "", "ram_client_id": ""},
+    {"id": "7",  "name": "Team 7",  "viya_url": "", "ram_url": "", "ram_api_url": "", "ram_realm": "", "ram_client_id": ""},
+    {"id": "8",  "name": "Team 8",  "viya_url": "", "ram_url": "", "ram_api_url": "", "ram_realm": "", "ram_client_id": ""},
+    {"id": "9",  "name": "Team 9",  "viya_url": "", "ram_url": "", "ram_api_url": "", "ram_realm": "", "ram_client_id": ""},
+    {"id": "10", "name": "Team 10", "viya_url": "", "ram_url": "", "ram_api_url": "", "ram_realm": "", "ram_client_id": ""}
+  ]
+}

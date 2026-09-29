@@ -60,7 +60,19 @@ from urllib.parse import quote
 
 import httpx
 
+from services import teams as _teams
+
 RAM_API_URL = os.getenv("RAM_API_URL", "").rstrip("/")
+
+
+def _cfg(name: str, default: str = "") -> str:
+    """A connection setting for the current request: the browser's team first
+    (services.teams), then the process environment."""
+    return _teams.setting(name, default)
+
+
+def _api_url() -> str:
+    return _cfg("RAM_API_URL").rstrip("/")
 VERIFY_SSL = os.getenv("RAM_VERIFY_SSL", "true").lower() != "false"
 MOCK = os.getenv("RAM_MOCK", "").lower() == "true"
 
@@ -112,7 +124,11 @@ def set_session_id(sid: str | None) -> None:
 def _sid() -> str:
     if os.getenv("RAM_TOKEN") or os.getenv("SAS_CLIENT_ID"):
         return _SHARED
-    return _current_sid.get() or _SHARED
+    sid = _current_sid.get() or _SHARED
+    team = _teams.current_id()
+    # A browser signed in to team 3's RAM is not signed in to team 4's: one
+    # entry per browser per team, so switching teams switches sign-in state.
+    return f"{sid}@{team}" if team and sid != _SHARED else sid
 
 
 def _new_entry() -> dict[str, Any]:
@@ -229,7 +245,7 @@ async def sign_out() -> dict:
         try:
             async with httpx.AsyncClient(verify=VERIFY_SSL, timeout=TIMEOUT) as client:
                 r = await client.post(token_url.rsplit("/token", 1)[0] + "/logout", data={
-                    "client_id": e.get("client_id") or os.getenv("RAM_CLIENT_ID", "sas-ram-api"),
+                    "client_id": e.get("client_id") or _cfg("RAM_CLIENT_ID", "sas-ram-api"),
                     "refresh_token": refresh,
                 })
             revoked = r.status_code in (200, 204)
@@ -255,7 +271,7 @@ async def keepalive_loop() -> None:
     """Refresh every signed-in session before its access token expires, which
     also keeps the identity provider's idle timer from signing it out.
     Started by the app's lifespan; harmless when nothing is signed in."""
-    if MOCK or os.getenv("RAM_TOKEN") or not RAM_API_URL:
+    if MOCK or os.getenv("RAM_TOKEN") or not (RAM_API_URL or _teams.enabled()):
         return
     while True:
         await asyncio.sleep(KEEPALIVE_INTERVAL)
@@ -268,21 +284,21 @@ async def keepalive_loop() -> None:
 def _oidc_base() -> str:
     """Keycloak OpenID Connect base for standalone RAM, e.g.
     https://host/SASRetrievalAgentManager/auth/realms/sas-iot/protocol/openid-connect"""
-    explicit = os.getenv("SAS_LOGON_URL")
+    explicit = _cfg("SAS_LOGON_URL")
     if explicit and "/protocol/openid-connect" in explicit:
         return explicit.split("/protocol/openid-connect")[0] + "/protocol/openid-connect"
-    base = RAM_API_URL.split("/api/")[0]  # strip /api/v1
-    realm = os.getenv("RAM_REALM", "sas-iot")
+    base = _api_url().split("/api/")[0]  # strip /api/v1
+    realm = _cfg("RAM_REALM", "sas-iot")
     return f"{base}/auth/realms/{realm}/protocol/openid-connect"
 
 
 def _logon_url() -> str:
-    explicit = os.getenv("SAS_LOGON_URL")
+    explicit = _cfg("SAS_LOGON_URL")
     if explicit:
         return explicit
     # Derive https://host/SASLogon/oauth/token from the RAM URL (full Viya);
     # standalone RAM deployments go through _oidc_base() instead.
-    base = RAM_API_URL.split("/SASRetrievalAgentManager")[0]
+    base = _api_url().split("/SASRetrievalAgentManager")[0]
     return f"{base}/SASLogon/oauth/token"
 
 
@@ -305,34 +321,35 @@ def _store_tokens(body: dict, *, token_url: str | None = None,
 # ─── Sign-in flow detection ──────────────────────────────────────────
 # Standalone RAM ships Keycloak (device code flow); full SAS Viya uses
 # SASLogon (authorization code flow with the sas.cli public client).
-_flow_cache: dict[str, str | None] = {"flow": None}
+_flow_cache: dict[str, str] = {}  # RAM api url -> "device" | "code"
 
 
 def _viya_logon_base() -> str:
-    explicit = os.getenv("SAS_LOGON_URL")
+    explicit = _cfg("SAS_LOGON_URL")
     if explicit:
         return explicit.split("/oauth/")[0]
-    return RAM_API_URL.split("/SASRetrievalAgentManager")[0] + "/SASLogon"
+    return _api_url().split("/SASRetrievalAgentManager")[0] + "/SASLogon"
 
 
 async def detect_signin_flow() -> str:
     """Return "device" (Keycloak) or "code" (Viya SASLogon paste-the-code)."""
-    env = os.getenv("RAM_AUTH_FLOW")
+    env = _cfg("RAM_AUTH_FLOW")
     if env in ("device", "code"):
         return env
-    if _flow_cache["flow"]:
-        return _flow_cache["flow"]
-    if not RAM_API_URL:
+    api = _api_url()
+    if not api:
         return "device"
-    realm = os.getenv("RAM_REALM", "sas-iot")
-    base = RAM_API_URL.split("/api/")[0]
+    if _flow_cache.get(api):
+        return _flow_cache[api]
+    realm = _cfg("RAM_REALM", "sas-iot")
+    base = api.split("/api/")[0]
     try:
         async with httpx.AsyncClient(verify=VERIFY_SSL, timeout=httpx.Timeout(8.0)) as client:
             r = await client.get(f"{base}/auth/realms/{realm}/.well-known/openid-configuration")
-        _flow_cache["flow"] = "device" if r.status_code == 200 else "code"
+        _flow_cache[api] = "device" if r.status_code == 200 else "code"
     except Exception:
         return "device"  # don't cache on network errors — retry next time
-    return _flow_cache["flow"]
+    return _flow_cache[api]
 
 
 # ─── Viya SASLogon authorization code flow (sas.cli public client) ───
@@ -365,7 +382,7 @@ async def device_start() -> dict:
     digest = hashlib.sha256(verifier.encode("utf-8")).digest()
     challenge = base64.urlsafe_b64encode(digest).decode("utf-8").rstrip("=")
 
-    client_id = os.getenv("RAM_CLIENT_ID", "sas-ram-api")
+    client_id = _cfg("RAM_CLIENT_ID", "sas-ram-api")
     async with httpx.AsyncClient(verify=VERIFY_SSL, timeout=TIMEOUT) as client:
         r = await client.post(f"{_oidc_base()}/auth/device", data={
             "client_id": client_id,
@@ -391,7 +408,7 @@ async def device_poll() -> dict:
     device = _entry().get("device") or {}
     if not device.get("device_code"):
         raise RamError(400, "No device authorization in progress — start a sign-in first.")
-    client_id = os.getenv("RAM_CLIENT_ID", "sas-ram-api")
+    client_id = _cfg("RAM_CLIENT_ID", "sas-ram-api")
     async with httpx.AsyncClient(verify=VERIFY_SSL, timeout=TIMEOUT) as client:
         r = await client.post(f"{_oidc_base()}/token", data={
             "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
@@ -425,7 +442,7 @@ async def _refresh_token_grant(entry: dict | None = None) -> str | None:
     token_url = e.get("token_url")
     if not refresh or not token_url:
         return None
-    client_id = e.get("client_id") or os.getenv("RAM_CLIENT_ID", "sas-ram-api")
+    client_id = e.get("client_id") or _cfg("RAM_CLIENT_ID", "sas-ram-api")
     data = {"grant_type": "refresh_token", "refresh_token": refresh}
     auth = None
     if e.get("auth_style") == "basic":
@@ -533,11 +550,13 @@ async def _request(method: str, path: str, *, params: dict | None = None, json: 
     if MOCK:
         data = await _mock_request(method, path, params=params, json=json)
         return (data, None) if with_response else data
-    if not RAM_API_URL:
-        raise RamError(500, "RAM_API_URL is not configured. Set it in backend/.env (see .env.example).")
+    api = _api_url()
+    if not api:
+        raise RamError(500, "RAM_API_URL is not configured. Set it in backend/.env (see .env.example), "
+                            "or fill the team's ram_api_url in data/teams.json.")
 
     token = await _get_token()
-    url = f"{RAM_API_URL}{path}"
+    url = f"{api}{path}"
     # Retry transient connection drops (e.g. RAM or its gateway closing a
     # connection — "Server disconnected without sending a response", a
     # RemoteProtocolError — which happens under intermittent/concurrent load).
@@ -892,7 +911,7 @@ def status() -> dict:
         auth = "device"
         e = _entry()
         authenticated = bool(e.get("refresh_token") or (e["token"] and time.time() < e["expires_at"]))
-    if not RAM_API_URL:
+    if not _api_url():
         state = "unconfigured"
     elif auth == "device" and not authenticated:
         state = "signin_required"
@@ -901,9 +920,10 @@ def status() -> dict:
     return {
         "status": state,
         "mode": "live",
-        "ramUrl": RAM_API_URL or "(not set)",
+        "ramUrl": _api_url() or "(not set)",
         "auth": auth,
         "authenticated": authenticated,
+        "team": _teams.current_id(),
     }
 
 
@@ -913,7 +933,7 @@ async def status_async() -> dict:
     if s.get("auth") == "device":
         s["signinFlow"] = await detect_signin_flow()
         if s["signinFlow"] == "code":
-            s["authorizeUrl"] = viya_authorize_url() if RAM_API_URL else None
+            s["authorizeUrl"] = viya_authorize_url() if _api_url() else None
     return s
 
 

@@ -128,3 +128,9 @@ export async function streamExplain({ patientId, profileId, overrides, actor }, 
 
 // ── Bootcamp environment links (SAS Viya, SAS RAM, materials) from the server's env ──
 export const getLinks = () => fetch('/api/links').then(json);
+
+// ── Teams: one SAS Viya + SAS RAM pair per team; the choice is a cookie the backend reads ──
+export const getTeams = () => fetch('/api/teams').then(json);
+export const selectTeam = (id) =>
+  fetch('/api/teams/select', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }).then(json);
+export const clearTeam = () => fetch('/api/teams/select', { method: 'DELETE' }).then(json);

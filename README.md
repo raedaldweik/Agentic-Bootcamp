@@ -13,6 +13,31 @@ Health Services (facilitators: EHS, BITS Pilani, SAS).
 
 ---
 
+## Teams: one SAS Viya and SAS RAM pair per team
+
+The hackathon can run every team on its own environments. `backend/data/teams.json` lists the
+teams; each row carries the URLs that differ per team and nothing secret:
+
+```json
+{"id": "3", "name": "Team 3",
+ "viya_url": "https://viya-....engage.sas.com",
+ "ram_url": "https://ram-3.example.com/SASRetrievalAgentManager",
+ "ram_api_url": "https://ram-3.example.com/SASRetrievalAgentManager/api/v1",
+ "ram_realm": "sas-iot", "ram_client_id": "sas-ram-api"}
+```
+
+A participant picks their team once on the home page. The choice is a cookie in their browser, and
+from then on the SAS Viya and SAS RAM buttons open that team's environments and the **SAS RAM** tab
+signs in to that team's RAM. Each team's sign-in is kept separately, so changing team means signing in
+to the new RAM, and switching back finds the old sign-in still there. The header shows the team;
+clicking it goes back to the picker.
+
+A field a team leaves empty falls back to `VIYA_URL`, `RAM_URL`, `RAM_API_URL` and the other
+variables, so the file can start with names only and get its URLs as the environments come up; a team
+without URLs shows as dashed in the picker. `TEAMS_JSON` (the same list as one JSON string) overrides
+the file, which is the way to change teams on Railway without a commit. An empty list means one
+environment for everyone and the picker stays hidden.
+
 ## The hackathon app
 
 Participants build a population-health agent on SAS Retrieval Agent Manager (RAM) over two days.

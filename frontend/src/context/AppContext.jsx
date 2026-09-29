@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { getTeams, selectTeam } from '../services/api';
+import { setSessionScope } from '../ram/api';
 
 export const PERSONAS = {
   executive: {
@@ -30,6 +32,24 @@ const Ctx = createContext(null);
 export function AppProvider({ children }) {
   const stored = loadStored();
   const [persona, setPersona] = useState('executive');
+  // Teams: which SAS Viya + SAS RAM pair this browser uses. `teams` is empty when the
+  // deployment runs one environment for everyone, and the picker stays hidden.
+  const [teams, setTeams] = useState([]);
+  const [team, setTeam] = useState(null);           // {id, name} or null
+  const [teamsLoaded, setTeamsLoaded] = useState(false);
+  useEffect(() => {
+    getTeams().then((r) => {
+      setTeams(r?.teams || []);
+      setTeam(r?.current || null);
+      setSessionScope(r?.current?.id || null);
+    }).catch(() => {}).finally(() => setTeamsLoaded(true));
+  }, []);
+  const chooseTeam = useCallback(async (id) => {
+    const r = await selectTeam(id);
+    setTeam(r.current);
+    setSessionScope(r.current?.id || null);
+    return r.current;
+  }, []);
   // Dashboard cross-filter: {tier: 'High', facility: '...'}; shared by every dashboard tab.
   const [dashFilter, setDashFilter] = useState({});
   const toggleFilter = useCallback((key, value) => setDashFilter((f) => {
@@ -98,7 +118,7 @@ export function AppProvider({ children }) {
   }, [persona]);
 
   return (
-    <Ctx.Provider value={{
+    <Ctx.Provider value={{ teams, team, teamsLoaded, chooseTeam,
       persona, setPersona, personaInfo: PERSONAS[persona],
       chats: visibleChats, activeChat, activeChatId: activeChat?.id,
       setActiveChatId, createNewChat, addMessage, renameChat, deleteChat,

@@ -24,10 +24,13 @@ export const submitViyaCode = (code) =>
 // cookie and refreshes it in the background. After a sign-in it also hands the
 // browser a copy of the session; if the backend ever comes back without it
 // (a redeploy on a fresh container), the browser hands it back and carries on.
-const SESSION_KEY = 'ram_session_v1';
-export const saveSession = (s) => { try { if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch { /* private mode */ } };
-export const loadSession = () => { try { const r = localStorage.getItem(SESSION_KEY); return r ? JSON.parse(r) : null; } catch { return null; } };
-export const clearSession = () => { try { localStorage.removeItem(SESSION_KEY); } catch { /* ignore */ } };
+// One copy per team: a session minted for team 3's RAM must not be handed to team 4's.
+let sessionScope = '';
+export const setSessionScope = (teamId) => { sessionScope = teamId ? `:${teamId}` : ''; };
+const sessionKey = () => `ram_session_v1${sessionScope}`;
+export const saveSession = (s) => { try { if (s) localStorage.setItem(sessionKey(), JSON.stringify(s)); } catch { /* private mode */ } };
+export const loadSession = () => { try { const r = localStorage.getItem(sessionKey()); return r ? JSON.parse(r) : null; } catch { return null; } };
+export const clearSession = () => { try { localStorage.removeItem(sessionKey()); } catch { /* ignore */ } };
 export const restoreSession = (session) =>
   req('/auth/restore', { method: 'POST', body: JSON.stringify({ session }) });
 // Sign this browser out of RAM: the backend revokes and forgets the session

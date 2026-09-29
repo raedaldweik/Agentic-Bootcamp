@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { getDashboard, getDataTables, getLinks } from '../services/api';
+import { useApp } from '../context/AppContext';
 
 /* ─── count-up hook (ease-out) ─── */
 function useCountUp(target, duration = 1700, start = true) {
@@ -42,6 +43,37 @@ const FALLBACK_LINKS = [
   { id: 'materials', label: 'Hackathon materials', url: 'https://github.com/raedaldweik/Agentic-Bootcamp' },
 ];
 
+/* Which team you are on. Each team has its own SAS Viya and SAS RAM pair, so the two
+   environment buttons and the SAS RAM tab follow the choice. Hidden when the deployment
+   runs one environment for everyone. */
+function TeamPicker() {
+  const { teams, team, chooseTeam } = useApp();
+  const [busy, setBusy] = useState(null);
+  if (!teams.length) return null;
+  const pick = async (id) => {
+    if (busy || team?.id === id) return;
+    setBusy(id);
+    try { await chooseTeam(id); } catch { /* the backend said no; keep the old team */ }
+    setBusy(null);
+  };
+  return (
+    <div className="team-pick reveal d4">
+      <div className="team-pick-label">
+        {team ? <>Your team: <b>{team.name}</b>. Change it any time.</> : 'Pick your team first: it sets which SAS Viya and SAS RAM you use.'}
+      </div>
+      <div className="team-grid">
+        {teams.map((t) => (
+          <button key={t.id} type="button" onClick={() => pick(t.id)} disabled={busy != null}
+            className={`team-pill ${team?.id === t.id ? 'active' : ''} ${t.ready ? '' : 'pending'}`}
+            title={t.ready ? `Use ${t.name}'s environments` : `${t.name}: environments not set up yet`}>
+            {busy === t.id ? '…' : t.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* One of the three environment buttons. Opens in a new tab; greyed out until its URL is set. */
 function EnvButton({ link, primary }) {
   const cls = primary ? 'btn-primary' : 'btn-secondary';
@@ -66,12 +98,16 @@ export default function LandingPage() {
   const [ov, setOv] = useState(null);
   const [tables, setTables] = useState(null);
   const [links, setLinks] = useState(FALLBACK_LINKS);
+  const { team } = useApp();
 
   useEffect(() => {
     getDashboard('overview').then(setOv).catch(() => {});
     getDataTables().then((r) => setTables(r.tables)).catch(() => {});
-    getLinks().then((r) => { if (r?.links?.length) setLinks(r.links); }).catch(() => {});
   }, []);
+  // The environment buttons belong to the team; refetch when it changes.
+  useEffect(() => {
+    getLinks().then((r) => { if (r?.links?.length) setLinks(r.links); }).catch(() => {});
+  }, [team?.id]);
 
   const rows = (name) => tables?.find((t) => t.name === name)?.rows;
   const kpi = ov?.kpis || [];
@@ -97,7 +133,8 @@ export default function LandingPage() {
               Your workbench for the two days: the data, the guidelines, a finished agent to learn from,
               and a door into your own RAM environment to test what you build.
             </p>
-            <div className="flex flex-wrap items-center gap-3 mt-7 reveal d4">
+            <TeamPicker />
+            <div className="flex flex-wrap items-center gap-3 mt-6 reveal d4">
               {links.map((l, i) => <EnvButton key={l.id} link={l} primary={i < 2} />)}
             </div>
           </div>

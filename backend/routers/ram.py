@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, Upload
 from pydantic import BaseModel
 
 from services import ram_client as ram
+from services import teams
 
 # Each browser carries its own RAM identity: an HttpOnly cookie names the
 # session the client keeps that browser's tokens under. Set on the first call
@@ -25,6 +26,7 @@ async def _bind_session(request: Request, response: Response) -> None:
         sid = secrets.token_urlsafe(24)
         response.set_cookie(SESSION_COOKIE, sid, max_age=SESSION_MAX_AGE, httponly=True, samesite="lax",
                             secure=request.url.scheme == "https", path="/api/ram")
+    teams.set_current(request.cookies.get(teams.COOKIE))
     ram.set_session_id(sid)
 
 

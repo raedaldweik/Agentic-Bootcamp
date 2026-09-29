@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import os
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+
+from services import teams
 
 router = APIRouter()
 
@@ -20,12 +22,16 @@ MATERIALS_DEFAULT = "https://github.com/raedaldweik/Agentic-Bootcamp"
 
 
 def _env(name: str, default: str = "") -> str:
-    return (os.getenv(name) or default).strip()
+    # The browser's team first (services.teams), then the process environment.
+    return teams.setting(name, default)
 
 
 @router.get("/api/links")
-def links():
+def links(request: Request):
+    teams.set_current(request.cookies.get(teams.COOKIE))
+    cur = teams.current()
     return {
+        "team": {"id": cur["id"], "name": cur["name"]} if cur else None,
         "links": [
             {"id": "viya", "label": "SAS Viya environment", "sub": "Data, models, decisions and Visual Analytics",
              "url": _env("VIYA_URL"), "icon": "viya"},
