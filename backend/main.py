@@ -139,6 +139,7 @@ app.include_router(ram.router)
 def health():
     live = agent.llm_enabled()
     return {"status": "ok", "app": "basira", "edition": "sas-ehs-hackathon",
+            "build": os.getenv("RAILWAY_GIT_COMMIT_SHA", "")[:7] or "local",
             "mode": "multi-agent" if live else "direct-tools",
             "model": (agent.display_model(agent.active_model()) if WARM["ready"] else "warming") if live else None,
             "model_switches": agent._active["switches"] if live else None,

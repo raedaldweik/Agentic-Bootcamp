@@ -45,13 +45,17 @@ import asyncio
 import base64
 import hashlib
 import json
+import logging
 import os
+import re
 import secrets
 import time
 import uuid
 from contextvars import ContextVar
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 from urllib.parse import quote
 
 import httpx
@@ -656,13 +660,29 @@ async def delete_session(session_id: str) -> dict:
     return {"ok": True}
 
 
-async def list_session_queries(session_id: str) -> list[dict]:
+async def list_session_queries(session_id: str, *, raw: bool = False) -> list[dict] | dict:
     body = await _request("GET", "/query", params={"filter": f"eq(querySessionId,'{session_id}')", "limit": 100})
     items = body.get("items") or []
+    if raw:
+        # Diagnostics: what a query record looks like on this RAM build, so an
+        # ordering problem can be read off one paste instead of guessed at.
+        first = items[0] if items else {}
+        return {"count": len(items), "keys": sorted(first.keys()),
+                "timestamp_by_item": [_query_timestamp(q) for q in items],
+                "order_as_returned": [str(q.get("content"))[:40] for q in items],
+                "sample": {k: (v if k != "response" else "…") for k, v in first.items()}}
     # Order chronologically — RAM doesn't guarantee an order on this endpoint,
     # and an unordered list reconstructs the conversation with turns scrambled.
-    # ISO-8601 timestamps sort lexically; undated items sink to the top stably.
-    items.sort(key=_query_timestamp)
+    # ISO-8601 timestamps sort lexically; undated items keep their place (stable sort).
+    if any(_query_timestamp(q) for q in items):
+        items.sort(key=_query_timestamp)
+    else:
+        # No timestamp on the records at all. RAM lists newest first (its
+        # sessions endpoint defaults to descending too, and a reloaded chat
+        # came back exactly reversed), so flip it to read top to bottom.
+        logger.warning("RAM query records carry no timestamp (keys: %s); assuming newest-first",
+                       sorted(items[0].keys()) if items else [])
+        items.reverse()
     # A conversation turn is a top-level *user* query. Querying an agent also
     # records the agent's own internal sub-queries (origin "agent", each with a
     # parentQueryId) under the same session id — rendering those as chat bubbles
@@ -799,7 +819,17 @@ async def _fetch_query(query_id: str) -> dict | None:
 
 
 _TS_KEYS = ("insert_timestamp", "update_timestamp", "insertTimestamp", "updateTimestamp",
-            "creationTimeStamp", "creationTimestamp", "modifiedTimeStamp")
+            "creationTimeStamp", "creationTimestamp", "modifiedTimeStamp", "createdAt", "created_at",
+            "timestamp")
+_TS_VALUE = re.compile(r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}")
+
+
+def _looks_like_time(v: Any) -> bool:
+    if isinstance(v, bool):
+        return False
+    if isinstance(v, (int, float)):
+        return v > 1_000_000_000          # epoch seconds or milliseconds
+    return isinstance(v, str) and bool(_TS_VALUE.match(v))
 
 
 def _query_timestamp(q: dict) -> str:
@@ -808,15 +838,25 @@ def _query_timestamp(q: dict) -> str:
     RAM's query records are stamped in snake case (`update_timestamp`), unlike
     its sessions (`insertTimestamp`, `updateTimestamp`); older builds guessed
     camel-case names only, matched nothing, and left history in RAM's own order,
-    which is not chronological. Try the known names first, then any key that
-    looks like a timestamp, so a renamed field cannot scramble history again."""
+    which is newest first. Try the known names, then any top-level or one-level
+    nested field whose name says time or date and whose value looks like one.
+    Epoch numbers are zero-padded so they sort with each other."""
+    def fmt(v: Any) -> str:
+        return f"{int(v):020d}" if isinstance(v, (int, float)) else str(v)
     for k in _TS_KEYS:
         v = q.get(k)
-        if v:
-            return str(v)
+        if _looks_like_time(v):
+            return fmt(v)
     for k, v in q.items():
-        if v and isinstance(v, (str, int, float)) and "timestamp" in k.lower():
-            return str(v)
+        kl = k.lower()
+        if ("time" in kl or "date" in kl) and _looks_like_time(v):
+            return fmt(v)
+    for v in q.values():
+        if isinstance(v, dict):
+            for k2, v2 in v.items():
+                k2l = k2.lower()
+                if ("time" in k2l or "date" in k2l) and _looks_like_time(v2):
+                    return fmt(v2)
     return ""
 
 

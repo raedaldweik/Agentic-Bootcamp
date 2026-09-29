@@ -177,8 +177,10 @@ async def sessions():
 
 
 @router.get("/sessions/{session_id}/queries")
-async def session_queries(session_id: str):
-    return await _wrap(ram.list_session_queries(session_id))
+async def session_queries(session_id: str, raw: bool = False):
+    """The session's turns, oldest first. `?raw=1` returns the shape of RAM's
+    query records instead (keys, per-item timestamp, order as returned)."""
+    return await _wrap(ram.list_session_queries(session_id, raw=raw))
 
 
 @router.delete("/sessions/{session_id}")
