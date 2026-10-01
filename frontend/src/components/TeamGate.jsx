@@ -38,7 +38,7 @@ export default function TeamGate() {
         <div className="section-eyebrow">Emirates Health Services × SAS</div>
         <h2 id="team-gate-title" className="team-gate-title">Sign in as your team</h2>
         <p className="team-gate-lede">
-          Each team has its own SAS Viya and SAS RAM. Your team name and password are on the card at your table.
+          Each team has its own Viya and RAM. Your team name and password are on the card at your table.
         </p>
         <label className="team-gate-label" htmlFor="team-user">Team</label>
         <input id="team-user" ref={first} className="team-gate-input" value={username} autoComplete="username"

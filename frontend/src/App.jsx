@@ -29,22 +29,24 @@ function Bokeh() {
   );
 }
 
+// Three places to be: the home page, the finished example to learn from, and the agent you build.
 export const TABS = [
   { id: 'landing', label: 'Home' },
-  { id: 'overview', label: 'Dashboards' },
-  { id: 'data', label: 'Data' },
-  { id: 'documents', label: 'Documents' },
-  { id: 'assistant', label: 'Population Health Agent' },
-  { id: 'ram', label: 'SAS RAM' },
+  { id: 'example', label: 'Example 1' },
+  { id: 'ram', label: 'Hackathon Agent' },
 ];
 
-// The dashboards: a second row of pills appears next to the main tabs while one of them is open.
-export const DASH_TABS = [
+// Everything inside Example 1: a second row of pills appears while one of them is open.
+export const EXAMPLE_TABS = [
   { id: 'overview', label: 'Registry' },
   { id: 'geography', label: 'Geography' },
   { id: 'simulator', label: 'Simulator' },
+  { id: 'data', label: 'Data' },
+  { id: 'documents', label: 'Documents' },
+  { id: 'assistant', label: 'Example agent' },
 ];
-const DASH_IDS = DASH_TABS.map((t) => t.id);
+const EXAMPLE_IDS = EXAMPLE_TABS.map((t) => t.id);
+const EXAMPLE_HOME = 'overview';
 
 function Header({ tab, setTab }) {
   const { team, teamsEnabled, signOutTeam, openGate } = useApp();
@@ -70,8 +72,9 @@ function Header({ tab, setTab }) {
   const selfTest = health?.warmup?.self_test;
   const warming = ok && health.mode === 'multi-agent' && !health.warmup?.ready;
   const keyBad = ok && health.mode === 'multi-agent' && selfTest && !selfTest.ok;
-  const isDash = DASH_IDS.includes(tab);
-  const activeTop = isDash ? 'overview' : tab;
+  const isExample = EXAMPLE_IDS.includes(tab);
+  const activeTop = isExample ? 'example' : tab;
+  const goTop = (id) => setTab(id === 'example' ? EXAMPLE_HOME : id);
 
   return (
     <header className="app-header">
@@ -84,24 +87,24 @@ function Header({ tab, setTab }) {
         <div className="header-eyebrow">Emirates Health Services × SAS</div>
         <div className="title-row">
           <h1 className="app-title">
-            <b>Agentic AI Hackathon</b> <span className="title-sep">·</span> SAS Retrieval Agent Manager
+            <b>Agentic AI Hackathon</b>
           </h1>
           <div className="accent-line" />
         </div>
         <div className="nav-row">
           <div className="seg-track">
             {TABS.map((t) => (
-              <button key={t.id} onClick={() => setTab(t.id)}
+              <button key={t.id} onClick={() => goTop(t.id)}
                 className={`seg-pill ${activeTop === t.id ? 'active' : ''}`}>
                 {t.label}
               </button>
             ))}
           </div>
-          {isDash && (
+          {isExample && (
             <>
               <span className="nav-divider" />
               <div className="seg-track">
-                {DASH_TABS.map((t) => (
+                {EXAMPLE_TABS.map((t) => (
                   <button key={t.id} onClick={() => setTab(t.id)}
                     className={`seg-pill ${tab === t.id ? 'active' : ''}`}>
                     {t.label}
@@ -116,11 +119,11 @@ function Header({ tab, setTab }) {
       <div className="flex items-center gap-4">
         {teamsEnabled && (team ? (
           <button className="team-chip" onClick={() => { signOutTeam(); setTab('landing'); }}
-            title="Signed in as this team: its SAS Viya and SAS RAM. Click to switch team.">
+            title="Signed in as this team: its Viya and RAM. Click to switch team.">
             {team.name} <span className="team-chip-sub">switch</span>
           </button>
         ) : (
-          <button className="team-chip unset" onClick={openGate} title="Sign in as your team to use its SAS Viya and SAS RAM">
+          <button className="team-chip unset" onClick={openGate} title="Sign in as your team to use its Viya and RAM">
             Sign in as a team
           </button>
         ))}

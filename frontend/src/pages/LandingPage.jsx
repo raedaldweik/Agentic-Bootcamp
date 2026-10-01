@@ -38,24 +38,33 @@ const ECG_D = (() => {
 })();
 
 const FALLBACK_LINKS = [
-  { id: 'viya', label: 'SAS Viya environment', url: '' },
-  { id: 'ram', label: 'SAS RAM environment', url: '' },
+  { id: 'ram', label: 'RAM', sub: 'Where you build and test your agent', url: '' },
+  { id: 'viya', label: 'Viya', sub: 'Data, models and dashboards', url: '' },
   { id: 'materials', label: 'Hackathon materials', url: 'https://github.com/raedaldweik/Agentic-Bootcamp' },
 ];
+// RAM is the door participants use all day, so it comes first and biggest.
+const LINK_ORDER = ['ram', 'viya', 'materials'];
+const linkStyle = (id) => (id === 'ram' ? 'btn-primary btn-xl' : id === 'viya' ? 'btn-secondary btn-lg' : 'btn-secondary');
 
 /* One of the three environment buttons. Opens in a new tab; greyed out until its URL is set. */
-function EnvButton({ link, primary }) {
-  const cls = primary ? 'btn-primary' : 'btn-secondary';
+function EnvButton({ link }) {
+  const cls = linkStyle(link.id);
+  const body = (
+    <span className="btn-text">
+      {link.label}
+      {link.id !== 'materials' && link.sub && <span className="btn-sub">{link.sub}</span>}
+    </span>
+  );
   if (!link.url) {
     return (
       <span className={`${cls} btn-disabled`} title="Link will be shared on the day">
-        {link.label}
+        {body}
       </span>
     );
   }
   return (
     <a className={cls} href={link.url} target="_blank" rel="noopener noreferrer" title={link.url}>
-      {link.label}
+      {body}
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M7 17L17 7M9 7h8v8" />
       </svg>
@@ -95,15 +104,15 @@ export default function LandingPage() {
           <div className="relative z-[1]">
             <div className="section-eyebrow reveal d1">Emirates Health Services × SAS</div>
             <h1 className="hero-title reveal d2">
-              Build a population-health{' '}
-              <span className="hero-grad">agent on <span className="nowrap">SAS RAM.</span></span>
+              Build a population-health <span className="hero-grad">agent.</span>
             </h1>
             <p className="hero-lede mt-5 reveal d3">
-              Your workbench for the two days: the data, the guidelines, a finished agent to learn from,
-              and a door into your own RAM environment to test what you build.
+              Two days, two places. <b>Example 1</b> is a finished agent to learn from, with its data and
+              guidelines. <b>RAM</b> is where you build and test your own.
             </p>
             <div className="flex flex-wrap items-center gap-3 mt-6 reveal d4">
-              {links.map((l, i) => <EnvButton key={l.id} link={l} primary={i < 2} />)}
+              {[...links].sort((a, b) => LINK_ORDER.indexOf(a.id) - LINK_ORDER.indexOf(b.id))
+                .map((l) => <EnvButton key={l.id} link={l} />)}
             </div>
           </div>
 

@@ -39,7 +39,7 @@ export default function DataPage() {
                 ? `● BigQuery · ${source.project}.${source.dataset} · ${source.location}${source.load_ms ? ` · loaded in ${(source.load_ms / 1000).toFixed(1)} s` : ''}`
                 : source.provisioning ? `◐ provisioning BigQuery ${source.dataset}…`
                 : source.backend === 'bigquery' ? `○ local files (BigQuery: ${source.error || 'pending'})`
-                : '○ local csv.gz files · on SAS Viya: CAS in-memory tables loaded from the exchange export'}
+                : '○ local csv.gz files · on Viya: CAS in-memory tables loaded from the exchange export'}
             </p>
           )}
         </div>

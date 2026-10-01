@@ -1,10 +1,10 @@
-// UI strings for the SAS RAM page — English / Arabic. The toggle in the
+// UI strings for the RAM page — English / Arabic. The toggle in the
 // page's top bar switches the page (and flips the page container to RTL; the
 // host app's document direction is never touched). The backend is told the
 // language per query for compatibility; RAM agents answer as configured.
 
 const STR = {
-  appTitle: { en: 'SAS RAM · Retrieval Agent Manager', ar: 'SAS RAM · مدير وكلاء الاسترجاع' },
+  appTitle: { en: 'Hackathon Agent · RAM', ar: 'وكيل الهاكاثون · RAM' },
   connecting: { en: 'Connecting…', ar: 'جارٍ الاتصال…' },
   connected: { en: 'Connected', ar: 'متصل' },
   mockMode: { en: 'Mock mode', ar: 'وضع المحاكاة' },
@@ -17,7 +17,7 @@ const STR = {
   // Sign-in (Keycloak device flow / Viya paste-the-code flow)
   signIn: { en: 'Sign in', ar: 'تسجيل الدخول' },
   signOut: { en: 'Sign out', ar: 'تسجيل الخروج' },
-  signOutTitle: { en: 'Sign out of SAS RAM on this browser', ar: 'تسجيل الخروج من SAS RAM على هذا المتصفح' },
+  signOutTitle: { en: 'Sign out of RAM on this browser', ar: 'تسجيل الخروج من RAM على هذا المتصفح' },
   signInTitle: { en: 'Sign in to your assistant', ar: 'سجّل الدخول إلى مساعدك' },
   signInSso: { en: 'Authenticate through single sign-on', ar: 'المصادقة عبر تسجيل الدخول الموحّد' },
   signInRam: { en: 'Authenticate with your RAM credentials', ar: 'المصادقة ببيانات اعتماد RAM الخاصة بك' },
@@ -44,8 +44,8 @@ const STR = {
   delete: { en: 'Delete', ar: 'حذف' },
 
   welcome: {
-    en: 'Welcome to the EHS Agentic AI Hackathon agent on SAS Retrieval Agent Manager (RAM). Pick an agent published in RAM from the dropdown above and ask about the diabetes population, care gaps, guidelines or a policy simulation. Every answer shows its tool calls, retrieval and sources.',
-    ar: 'مرحباً بك في وكيل هاكاثون EHS للذكاء الاصطناعي الوكيل على SAS Retrieval Agent Manager. اختر وكيلاً منشوراً في RAM من القائمة أعلاه واسأل عن مرضى السكري، أو فجوات الرعاية، أو الإرشادات السريرية، أو محاكاة سياسة. كل إجابة تعرض استدعاءات أدواتها وعمليات الاسترجاع ومصادرها.',
+    en: 'Welcome to the EHS Agentic AI Hackathon agent on RAM. Pick an agent published in RAM from the dropdown above and ask about the diabetes population, care gaps, guidelines or a policy simulation. Every answer shows its tool calls, retrieval and sources.',
+    ar: 'مرحباً بك في وكيل هاكاثون EHS للذكاء الاصطناعي الوكيل على RAM. اختر وكيلاً منشوراً في RAM من القائمة أعلاه واسأل عن مرضى السكري، أو فجوات الرعاية، أو الإرشادات السريرية، أو محاكاة سياسة. كل إجابة تعرض استدعاءات أدواتها وعمليات الاسترجاع ومصادرها.',
   },
 
   selectAgent: { en: 'Select an agent', ar: 'اختر وكيلاً' },

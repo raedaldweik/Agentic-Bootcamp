@@ -33,10 +33,10 @@ def links(request: Request):
     return {
         "team": {"id": cur["id"], "name": cur["name"]} if cur else None,
         "links": [
-            {"id": "viya", "label": "SAS Viya environment", "sub": "Data, models, decisions and Visual Analytics",
-             "url": _env("VIYA_URL"), "icon": "viya"},
-            {"id": "ram", "label": "SAS RAM environment", "sub": "Retrieval Agent Manager: agents, collections, tools",
+            {"id": "ram", "label": "RAM", "sub": "Where you build and test your agent",
              "url": _env("RAM_URL"), "icon": "ram"},
+            {"id": "viya", "label": "Viya", "sub": "Data, models and dashboards",
+             "url": _env("VIYA_URL"), "icon": "viya"},
             {"id": "materials", "label": "Hackathon materials", "sub": "Decks, labs, data and this application",
              "url": _env("MATERIALS_URL", MATERIALS_DEFAULT), "icon": "materials"},
         ],

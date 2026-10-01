@@ -5,7 +5,6 @@ import ResponseCard from './components/ResponseCard';
 import SourceViewer from './components/SourceViewer';
 import QueryDetails from './components/QueryDetails';
 import TargetSelector from './components/TargetSelector';
-import VoiceInput from './components/VoiceInput';
 import SignIn from './SignIn';
 import {
   getHealth, getAgents, getCollections, submitQuery, getQueryStatus, getQueryTrace, extractAttachment,
@@ -156,7 +155,7 @@ function ChatBody() {
       setAgents(agentList);
       setCollections(collList);
       if (a.status === 'rejected' && c.status === 'rejected') {
-        setTargetsError(a.reason?.message || 'Could not reach SAS Retrieval Agent Manager');
+        setTargetsError(a.reason?.message || 'Could not reach RAM');
       } else if (agentList.length > 0) {
         // Default to the first published agent
         setTarget({ type: 'agent', id: agentList[0].id, name: agentList[0].name });
@@ -465,18 +464,6 @@ function ChatBody() {
         <div className="px-5 pb-4 pt-2 relative z-[1]">
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl border border-[rgba(15,23,42,0.10)] transition-all focus-within:border-[var(--sas-hi)] focus-within:shadow-[0_0_0_3px_rgba(43,83,120,0.10)]"
             style={{ background: 'var(--glass-strong)', backdropFilter: 'blur(12px)' }}>
-            {/* Attach document */}
-            <input ref={fileRef} type="file" className="hidden" onChange={pickFile}
-              accept=".pdf,.docx,.txt,.md,.csv,.json,.log,.xml,.html,.yaml,.yml,.sas,.sql,.py" />
-            <button onClick={() => fileRef.current?.click()} disabled={attaching}
-              title={t('attachTooltip')}
-              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all hover:bg-[rgba(43,83,120,0.08)] disabled:opacity-40"
-              style={{ color: attachment ? 'var(--sas)' : 'var(--text-dim)' }}>
-              <AttachIcon size={15} />
-            </button>
-
-            <VoiceInput onTranscript={text => send(text)} disabled={loading} lang={lang} title={t('speakTooltip')} />
-
             <textarea ref={inputRef} rows="1" value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
