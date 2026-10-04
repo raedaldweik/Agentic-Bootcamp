@@ -107,8 +107,9 @@ export default function LandingPage() {
               Build a population-health <span className="hero-grad">agent.</span>
             </h1>
             <p className="hero-lede mt-5 reveal d3">
-              Two days, two places. <b>Example 1</b> is a finished agent to learn from, with its data and
-              guidelines. <b>RAM</b> is where you build and test your own.
+              Two days, three places. <b>Example 1</b> is a finished agent to learn from, with its data and
+              guidelines. <b>Example 2</b> is a screening check: your risk, the right test, the nearest place.
+              <b>RAM</b> is where you build and test your own.
             </p>
             <div className="flex flex-wrap items-center gap-3 mt-6 reveal d4">
               {[...links].sort((a, b) => LINK_ORDER.indexOf(a.id) - LINK_ORDER.indexOf(b.id))

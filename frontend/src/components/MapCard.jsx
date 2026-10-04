@@ -24,10 +24,10 @@ export const UAE_OUTLINE = [
 // CARTO's raster basemaps now require an API key, which is why the tiles used to read
 // "API KEY REQUIRED". Override at build time with VITE_BASEMAP_STYLE if the customer has
 // their own tile service.
-const STYLE = import.meta.env.VITE_BASEMAP_STYLE || 'https://tiles.openfreemap.org/styles/positron';
+export const STYLE = import.meta.env.VITE_BASEMAP_STYLE || 'https://tiles.openfreemap.org/styles/positron';
 
 // Offline fallback: a soft land shape, no border, used only when the basemap fails to load.
-const FALLBACK_STYLE = {
+export const FALLBACK_STYLE = {
   version: 8,
   sources: { uae: { type: 'geojson', data: { type: 'Feature', geometry: { type: 'Polygon', coordinates: [UAE_OUTLINE] } } } },
   layers: [

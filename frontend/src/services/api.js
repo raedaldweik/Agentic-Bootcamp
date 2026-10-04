@@ -137,3 +137,8 @@ export const loginTeam = async (username, password) => {
   return r.json();
 };
 export const logoutTeam = () => fetch('/api/teams/logout', { method: 'POST' }).then(json);
+
+// ── Example 2: colorectal screening check ──
+export const getCrcOptions = () => fetch('/api/screening/crc/options').then(json);
+export const assessCrc = (body) =>
+  fetch('/api/screening/crc/assess', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(json);

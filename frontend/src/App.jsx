@@ -10,6 +10,7 @@ import SimulatorPage from './pages/SimulatorPage';
 import DocumentsPage from './pages/DocumentsPage';
 import DataPage from './pages/DataPage';
 import RamCopilotPage from './ram/RamCopilotPage';
+import ScreeningPage from './pages/ScreeningPage';
 // Imported (not served from /public) so Vite gives it a hashed URL under /assets: a browser or edge
 // cache can never show a stale copy of the partner mark after the file changes.
 import sasLogoUrl from './assets/sas-logo.png';
@@ -29,10 +30,11 @@ function Bokeh() {
   );
 }
 
-// Three places to be: the home page, the finished example to learn from, and the agent you build.
+// Four places to be: the home page, two finished examples to learn from, and the agent you build.
 export const TABS = [
   { id: 'landing', label: 'Home' },
   { id: 'example', label: 'Example 1' },
+  { id: 'screening', label: 'Example 2' },
   { id: 'ram', label: 'Hackathon Agent' },
 ];
 
@@ -159,6 +161,7 @@ function Layout() {
       case 'data': return <DataPage />;
       case 'documents': return <DocumentsPage />;
       case 'assistant': return <AssistantPage />;
+      case 'screening': return <ScreeningPage />;
       case 'ram': return <RamCopilotPage key={team?.id || 'one'} />;  // a new team means a new RAM: start the page over
       default: return <LandingPage />;
     }
