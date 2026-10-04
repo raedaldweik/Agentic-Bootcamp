@@ -118,6 +118,58 @@ HISTORY = {
 }
 
 
+# ── Free text: what a person writes in the "tell us more" boxes ───────────────
+# The score and the pathway only count what is ticked, so the notes are scanned for
+# things the person wrote but did not tick, and the page offers to tick them.
+NOTE_PATTERNS = [
+    ("symptoms", "bleeding", r"\b(blood|bleed|bleeding|bloody|red stool|black stool|melaena|melena)\b",
+     "You mentioned blood. Tick 'blood in the stool' so it counts: it changes the advice."),
+    ("symptoms", "bowel_change", r"\b(constipat\w*|diarrh\w*|loose stool|bowel habit|stools? (changed|change)|going more|going less|urgency)\b",
+     "You described a change in bowel habit. If it has lasted more than four weeks, tick it."),
+    ("symptoms", "weight_loss", r"\b(lost|losing) (some )?weight|weight loss|kilos? (down|lost)\b",
+     "You mentioned losing weight. If it was not on purpose, tick 'unexplained weight loss'."),
+    ("symptoms", "anaemia", r"\b(an(a)?emi\w*|low (iron|haemoglobin|hemoglobin)|iron deficien\w*|ferritin)\b",
+     "You mentioned anaemia or low iron. Tick it: it is one of the warning signs doctors look for."),
+    ("symptoms", "mass_or_pain", r"\b(abdominal pain|stomach pain|tummy pain|belly pain|cramps?|lump|mass|bloat\w*)\b",
+     "You mentioned pain or a lump. If it is persistent, tick 'persistent abdominal pain or a lump'."),
+    ("family_history", None, r"\b(father|mother|dad|mum|mom|brother|sister|son|daughter|parent|sibling)s?\b[^.]{0,60}\b(cancer|tumou?r|polyps?)\b",
+     "You wrote about a relative with cancer or polyps. If it was a parent, brother, sister or child with bowel cancer, pick it under 'bowel cancer in the family' and give their age at diagnosis."),
+    ("history", "polyps", r"\bpolyps?\b(?![^.]{0,60}\b(father|mother|brother|sister|son|daughter|parent|sibling))",
+     "You mentioned polyps. If they were removed from your own bowel, tick it under your own history."),
+    ("history", "ibd8", r"\b(crohn|colitis|ulcerative|ibd|inflammatory bowel)\b",
+     "You mentioned colitis or Crohn's. If you have had it for 8 years or more, tick it: it moves you to a surveillance programme."),
+    ("history", "syndrome", r"\b(lynch|fap|familial adenomatous|hnpcc|genetic test|brca)\b",
+     "You mentioned an inherited syndrome or a genetic test. Tick 'a known inherited syndrome' if that is you or your family."),
+    ("smoking", None, r"\b(smok\w*|cigarette|shisha|vap\w*|hookah|medwakh)\b",
+     "You mentioned smoking or shisha. Set 'Smoking' to 'Yes' or 'Used to' so the score counts it."),
+    ("last_screen", None, r"\b(colonoscop\w*|fit test|stool test|screened|screening|sigmoidoscop\w*)\b",
+     "You mentioned a previous test. Pick it under 'Last screening' so the timing is right."),
+    ("diabetes", None, r"\b(diabet\w*|metformin|insulin|hba1c|sugar)\b",
+     "You mentioned diabetes or diabetes medicines. Set 'Diabetes' to 'Yes'."),
+]
+NOTE_FIELDS = ("health", "family", "screening", "symptoms", "lifestyle", "other")
+
+
+def note_hints(p: dict) -> list[dict]:
+    import re as _re
+    text = " ".join(str((p.get("notes") or {}).get(k) or "") for k in NOTE_FIELDS).lower()
+    if not text.strip():
+        return []
+    flags = set(p.get("symptoms") or []); history = set(p.get("history") or [])
+    hints = []
+    for field, value, pattern, message in NOTE_PATTERNS:
+        if not _re.search(pattern, text):
+            continue
+        already = ((field == "symptoms" and value in flags) or (field == "history" and value in history)
+                   or (field == "family_history" and (p.get("family_history") or "none") != "none")
+                   or (field == "smoking" and (p.get("smoking") or "never") != "never")
+                   or (field == "last_screen" and (p.get("last_screen") or "never") != "never")
+                   or (field == "diabetes" and bool(p.get("diabetes"))))
+        if not already:
+            hints.append({"field": field, "value": value, "text": message})
+    return hints
+
+
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     r = 6371.0
     p1, p2 = math.radians(lat1), math.radians(lat2)
@@ -203,6 +255,7 @@ def assess(p: dict) -> dict:
     last = p.get("last_screen") or "never"
     bmi = p.get("bmi") or _bmi(p.get("height_cm"), p.get("weight_kg"))
     diabetes = bool(p.get("diabetes"))
+    duration = p.get("symptom_duration") or ""    # under_2w | 2_6w | over_6w
     activity = p.get("activity") or "some"        # low | some | regular
     diet = p.get("diet") or "mixed"               # mixed | high_processed | high_fibre
     alcohol = p.get("alcohol") or "none"          # none | moderate | heavy
@@ -218,9 +271,11 @@ def assess(p: dict) -> dict:
             "test": "Urgent GP assessment, then colonoscopy by referral",
             "interval": "Now. Do not wait for a screening appointment.",
             "where": "endoscopy",
-            "why": ("You reported " + ", ".join(flagged) + ". These need a doctor to look into them "
-                    "properly. Most turn out to be something minor, but a stool screening test is not "
-                    "the right test once there are symptoms."),
+            "why": ("You reported " + ", ".join(flagged)
+                    + (" for more than six weeks" if duration == "over_6w" else " for a few weeks" if duration == "2_6w" else "")
+                    + ". These need a doctor to look into them properly. Most turn out to be something minor, "
+                    "but a stool screening test is not the right test once there are symptoms."
+                    + (" Symptoms that have lasted this long should not wait any longer." if duration == "over_6w" else "")),
             "next_steps": [
                 "Book a GP or family-medicine appointment this week and say the words 'change in bowels' or 'bleeding'.",
                 "Expect a blood test and a referral for a colonoscopy; in the UAE this is usually arranged within two weeks.",
@@ -404,6 +459,7 @@ def assess(p: dict) -> dict:
     return {
         "inputs": {"age": age, "sex": sex, "bmi": bmi, "smoking": smoking, "family_history": family,
                    "history": sorted(history), "symptoms": sorted(flags), "last_screen": last},
+        "note_hints": note_hints(p),
         "score": {**score, "tier_label": tier_label},
         "pathway": pathway,
         "advice": advice,
@@ -442,3 +498,157 @@ EXAMPLES = [
                 "family_history": "none", "history": [], "symptoms": ["bleeding", "bowel_change"], "last_screen": "colo_old",
                 "activity": "some", "diet": "mixed", "alcohol": "none", "location": {"area": "Al Hamidiya"}}},
 ]
+
+
+# ── Chat: questions about the result ──────────────────────────────────────────
+CHAT_SYSTEM = """You are the screening assistant inside Example 2 of the EHS x SAS Agentic AI Hackathon app,
+an educational prototype about bowel (colorectal) cancer screening in the UAE.
+
+You are given the person's form and the assessment the app computed from it. Answer their questions
+about that result, about the tests (FIT stool test, colonoscopy, preparation, sedation, what results
+mean), about the UAE screening programme (average-risk screening from 40 to 75, yearly FIT or
+colonoscopy every 10 years, family-history and surveillance rules), and about the EHS facilities listed.
+
+Rules:
+- Plain language, short answers, for someone who is not medical. Two to five sentences, or a short list.
+- Never diagnose, never estimate an individual's chance of having cancer, never change the pathway the
+  app shows; if they ask whether they have cancer, say a test is the only way to know and point them to
+  the next step in their result.
+- Anyone with the warning symptoms (bleeding, a changed bowel habit for weeks, unexplained weight loss,
+  anaemia, persistent pain or a lump) should see a doctor within two weeks. Say so when relevant, calmly.
+- No medicine doses, no interpreting their lab results, nothing beyond bowel cancer screening; for other
+  topics say it is outside what this assistant covers and suggest their GP.
+- If asked how reliable this is: the risk tier is a published score (APCS), the rules are a simplified
+  teaching version of the national programme, and nothing here replaces a doctor.
+- Do not invent phone numbers, prices, opening hours or waiting times. Booking is through the EHS app
+  or call centre, with an Emirates ID.
+- Match the person's language (English or Arabic).
+"""
+
+FAQ = [
+    (r"\b(do i have|have i got|is it cancer|cancer\?|am i going to|will i die|dying)\b",
+     "Nothing on this page can tell whether you have cancer; only a test can, and most people who are checked do not have it. "
+     "What the page can tell you is the right next step for you, which is shown at the top of your result. If you have any of the warning symptoms, that step is a doctor within two weeks."),
+    (r"\b(fit|stool test|poo test|poop|sample|kit)\b",
+     "FIT is a stool test you do at home. You collect a tiny sample with the stick in the kit, close it and hand it back. "
+     "It looks for blood you cannot see. No fasting, no preparation. The result takes about a week. A positive result does not mean cancer: about nine in ten positives are polyps or something harmless, but every positive is followed by a colonoscopy to check."),
+    (r"\b(colonoscop\w*|camera|scope|prep\w*|laxative|sedat\w*|anaesth\w*|hurt|painful)\b",
+     "A colonoscopy is a camera test of the whole large bowel, done in a hospital endoscopy unit. The day before you drink a bowel-cleansing solution and stay on clear fluids. "
+     "On the day you are given sedation, so most people remember little and feel no pain; it takes 20 to 40 minutes and you go home the same day with someone to drive you. If polyps are found they are usually removed there and then."),
+    (r"\b(40|forty|start|young|early|age)\b",
+     "In the UAE routine screening starts at 40 for people at average risk, earlier than the 45 or 50 used in many countries, because bowel cancer here is diagnosed younger on average. "
+     "From 40 to 75 the choice is a yearly FIT or a colonoscopy every ten years. With a close relative diagnosed young, it starts ten years before their age at diagnosis."),
+    (r"\b(tier|score|points|apcs|average risk|higher risk|moderate|percent|%|chance|likely|odds)\b",
+     "The tier comes from the APCS score, a published score using age, sex, family history, smoking and weight. Each tier was measured in large screening studies: of 100 people in the average tier who have a colonoscopy about 1 is found to have an advanced polyp or early cancer, about 3 in the moderate tier and about 5 in the higher tier. "
+     "It describes the group, not you personally. Open 'How the points add up' on your result to see which facts gave points."),
+    (r"\b(famil\w*|father|mother|brother|sister|parent|relative|hereditary|genetic|lynch)\b",
+     "One parent, brother, sister or child with bowel cancer roughly doubles your own risk. Diagnosed at 60 or older, you keep the normal tests but start at 40 at the latest. Diagnosed younger, or two relatives, you move to colonoscopy every five years, starting ten years before their diagnosis age. "
+     "Lynch syndrome and FAP are rarer inherited conditions handled by a genetics team."),
+    (r"\b(symptom\w*|bleed\w*|blood|constipat\w*|diarrh\w*|weight loss|pain|lump|anaemi\w*|anemi\w*|urgent|worried|scared)\b",
+     "Blood in the stool, a change in bowel habit lasting more than four weeks, unexplained weight loss, anaemia, or persistent pain or a lump all need a doctor within two weeks, whatever your age or tier. "
+     "Most turn out to be something minor, but they are checked with a colonoscopy, not a stool test. Book a GP appointment this week and say what you have noticed."),
+    (r"\b(where|book\w*|appointment|hospital|centre|center|clinic|near\w*|how do i|go)\b",
+     "Your result lists the nearest EHS places and what each does: health centres hand out FIT kits and see you as a GP, hospitals have the endoscopy units for colonoscopy. "
+     "Book through the EHS app or the EHS call centre and bring your Emirates ID. If you have symptoms, say so when booking so you are seen sooner."),
+    (r"\b(cost|price|free|pay|insurance|fee)\b",
+     "Under the national screening programme the stool test and the follow-up colonoscopy are provided through the public system; for insured residents the screening benefit is usually covered. "
+     "I cannot quote prices; the facility or your insurer can confirm."),
+    (r"\b(result\w*|positive|negative|normal|how long|wait)\b",
+     "A FIT result normally comes back within about a week. Negative means no blood was found and you repeat the test in a year. Positive means blood was found and you are invited for a colonoscopy, usually within a few weeks; nine in ten positives are not cancer, but all are checked."),
+    (r"\b(polyp\w*|adenoma\w*)\b",
+     "Polyps are small growths on the bowel lining. Most are harmless, some can slowly turn into cancer over years, which is exactly why screening works: finding and removing them prevents cancer. "
+     "After polyps are removed you get a follow-up colonoscopy in three to five years, depending on how many and how large."),
+    (r"\b(diet|food|meat|fibre|fiber|exercise|weight|smok\w*|alcohol|prevent\w*|reduce|lower)\b",
+     "The things that measurably lower bowel-cancer risk: not smoking, keeping a healthy weight, 150 minutes a week of brisk activity, more fibre from whole grains, fruit, vegetables and pulses, less processed and red meat, and little or no alcohol. "
+     "None of them replaces screening on time; they work alongside it."),
+    (r"\b(reliable|accurate|trust|real|ai|doctor|sure|prototype|demo)\b",
+     "This is an educational prototype built for the hackathon. The risk tier is a published, validated score and the pathway follows the national programme in simplified form, but it does not replace a doctor. "
+     "Use it to understand what applies to you and to know what to ask for; the decision is made with your GP."),
+]
+FAQ_DEFAULT = ("I can help with what your result means, the tests (the FIT stool test and colonoscopy), when screening starts in the UAE, "
+               "family history, warning symptoms, and where to go. Ask me about any of those. For anything else, your GP is the right person.")
+
+
+def faq_answer(question: str, assessment: dict) -> str:
+    import re as _re
+    q = (question or "").lower()
+    answer = next((a for pat, a in FAQ if _re.search(pat, q)), FAQ_DEFAULT)
+    if assessment.get("inputs", {}).get("symptoms") and "two weeks" not in answer:
+        answer += " Because you ticked warning symptoms, the first step for you is a doctor within two weeks."
+    return answer
+
+
+def chat_context(person: dict, assessment: dict) -> str:
+    notes = {k: v for k, v in (person.get("notes") or {}).items() if v}
+    f = assessment["facilities"]
+    return "\n".join([
+        "PERSON (from the form): " + ", ".join(f"{k}={v}" for k, v in assessment["inputs"].items()),
+        "NOTES THEY WROTE: " + (" | ".join(f"{k}: {v}" for k, v in notes.items()) if notes else "none"),
+        f"RISK TIER: {assessment['score']['tier_label']}, {assessment['score']['points']}/{assessment['score']['max_points']} APCS points; "
+        f"factors: " + ", ".join(f"{x['factor']} (+{x['points']})" for x in assessment["score"]["factors"]),
+        f"PATHWAY: {assessment['pathway']['title']} | test: {assessment['pathway']['test']} | timing: {assessment['pathway']['interval']} | urgency: {assessment['pathway']['urgency']}",
+        "WHY: " + assessment["pathway"]["why"],
+        "NEXT STEPS: " + " / ".join(assessment["pathway"]["next_steps"]),
+        "NEAREST PLACES: " + ("; ".join(f"{x['name']} ({x['type']}, {x['km']} km, {x['role']})" for x in f) if f else "no location given"),
+        "ADVICE SHOWN: " + "; ".join(f"{a['title']}: {a['text']}" for a in assessment["advice"]),
+        "DISCLAIMER SHOWN: " + assessment["disclaimer"],
+    ])
+
+
+async def chat(person: dict, messages: list[dict]):
+    """NDJSON events, same shape as the simulator's explanation: meta, token..., final."""
+    from services import llm_client as LC
+    assessment = assess(person)
+    history = [{"role": m["role"], "content": str(m.get("content") or "")[:4000]}
+               for m in messages if m.get("role") in ("user", "assistant") and m.get("content")][-12:]
+    question = history[-1]["content"] if history and history[-1]["role"] == "user" else ""
+    if not LC.llm_available():
+        text = faq_answer(question, assessment)
+        yield {"type": "meta", "mode": "deterministic", "model": None}
+        for chunk in text.split(" "):
+            yield {"type": "token", "text": chunk + " "}
+        yield {"type": "final", "text": text, "mode": "deterministic", "model": None}
+        return
+    from services import agent   # the agent graph's model choice; heavy, so only when a model is configured
+    system = CHAT_SYSTEM + "\n\nCONTEXT\n" + chat_context(person, assessment)
+
+    async def run(model: str):
+        if model.startswith("claude"):
+            client = LC.make_anthropic_client(timeout_s=agent.HTTP_TIMEOUT_MS / 1000, max_retries=2)
+            async with client.messages.stream(model=model, max_tokens=500, temperature=0.3, system=system,
+                                              messages=history) as stream:
+                async for piece in stream.text_stream:
+                    yield piece
+            return
+        from google.genai import types as gtypes
+        client = LC.make_client(http_options=agent._http_options())
+        cfg = agent.generation_config(model) or gtypes.GenerateContentConfig()
+        cfg.system_instruction = system; cfg.temperature = 0.3; cfg.max_output_tokens = 500
+        contents = [gtypes.Content(role="user" if m["role"] == "user" else "model", parts=[gtypes.Part(text=m["content"])]) for m in history]
+        async for ev in await client.aio.models.generate_content_stream(model=model, contents=contents, config=cfg):
+            if ev.text:
+                yield ev.text
+
+    model = agent.active_model()
+    label = agent.display_model(model)
+    text = ""
+    yield {"type": "meta", "mode": "live", "model": label}
+    try:
+        async for piece in run(model):
+            text += piece
+            yield {"type": "token", "text": piece}
+    except Exception as e:
+        if agent.is_capacity_error(e) and not text and agent.switch_model(str(e)):
+            try:
+                async for piece in run(agent.active_model()):
+                    text += piece
+                    yield {"type": "token", "text": piece}
+            except Exception:
+                pass
+        if not text:   # the model is unavailable: the FAQ still answers
+            text = faq_answer(question, assessment)
+            for chunk in text.split(" "):
+                yield {"type": "token", "text": chunk + " "}
+            yield {"type": "final", "text": text, "mode": "deterministic", "model": None}
+            return
+    yield {"type": "final", "text": text, "mode": "live", "model": label}

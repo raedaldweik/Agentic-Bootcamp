@@ -3,7 +3,10 @@ from __future__ import annotations
 
 from typing import Any
 
+import json
+
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from services import crc
@@ -30,6 +33,8 @@ class Person(BaseModel):
     youngest_relative_age: int | None = None
     history: list[str] = []
     symptoms: list[str] = []
+    symptom_duration: str | None = None
+    notes: dict[str, str] = {}
     last_screen: str = "never"
     activity: str = "some"
     diet: str = "mixed"
@@ -45,3 +50,16 @@ def options() -> dict[str, Any]:
 @router.post("/assess")
 def assess(p: Person) -> dict[str, Any]:
     return crc.assess(p.model_dump())
+
+
+class ChatRequest(BaseModel):
+    person: Person
+    messages: list[dict[str, Any]]
+
+
+@router.post("/chat")
+async def chat(req: ChatRequest):
+    async def stream():
+        async for ev in crc.chat(req.person.model_dump(), req.messages):
+            yield json.dumps(ev) + "\n"
+    return StreamingResponse(stream(), media_type="application/x-ndjson")

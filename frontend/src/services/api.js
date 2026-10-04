@@ -142,3 +142,24 @@ export const logoutTeam = () => fetch('/api/teams/logout', { method: 'POST' }).t
 export const getCrcOptions = () => fetch('/api/screening/crc/options').then(json);
 export const assessCrc = (body) =>
   fetch('/api/screening/crc/assess', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(json);
+export async function streamCrcChat({ person, messages }, onEvent, signal) {
+  const res = await fetch('/api/screening/crc/chat', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ person, messages }), signal,
+  });
+  if (!res.ok || !res.body) throw new Error(`chat failed: ${res.status}`);
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop();
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try { onEvent(JSON.parse(line)); } catch { /* partial line */ }
+    }
+  }
+  if (buf.trim()) { try { onEvent(JSON.parse(buf)); } catch { /* ignore */ } }
+}
