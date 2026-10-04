@@ -105,6 +105,20 @@ async def lifespan(app: FastAPI):
     if agent.llm_enabled():
         print(f"✓ Model credentials present ({LC.describe()}), warming the agent graph in the background", flush=True)
         threading.Thread(target=_warm_up, name="basira-warmup", daemon=True).start()
+
+        async def _prewarm_mcp():
+            # wait for the warm-up thread to build the graph, then open the MCP server here,
+            # on the request loop, so its session belongs to the loop that will use it
+            for _ in range(90):
+                await asyncio.sleep(2)
+                if WARM["ready"] or WARM["error"]:
+                    break
+            if WARM["ready"]:
+                try:
+                    await agent.prewarm_tools()
+                except Exception as e:
+                    print(f"! MCP pre-warm skipped: {e}", flush=True)
+        asyncio.get_running_loop().create_task(_prewarm_mcp())
     else:
         print("✓ Direct tool mode: no model credentials, scenario chips run on live data; free-form chat disabled", flush=True)
     audit.log("SYSTEM·START", "basira",

@@ -47,6 +47,11 @@ GEMINI_MODELS = [
 PREFERRED_MODELS = ANTHROPIC_MODELS if PROVIDER == "anthropic" else GEMINI_MODELS
 FALLBACK_MODEL = PREFERRED_MODELS[0] if PROVIDER == "anthropic" else "gemini-2.5-flash"
 MODEL_CANDIDATES = [m for m in [os.getenv("MODEL", "").strip() or None, *PREFERRED_MODELS] if m]
+# The specialists do mechanical work (call a tool, report the numbers), so they run on the
+# fastest model of the family; the supervisor, which writes the answer, keeps the main model.
+# A turn is a chain of sequential model calls, so this is where most of the latency goes.
+SPECIALIST_MODEL = (os.getenv("SPECIALIST_MODEL", "").strip()
+                    or ("claude-haiku-4-5" if PROVIDER == "anthropic" else ""))
 
 # How the model was chosen, surfaced on /api/health and in the deploy log so a wrong
 # key or an invisible model is obvious before demo day.
@@ -265,7 +270,7 @@ def _http_options():
     return gtypes.HttpOptions(timeout=HTTP_TIMEOUT_MS, retry_options=_retry_options())
 
 
-def _llm(model: str):
+def _llm(model: str, max_tokens: int = 4096):
     """ADK model connection with a hard HTTP timeout and client-side retries on 429/5xx.
     Without the timeout a stalled streaming response during a capacity incident hangs
     the turn forever; ADK's own clients set none.
@@ -275,7 +280,7 @@ def _llm(model: str):
     google-genai client from llm_client."""
     if model.startswith("claude"):
         from google.adk.models.anthropic_llm import AnthropicLlm
-        return AnthropicLlm(model=model, max_tokens=4096,
+        return AnthropicLlm(model=model, max_tokens=max_tokens,
                             client=LC.make_anthropic_client(timeout_s=HTTP_TIMEOUT_MS / 1000, max_retries=3))
     from functools import cached_property
     from google.adk.models.google_llm import Gemini
@@ -576,10 +581,24 @@ Rules:
 4. Lead the final answer with the direct result and its actual numbers; then brief supporting detail. Clean markdown, short sentences, bold the key figures.
 5. Never end on a filler line like "let me check", always finish with the complete written answer. Charts support the text; they never replace it.
 6. Population aggregates are fine to show; do not expose row-level data for restricted-consent patients (the tools enforce this, surface the denial transparently when it happens).
+7. Speed matters, every specialist call is a round trip: one specialist answers most questions. Call a second only when the question clearly needs both data and a guideline or a model. Never call the same specialist twice for one question, and never call one for small talk, definitions, or questions about what you can do: answer those yourself.
+8. Keep the answer under 180 words unless a report is asked for. The chat window is small; the numbers matter more than the prose.
 """
 
 _runners: dict = {}
 _session_service = None
+_mcp_toolsets: dict = {}
+
+
+async def prewarm_tools(model_name: str | None = None) -> None:
+    """Open the population-health MCP server (a subprocess that loads the registry) before
+    the first question, on the app's own event loop so the session stays usable."""
+    model = model_name or active_model()
+    _get_runner(model)
+    toolset = _mcp_toolsets.get(model)
+    if toolset is not None:
+        tools = await toolset.get_tools()
+        print(f"✓ Population-health MCP server up: {len(tools)} tools", flush=True)
 
 
 def _build_tools_map(model_name: str | None = None):
@@ -590,10 +609,16 @@ def _build_tools_map(model_name: str | None = None):
 
     model = model_name or active_model()
     gen_cfg = generation_config(model)
-    llm = _llm(model)
+    # The supervisor writes the answer: the main model, room for a full reply. The
+    # specialists return compact factual summaries: the fast model, a short budget.
+    llm = _llm(model, max_tokens=2048)
+    fast_model = SPECIALIST_MODEL or model
+    fast = _llm(fast_model, max_tokens=1024) if fast_model != model else llm
+    COMPACT = (" Be fast and compact: at most 120 words, the numbers and names that answer the "
+               "request and nothing else. One tool call is usually enough; never repeat a call.")
 
     cohort_agent = LlmAgent(
-        name="cohort_agent", model=llm, generate_content_config=gen_cfg,
+        name="cohort_agent", model=fast, generate_content_config=gen_cfg,
         description=("Queries the national HIE: patient records, timelines, cohort filters, "
                      "group-bys, rankings, correlations, facility benchmark, equity view, KPIs."),
         instruction=("You are the HIE data specialist. Use your tools to answer the request "
@@ -602,22 +627,22 @@ def _build_tools_map(model_name: str | None = None):
                         "and rankings the structured tools cannot express, and quote the bytes processed. "
                         if P.HIE_BACKEND == "bigquery" else "") +
                      "Return a compact, complete factual summary of what you found (with the "
-                     "numbers); no pleasantries."),
+                     "numbers); no pleasantries." + COMPACT),
         tools=[describe_dataset, describe_column, get_patient, patient_timeline,
                filter_cohort, groupby_aggregate, top_n, correlate, histogram,
                cohort_kpis, facility_benchmark, equity_breakdown]
               + ([query_bigquery] if P.HIE_BACKEND == "bigquery" else []))
 
     guideline_agent = LlmAgent(
-        name="guideline_agent", model=llm, generate_content_config=gen_cfg,
+        name="guideline_agent", model=fast, generate_content_config=gen_cfg,
         description="Retrieves and cites national clinical guideline passages (RAG).",
         instruction=("You are the clinical guideline retrieval specialist. Search the corpus, "
                      "then answer with the relevant recommendation(s) and ALWAYS cite document "
-                     "name + page for each claim. Quote thresholds and doses exactly."),
+                     "name + page for each claim. Quote thresholds and doses exactly." + COMPACT),
         tools=[search_guidelines])
 
     risk_agent = LlmAgent(
-        name="risk_agent", model=llm, generate_content_config=gen_cfg,
+        name="risk_agent", model=fast, generate_content_config=gen_cfg,
         description=("Runs the deployed ML models: risk scoring with SHAP drivers, cohort "
                      "stratification, similar patients, demand forecast, counterfactual policy "
                      "simulation, model governance cards."),
@@ -627,33 +652,33 @@ def _build_tools_map(model_name: str | None = None):
                      "and state the method in one line. For a single patient's what-if question "
                      "('what if HbA1c came down to 8', 'if we start an SGLT2 inhibitor') use "
                      "simulate_patient_whatif with the matching levers and report before/after risk, "
-                     "the attribution and the gaps closed."),
+                     "the attribution and the gaps closed." + COMPACT),
         tools=[score_patient_risk, stratify_cohort_risk, similar_patients,
                simulate_policy, simulate_patient_whatif, visit_forecast, model_cards])
 
-    pophealth_tools = McpToolset(
+    pophealth_tools = _mcp_toolsets[model] = McpToolset(
         connection_params=StdioConnectionParams(
             server_params=StdioServerParameters(
                 command=sys.executable, args=["-m", "pophealth_mcp"], cwd=BACKEND_DIR),
             timeout=30),
     )
     pophealth_agent = LlmAgent(
-        name="pophealth_agent", model=llm, generate_content_config=gen_cfg,
+        name="pophealth_agent", model=fast, generate_content_config=gen_cfg,
         description=("Population-health MCP specialist: HEDIS-style quality measures, care-gap "
                      "hunting, cohort building, model-backed stratification, policy simulation, "
                      "and drafting population interventions (human-approved)."),
         instruction=("You are the population-health specialist, working through the "
                      "population-health MCP server's tools. Answer with the measure/gap/cohort "
                      "numbers you computed. When asked to act, use draft_intervention, it goes "
-                     "to the human approval queue."),
+                     "to the human approval queue." + COMPACT),
         tools=[pophealth_tools])
 
     action_agent = LlmAgent(
-        name="action_agent", model=llm, generate_content_config=gen_cfg,
+        name="action_agent", model=fast, generate_content_config=gen_cfg,
         description="Drafts prescriptions, recall campaigns and referrals for human approval.",
         instruction=("You draft clinical actions. Every draft goes to the human-in-the-loop "
                      "queue, say so explicitly. Include the clinical rationale and guideline "
-                     "citation when provided. Never claim an action was executed."),
+                     "citation when provided. Never claim an action was executed." + COMPACT),
         tools=[draft_prescription, draft_recall, draft_referral])
 
     supervisor = LlmAgent(
@@ -863,6 +888,9 @@ async def _stream_once(message: str, session_id: str, persona: str, model: str,
     audit.log("AGENT·ANSWER", "basira_supervisor",
               f"Answered ({persona}): '{message[:90]}', {len(trace)} tool steps, "
               f"{usage['total_tokens']} tokens")
+    print(f"· turn {time.time() - t_start:.1f}s · {usage['llm_calls']} model calls · "
+          f"first token {first_token_ms if first_token_ms is not None else '-'} ms · {len(trace)} tool steps · "
+          f"{usage['total_tokens']} tokens", flush=True)
     yield {"type": "final",
            "answer": final_text or "I wasn't able to produce an answer for that query.",
            "trace": trace, "charts": charts, "citations": uniq, "actions": actions,
