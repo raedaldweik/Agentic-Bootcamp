@@ -1084,13 +1084,4 @@ a.btn-primary, a.btn-secondary { text-decoration: none; }
 .door { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 @media (max-width: 760px) { .doors { grid-template-columns: 1fr; } }
 .door .btn-primary, .door .btn-secondary { align-self: stretch; justify-content: space-between; }
-.cred-card { border-radius: 14px; padding: 9px 11px 7px; background: rgba(255,255,255,0.62); border: 1px solid rgba(43,83,120,0.16); }
-.cred-title { font-size: 9.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 4px; }
-.cred-row { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid rgba(15,23,42,0.06); }
-.cred-row:first-of-type { border-top: 0; }
-.cred-k { font-size: 10.5px; font-weight: 700; color: var(--text-dim); }
-.cred-v { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.copy-btn { padding: 4px 9px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: .04em; color: var(--brand-lo); background: rgba(43,83,120,0.08); border: 1px solid rgba(43,83,120,0.2); cursor: pointer; transition: all .15s; }
-.copy-btn:hover { background: rgba(43,83,120,0.14); }
-.copy-btn.done { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
 .team-gate-note { margin-top: 12px; font-size: 11px; line-height: 1.45; color: var(--text-faint); text-align: center; }

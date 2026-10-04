@@ -13,13 +13,13 @@ secret), or in ``ENVIRONMENTS_JSON`` as the same list in one string. Each row:
      "ram_api_url": "", "ram_realm": "", "ram_client_id": ""}     (the last three optional)
 
 The RAM API address is derived from the RAM address when not given. Realm and
-client fall back to RAM_REALM and RAM_CLIENT_ID. The sign-in names and passwords
-shown next to the environment buttons come from VIYA_USER, VIYA_PASSWORD,
-RAM_USER and RAM_PASSWORD on the server.
+client fall back to RAM_REALM and RAM_CLIENT_ID.
 
 Teams: TEAM_COUNT of them (default 10 when environments exist), signing in on the
-app as team1 / team1, team2 / team2, ... (TEAMn_PASSWORD changes one; TEAMn_ENV
-pins a team to an environment). The sign-in is a cookie; the app shows nothing
+app as team1, team2, ... with the shared TEAM_PASSWORD (TEAMn_PASSWORD overrides
+one; without either the password is the username; TEAMn_ENV pins a team to an
+environment). The Viya and RAM sign-in details are not shown anywhere in the app;
+they go on a slide. The sign-in is a cookie; the app shows nothing
 else until it is there. With no environments configured nothing changes: one
 environment from VIYA_URL / RAM_URL / RAM_API_URL and no team sign-in.
 """
@@ -103,7 +103,7 @@ def teams() -> list[dict]:
         env = next((e for e in envs if e["id"] == pinned), None) if pinned else None
         env = env or envs[(n - 1) % len(envs)]
         out.append({"id": str(n), "name": _env(f"TEAM{n}_NAME") or f"Team {n}", "username": f"team{n}",
-                    "password": _env(f"TEAM{n}_PASSWORD") or f"team{n}", "env": env})
+                    "password": _env(f"TEAM{n}_PASSWORD") or _env("TEAM_PASSWORD") or f"team{n}", "env": env})
     return out
 
 
@@ -152,12 +152,6 @@ def setting(env_name: str, default: str = "") -> str:
     if t and field and t["env"].get(field):
         return t["env"][field]
     return _env(env_name) or default
-
-
-def credentials() -> dict:
-    """What a participant types into Viya and RAM; shown on the home page, never stored here."""
-    return {"viya": {"username": _env("VIYA_USER"), "password": _env("VIYA_PASSWORD")},
-            "ram": {"username": _env("RAM_USER"), "password": _env("RAM_PASSWORD")}}
 
 
 def shared_with(t: dict) -> list[str]:

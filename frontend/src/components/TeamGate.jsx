@@ -25,23 +25,23 @@ export default function TeamGate() {
 
   return (
     <div className="team-gate" role="dialog" aria-modal="true" aria-labelledby="team-gate-title">
-      <form className="team-gate-card" onSubmit={submit}>
+      <form className="team-gate-card" onSubmit={submit} autoComplete="off">
         <div className="section-eyebrow">Emirates Health Services × SAS</div>
         <h2 id="team-gate-title" className="team-gate-title">Sign in as your team</h2>
         <p className="team-gate-lede">
-          Your team name and password are on the card at your table, for example team3 / team3.
+          Your team name is on the card at your table, for example team3. The password is on the screen.
         </p>
         <label className="team-gate-label" htmlFor="team-user">Team</label>
-        <input id="team-user" ref={first} className="team-gate-input" value={username} autoComplete="username"
+        <input id="team-user" ref={first} className="team-gate-input" value={username} autoComplete="off" name="hackathon-team"
           onChange={(e) => setUsername(e.target.value)} placeholder="team3" autoCapitalize="none" spellCheck={false} />
         <label className="team-gate-label" htmlFor="team-pass">Password</label>
-        <input id="team-pass" type="password" className="team-gate-input" value={password} autoComplete="current-password"
+        <input id="team-pass" type="password" className="team-gate-input" value={password} autoComplete="off" name="hackathon-team-key"
           onChange={(e) => setPassword(e.target.value)} placeholder="••••••" />
         {error && <div className="team-gate-error">{error}</div>}
         <button type="submit" className="btn-primary team-gate-btn" disabled={busy || !username || !password}>
           {busy ? 'Signing in…' : 'Enter the hackathon'}
         </button>
-        <div className="team-gate-note">You sign in once on this computer. Your team's Viya and RAM, with their sign-in details, are on the home page after that.</div>
+        <div className="team-gate-note">You sign in once on this computer. Your team's Viya and RAM buttons are on the home page after that.</div>
       </form>
     </div>
   );

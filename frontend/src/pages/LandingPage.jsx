@@ -46,29 +46,10 @@ const FALLBACK_LINKS = [
 const LINK_ORDER = ['ram', 'viya', 'materials'];
 const linkStyle = (id) => (id === 'ram' ? 'btn-primary btn-xl' : id === 'viya' ? 'btn-secondary btn-lg' : 'btn-secondary');
 
-/* A value with a copy button: the sign-in name or password for Viya or RAM. */
-function CopyField({ label, value }) {
-  const [done, setDone] = useState(false);
-  const copy = async () => {
-    try { await navigator.clipboard.writeText(value); setDone(true); setTimeout(() => setDone(false), 1400); } catch { /* clipboard blocked */ }
-  };
-  return (
-    <div className="cred-row">
-      <span className="cred-k">{label}</span>
-      <code className="cred-v" title={value}>{value}</code>
-      <button type="button" className={`copy-btn ${done ? 'done' : ''}`} onClick={copy} title={`Copy ${label.toLowerCase()}`}>
-        {done ? 'Copied' : 'Copy'}
-      </button>
-    </div>
-  );
-}
-
-/* One of the two environment doors: the button that opens it, and right under it the
-   name and password to type there. Greyed out until its URL is set. */
+/* One of the environment doors. Opens in a new tab; greyed out until its URL is set. The
+   sign-in details for Viya and RAM are deliberately not on the page: they go on a slide. */
 function Door({ link }) {
   const cls = linkStyle(link.id);
-  const creds = link.credentials;
-  const hasCreds = creds?.username || creds?.password;
   const body = (
     <span className="btn-text">
       {link.label}
@@ -86,18 +67,7 @@ function Door({ link }) {
     </a>
   );
   if (link.id === 'materials') return button;
-  return (
-    <div className={`door ${link.id}`}>
-      {button}
-      {hasCreds && (
-        <div className="cred-card">
-          <div className="cred-title">Sign in to {link.label} with</div>
-          {creds.username && <CopyField label="Username" value={creds.username} />}
-          {creds.password && <CopyField label="Password" value={creds.password} />}
-        </div>
-      )}
-    </div>
-  );
+  return <div className={`door ${link.id}`}>{button}</div>;
 }
 
 export default function LandingPage() {

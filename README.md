@@ -22,12 +22,12 @@ order and wrap around: with four environments team 5 is on environment 1 again, 
 environments carry two teams. Add a row when a new environment is ready.
 
 When that file has rows the app opens with a team sign-in that cannot be skipped: username `team3`,
-password `team3` (`TEAM3_PASSWORD` changes it, `TEAM3_ENV` pins the team to an environment,
-`TEAM_COUNT` changes the number of teams from 10). The sign-in is a cookie, so a refresh does not ask
-again; the team chip in the header switches team. From then on the home page shows the team's RAM
-and Viya buttons with the username and password to type there, each with a copy button, taken from
-`VIYA_USER`, `VIYA_PASSWORD`, `RAM_USER` and `RAM_PASSWORD` on the server. The **Hackathon Agent** tab
-talks to that team's RAM, and RAM sign-ins are kept per browser per team.
+password `TEAM_PASSWORD` (one shared password for every team; `TEAM3_PASSWORD` overrides one team,
+`TEAM3_ENV` pins a team to an environment, `TEAM_COUNT` changes the number of teams from 10). The
+sign-in is a cookie, so a refresh does not ask again; the team chip in the header switches team. From
+then on the home page shows the team's RAM and Viya buttons. The Viya and RAM usernames and passwords
+are deliberately not shown in the app, so no browser offers to save or flag them; they go on a slide.
+The **Hackathon Agent** tab talks to that team's RAM, and RAM sign-ins are kept per browser per team.
 
 An empty environments file means one environment for everyone, from `VIYA_URL`, `RAM_URL` and
 `RAM_API_URL`, and no team sign-in. `ENVIRONMENTS_JSON` (the same list as one string) overrides
