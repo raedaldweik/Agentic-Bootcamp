@@ -380,8 +380,6 @@ notes(s, "Part 1 of 4. About 8 minutes: three kinds of AI, the loop, and where a
 
 # 4 ---- Three generations -------------------------------------------------------------------
 s = content_slide('Predict, generate, act', 'Three kinds of AI. The third one puts the other two to work.')
-arrow(s, X0, 2.95, XW, 0.6, fill=LIGHT)
-text(s, X0 + 0.4, 2.95, XW - 1.2, 0.6, 'Predict  →  Generate  →  Act', size=16, color=NAVY, bold=True, anchor='m')
 gens = [
     ('model', 'Machine learning', 'Learns patterns from data and gives you a number: a risk score, a forecast, the chance a patient does not turn up. EHS has done this for years.',
      'This is the risk model in today\'s demo.', 'Good at: how likely? how many?', NAVY, WHITE, INK, BLUE),
@@ -392,10 +390,10 @@ gens = [
 ]
 gw3 = (XW - 2 * 0.45) / 3
 for i, (ic, t, d, ex, foot, circ, fill, tc, fc) in enumerate(gens):
-    x = X0 + i * (gw3 + 0.45); y = 4.1; h = 4.85
-    top_card(s, x, y, gw3, h, ic, circ if fill == WHITE else WHITE, t, [d, {'t': ex, 'space_before': 12, 'color': fc, 'bold': True}],
-             foot=foot, fill=fill, title_color=tc, desc_color=tc, foot_color=fc, title_size=21, desc_size=16, icon_variant=('w' if fill == WHITE else 'b'))
-callout(s, X0, 9.2, XW, 1.0, 'Nothing here replaces what you already have. The agent is the layer that puts your models and the language model to work.', icon_name='lightbulb', size=16)
+    x = X0 + i * (gw3 + 0.45); y = 3.55; h = 4.9
+    top_card(s, x, y, gw3, h, ic, circ if fill == WHITE else WHITE, t, [d, {'t': ex, 'space_before': 14, 'color': fc, 'bold': True}],
+             foot=foot, fill=fill, title_color=tc, desc_color=tc, foot_color=fc, title_size=22, desc_size=17, icon_variant=('w' if fill == WHITE else 'b'))
+text(s, X0, 8.85, XW, 0.5, 'Nothing here replaces what you already have. The agent is the layer that puts your models and the language model to work.', size=14, color=SLATE)
 notes(s, """
 Three kinds of AI, one sentence each. Machine learning predicts, and EHS already runs it (risk scores, forecasts).
 Generative AI writes, and most of the room has used a chatbot. Agentic AI is given a goal and works through the steps
@@ -418,7 +416,7 @@ for phi in (315, 45, 135, 225):
     chevron(s, px_ - 0.3, py_ - 0.26, 0.6, 0.52, fill=BLUE, rotation=phi + 90)
 text(s, lcx - 1.35, lcy - 0.85, 2.7, 1.7, ['Round and round until the job is done,', {'t': 'or a limit is reached', 'color': BLUE}], size=14, color=NAVY, bold=True, align='c', anchor='m')
 rx = 10.0; rw = X1 - rx
-card(s, rx, 3.0, rw, 5.35)
+card(s, rx, 3.0, rw, 6.9)
 heading(s, rx + 0.45, 3.3, rw - 0.9, 'One turn around the loop', size=20, color=BLUE)
 lrows = [('eye', 'Perceive', 'What is in front of it now: your question, the last result, a new row of data.'),
          ('brain', 'Reason & plan', 'The LLM decides the next step. Ask the registry? Open the guideline? Score the model?'),
@@ -426,7 +424,8 @@ lrows = [('eye', 'Perceive', 'What is in front of it now: your question, the las
          ('search', 'Observe', 'The result comes back, and the loop starts again.')]
 for i, (ic, a, b) in enumerate(lrows):
     icon_row(s, rx + 0.45, 3.95 + i * 1.08, rw - 0.9, ic, a, b, circle=NAVY if i % 2 == 0 else BLUE, d=0.58, label_size=16, desc_size=14, row_h=1.0)
-callout(s, rx, 8.65, rw, 1.55, 'In one sentence: an agent chases a **goal**, uses **tools**, checks its own work, and stays inside the **lines we draw**.', icon_name='robot', size=15)
+connector(s, rx + 0.45, 8.45, X1 - 0.45, 8.45, color=PANEL, width=1.0)
+text(s, rx + 0.45, 8.6, rw - 0.9, 1.1, 'In one sentence: an agent chases a **goal**, uses **tools**, checks its own work, and stays inside the **lines we draw**.', size=16, color=NAVY, anchor='m')
 notes(s, """
 This loop is what the word 'agentic' means. Four beats: perceive, reason and plan, act, observe, then round again. A
 chatbot goes round once; an agent keeps going until the goal is met or a limit stops it. Three words carry the rest of
@@ -501,28 +500,28 @@ people in the room relax.
 # 9 ---- LLM ---------------------------------------------------------------------------------
 s = content_slide('Why the LLM alone is not enough', 'Brilliant with language. Blind to your data.')
 hw = (XW - 0.45) / 2
-card(s, X0, 3.0, hw, 5.75)
+card(s, X0, 3.0, hw, 5.4)
 icon_circle(s, X0 + 0.7, 3.65, 0.8, GREEN, 'check', shadow=False, scale=0.5)
 text(s, X0 + 1.25, 3.4, hw - 1.5, 0.5, 'What it does well', size=20, color=INK, bold=True)
-text(s, X0 + 0.45, 4.45, hw - 0.9, 3.2, [
+text(s, X0 + 0.45, 4.5, hw - 0.9, 3.5, [
     {'t': 'Understands the question, in English or Arabic', 'bullet': True},
     {'t': 'Breaks a task into steps and picks the right tool for each', 'bullet': True},
     {'t': 'Reads a passage and summarises it without inventing', 'bullet': True},
     {'t': 'Writes a clear answer, cohort and all', 'bullet': True},
-], size=18, color=INK, space_after=12)
-text(s, X0 + 0.45, 7.7, hw - 0.9, 0.85, [{'t': 'In the demo it chooses the SQL tool for counts and the collection for targets.', 'color': BLUE, 'size': 14, 'bold': True}], anchor='b')
+], size=20, color=INK, space_after=16)
+text(s, X0 + 0.45, 7.35, hw - 0.9, 0.85, [{'t': 'In the demo it chooses the SQL tool for counts and the collection for targets.', 'color': BLUE, 'size': 14, 'bold': True}], anchor='b')
 gx2 = X0 + hw + 0.45
-card(s, gx2, 3.0, hw, 5.75)
+card(s, gx2, 3.0, hw, 5.4)
 icon_circle(s, gx2 + 0.7, 3.65, 0.8, RED, 'x', shadow=False, scale=0.5)
 text(s, gx2 + 1.25, 3.4, hw - 1.5, 0.5, 'What it cannot do on its own', size=20, color=INK, bold=True)
-text(s, gx2 + 0.45, 4.45, hw - 0.9, 3.2, [
+text(s, gx2 + 0.45, 4.5, hw - 0.9, 3.5, [
     {'t': 'Know how many of your patients are uncontrolled today', 'bullet': True, 'bullet_color': RED},
     {'t': 'Know what the national guideline says in section 4', 'bullet': True, 'bullet_color': RED},
     {'t': 'Count reliably across 4,000 rows', 'bullet': True, 'bullet_color': RED},
     {'t': 'Run anything. It can only propose.', 'bullet': True, 'bullet_color': RED},
-], size=18, color=INK, space_after=12)
-text(s, gx2 + 0.45, 7.7, hw - 0.9, 0.85, [{'t': 'In the demo every number is a query that ran, and every target has a section number.', 'color': BLUE, 'size': 14, 'bold': True}], anchor='b')
-callout(s, X0, 9.15, XW, 1.05, 'So we surround it. **RAG** for the quotes, **tools and models** for the numbers, **people** for the decisions.', icon_name='lightbulb', size=16)
+], size=20, color=INK, space_after=16)
+text(s, gx2 + 0.45, 7.35, hw - 0.9, 0.85, [{'t': 'In the demo every number is a query that ran, and every target has a section number.', 'color': BLUE, 'size': 14, 'bold': True}], anchor='b')
+text(s, X0, 8.85, XW, 0.5, 'So we surround it. RAG for the quotes, tools and models for the numbers, people for the decisions.', size=14, color=SLATE)
 notes(s, """
 Give the language model its due and its limits. Good with language, planning and faithful summarising. It cannot know
 your data or today's guideline, cannot count reliably, cannot run anything. When none of its sources has the answer it
@@ -569,36 +568,36 @@ one from the four PDFs in the hands-on, and in the demo you will see the retriev
 
 # 11 ---- MCP --------------------------------------------------------------------------------
 s = content_slide('MCP: how the agent reaches your systems', 'One standard plug. The agent asks, the server does the work, everything is written down.')
-ax, ay, aw_, ah = X0, 3.3, 4.6, 5.3
+ax, ay, aw_, ah = X0, 3.3, 4.6, 6.1
 card(s, ax, ay, aw_, ah)
 icon_circle(s, ax + aw_ / 2, ay, 1.15, NAVY, 'robot')
 text(s, ax + 0.3, ay + 0.8, aw_ - 0.6, 0.6, 'The agent', size=22, color=INK, bold=True, align='c')
 arows = [('goal', 'Goal and rules'), ('brain', 'The LLM'), ('files', 'The guidelines (RAG)'), ('memory', 'What happened so far')]
 for i, (ic, t) in enumerate(arows):
-    yy = ay + 1.65 + i * 0.88
+    yy = ay + 1.75 + i * 1.05
     icon_circle(s, ax + 0.75, yy + 0.3, 0.6, BLUE, ic, shadow=False, scale=0.55)
     text(s, ax + 1.25, yy + 0.05, aw_ - 1.5, 0.5, t, size=16, color=INK, bold=True)
-gx, gy, gw2, gh2 = 7.3, 3.0, 2.5, 5.9
+gx, gy, gw2, gh2 = 7.3, 3.0, 2.5, 6.4
 rect(s, gx, gy, gw2, gh2, fill=NAVY, radius=0.3, shadow=True)
 text(s, gx - 2.3, gy + gh2 / 2 - 0.9, gh2 - 0.4, 1.8, ['MCP SERVER', {'t': 'knows the tools, who may call them, and keeps the log', 'size': 13, 'bold': False}],
      size=18, color=WHITE, bold=True, align='c', anchor='m', rotation=270)
 tb = s.shapes[-1]; tb.left = Inches(gx + gw2 / 2 - (gh2 - 0.4) / 2); tb.top = Inches(gy + gh2 / 2 - 0.9)
-connector(s, ax + aw_ + 0.1, 5.95, gx - 0.1, 5.95, color=BLUE, width=2.25, tail=True, head=True)
-text(s, ax + aw_ + 0.1, 5.25, gx - ax - aw_ - 0.2, 0.6, 'asks, gets the result', size=12, color=BLUE, bold=True, align='c', anchor='b')
+connector(s, ax + aw_ + 0.1, 6.35, gx - 0.1, 6.35, color=BLUE, width=2.25, tail=True, head=True)
+text(s, ax + aw_ + 0.1, 5.65, gx - ax - aw_ - 0.2, 0.6, 'asks, gets the result', size=12, color=BLUE, bold=True, align='c', anchor='b')
 tools_ = [('sql', 'Query the registry', 'FedSQL on the CAS tables. Counts, rates, costs, or one patient'),
           ('model', 'Score the model', 'The published risk model in SAS Micro Analytic Service'),
           ('rules', 'Run a decision flow', 'SAS Intelligent Decisioning. Recall priority, the 30-day window'),
           ('chart', 'Draw a chart', 'Control by emirate, cost by risk tier, straight into the answer')]
-sx = 10.9; sw = X1 - sx; sh = 1.24; sgap = 0.31
+sx = 10.9; sw = X1 - sx; sh = 1.3; sgap = 0.4
 for i, (ic, t, d) in enumerate(tools_):
     yy = gy + i * (sh + sgap)
     card(s, sx, yy, sw, sh)
     icon_circle(s, sx + 0.7, yy + sh / 2, 0.72, BLUE if i % 2 == 0 else SKY, ic, shadow=False, scale=0.55)
-    text(s, sx + 1.25, yy + 0.12, sw - 1.45, 0.45, t, size=16, color=INK, bold=True)
-    text(s, sx + 1.25, yy + 0.55, sw - 1.45, 0.65, d, size=12, color=SLATE)
+    text(s, sx + 1.25, yy + 0.15, sw - 1.45, 0.45, t, size=16, color=INK, bold=True)
+    text(s, sx + 1.25, yy + 0.58, sw - 1.45, 0.65, d, size=12, color=SLATE)
     connector(s, gx + gw2 + 0.05, yy + sh / 2, sx - 0.08, yy + sh / 2, color=BLUE, width=1.75, tail=True)
 text(s, sx, gy - 0.5, sw, 0.4, 'Each tool comes with a one-line description the agent reads', size=14, color=BLUE, bold=True)
-callout(s, X0, 9.2, XW, 1.0, 'Think USB-C: one plug, any device. You can read the tool list and know exactly what the agent can reach. Nothing else.', icon_name='usb', size=15)
+text(s, X0, 9.7, XW, 0.5, 'Think USB-C: one plug, any device. Read the tool list and you know exactly what the agent can reach. Nothing else.', size=14, color=SLATE)
 notes(s, """
 MCP is the standard that lets any agent talk to any tool through one plug: the USB-C of agents. The agent on the left
 never reaches a database or a model directly. It sends a request ('score patient EHS-100092') to the MCP server, which
@@ -641,7 +640,7 @@ text(s, anx + 0.35, 4.35, anw - 0.7, 4.7, [
     {'t': 'A draft. **The clinician decides.**', 'bullet': True},
     {'t': 'Last line: the query it ran and the sections it used', 'bullet': True},
 ], size=14, color=NAVY, space_after=7)
-callout(s, X0, 9.45, XW, 0.8, 'The LLM did not count anything or invent a threshold. It chose the engines and wrote up what came back.', icon_name='puzzle', size=15)
+text(s, X0, 9.55, XW, 0.5, 'The LLM did not count anything or invent a threshold. It chose the engines and wrote up what came back.', size=14, color=SLATE)
 notes(s, """
 Composite AI is why the agent can be trusted: each kind of fact comes from the engine that is good at it. One real
 question from the demo flows left to right. Retrieval finds the section; SQL counts the cohort; the model ranks it;
@@ -732,10 +731,14 @@ icon(s, 'table', 'b', AX + 0.35, 8.52, 0.5)
 text(s, AX + 0.95, 8.5, 3.6, 0.5, 'CAS table (SAS Viya)', size=16, color=BLUE, bold=True, anchor='m')
 connector(s, X0 + 4.3, 8.0, AX + 0.3, 8.75, color=BLUE, width=1.5, dash=MSO_LINE.ROUND_DOT, tail=True)
 connector(s, AX + 3.9, 8.75, TX + TW / 2, tool_y[3] + TH + 0.02, color=BLUE, width=1.5, dash=MSO_LINE.ROUND_DOT, tail=True)
-callout(s, X0, 9.15, XW, 1.15, [
-    {'t': 'What this gives you', 'bold': True, 'size': 15},
-    {'t': 'Ask in plain English or Arabic and get governed numbers, cohorts and charts   ·   Score, forecast and test a policy on demand   ·   '
-          'Every answer cites the guideline and shows the tools it used', 'size': 13}], icon_name='badge', size=14)
+gives = ['Ask in plain English or Arabic; get governed numbers, cohorts and charts',
+         'Score, forecast and test a policy on demand',
+         'Every answer cites the guideline and shows the tools it used']
+gvw = (XW - 2 * 0.4) / 3
+for i, g in enumerate(gives):
+    x = X0 + i * (gvw + 0.4)
+    icon(s, 'check', 'b', x, 9.42, 0.4)
+    text(s, x + 0.55, 9.3, gvw - 0.55, 0.75, g, size=13, color=INK, anchor='m')
 notes(s, """
 The one picture to remember, and the one to copy for your own use case. Left: two kinds of data. The guidelines are
 chunked, embedded and stored as vectors (the RAG knowledge base); the registry is loaded as a CAS table in SAS Viya.
@@ -850,17 +853,17 @@ steps5 = [('upload', 'Load the data', 'Import the registry CSV through Manage Da
           ('robot', 'Assemble and test', 'Instructions, collection, tools. Then ask it the test questions and read the trace.', 'SAS RAM  ·  agent', NAVY)]
 sw5 = (XW - 4 * 0.42) / 5
 for i, (ic, t, d, tag, col) in enumerate(steps5):
-    x = X0 + i * (sw5 + 0.42); y = 3.55; h = 5.3
+    x = X0 + i * (sw5 + 0.42); y = 3.55; h = 5.0
     card(s, x, y, sw5, h)
     icon_circle(s, x + sw5 / 2, y, 1.05, col, ic)
     c = oval(s, x + 0.45, y + 0.45, 0.5, fill=PALE); shape_text(c, str(i + 1), size=14, color=NAVY, bold=True, margins=(0, 0, 0, 0))
     text(s, x + 0.25, y + 0.85, sw5 - 0.5, 0.95, t, size=17, color=INK, bold=True, align='c')
-    text(s, x + 0.3, y + 1.85, sw5 - 0.6, 2.5, d, size=13, color=INK)
+    text(s, x + 0.3, y + 1.85, sw5 - 0.6, 2.2, d, size=14, color=INK)
     p = rect(s, x + 0.3, y + h - 0.85, sw5 - 0.6, 0.5, fill=LIGHT, radius=0.25)
     shape_text(p, tag, size=11, color=NAVY, bold=True, margins=(0.05, 0.02, 0.05, 0.02))
     if i < 4:
         chevron(s, x + sw5 + 0.06, y + h / 2 - 0.22, 0.3, 0.44, fill=BLUE)
-callout(s, X0, 9.2, XW, 1.0, 'Steps 1 and 2 can be done by talking to the copilot agent in RAM, which drives SAS Viya through MCP. Worth watching in itself. Steps 3 to 5 are yours.', icon_name='wand', size=15)
+text(s, X0, 8.95, XW, 0.5, 'Steps 1 and 2 can be done by talking to the copilot agent in RAM, which drives SAS Viya through MCP. Steps 3 to 5 are yours.', size=14, color=SLATE)
 notes(s, """
 Five steps, in the order the participants will do them. Steps 1 and 2 live in SAS Viya: load the registry, build and
 publish the model. Steps 3 to 5 live in SAS Retrieval Agent Manager: the collection (RAG), the MCP tool source, and
