@@ -2,23 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 /* Team sign-in. Shown over the whole app until this browser has signed in as a team,
-   when the deployment runs one SAS Viya + SAS RAM pair per team. The team account
-   (team3 / its password) only chooses the environments; RAM itself still asks for
-   the participant's own RAM sign-in on the SAS RAM tab. */
+   when the deployment has team environments. It cannot be dismissed: the team account
+   (team3 / its password) is what chooses the environments. */
 export default function TeamGate() {
-  const { gateOpen: open, closeGate, signInTeam } = useApp();
+  const { gateOpen: open, signInTeam } = useApp();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const first = useRef(null);
-  useEffect(() => {
-    if (!open) return undefined;
-    setTimeout(() => first.current?.focus(), 50);
-    const onKey = (e) => { if (e.key === 'Escape') closeGate(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, closeGate]);
+  useEffect(() => { if (open) setTimeout(() => first.current?.focus(), 50); }, [open]);
   if (!open) return null;
 
   const submit = async (e) => {
@@ -31,14 +24,12 @@ export default function TeamGate() {
   };
 
   return (
-    <div className="team-gate" role="dialog" aria-modal="true" aria-labelledby="team-gate-title"
-      onMouseDown={(e) => { if (e.target === e.currentTarget) closeGate(); }}>
+    <div className="team-gate" role="dialog" aria-modal="true" aria-labelledby="team-gate-title">
       <form className="team-gate-card" onSubmit={submit}>
-        <button type="button" className="team-gate-close" onClick={closeGate} aria-label="Close" title="Close">×</button>
         <div className="section-eyebrow">Emirates Health Services × SAS</div>
         <h2 id="team-gate-title" className="team-gate-title">Sign in as your team</h2>
         <p className="team-gate-lede">
-          Each team has its own Viya and RAM. Your team name and password are on the card at your table.
+          Your team name and password are on the card at your table, for example team3 / team3.
         </p>
         <label className="team-gate-label" htmlFor="team-user">Team</label>
         <input id="team-user" ref={first} className="team-gate-input" value={username} autoComplete="username"
@@ -50,10 +41,7 @@ export default function TeamGate() {
         <button type="submit" className="btn-primary team-gate-btn" disabled={busy || !username || !password}>
           {busy ? 'Signing in…' : 'Enter the hackathon'}
         </button>
-        <button type="button" className="team-gate-skip" onClick={closeGate}>
-          Continue without a team
-          <span>You can sign in later from the top right. Until then the shared environment is used.</span>
-        </button>
+        <div className="team-gate-note">You sign in once on this computer. Your team's Viya and RAM, with their sign-in details, are on the home page after that.</div>
       </form>
     </div>
   );

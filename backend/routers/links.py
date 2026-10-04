@@ -30,13 +30,14 @@ def _env(name: str, default: str = "") -> str:
 def links(request: Request):
     teams.set_current(request.cookies.get(teams.COOKIE))
     cur = teams.current()
+    creds = teams.credentials()
     return {
-        "team": {"id": cur["id"], "name": cur["name"]} if cur else None,
+        "team": teams.public(cur),
         "links": [
             {"id": "ram", "label": "RAM", "sub": "Where you build and test your agent",
-             "url": _env("RAM_URL"), "icon": "ram"},
+             "url": _env("RAM_URL"), "icon": "ram", "credentials": creds["ram"]},
             {"id": "viya", "label": "Viya", "sub": "Data, models and dashboards",
-             "url": _env("VIYA_URL"), "icon": "viya"},
+             "url": _env("VIYA_URL"), "icon": "viya", "credentials": creds["viya"]},
             {"id": "materials", "label": "Hackathon materials", "sub": "Decks, labs, data and this application",
              "url": _env("MATERIALS_URL", MATERIALS_DEFAULT), "icon": "materials"},
         ],

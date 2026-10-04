@@ -158,7 +158,8 @@ html, body, #root {
 .brand-logo {
   height: 5.4cqw; width: auto; min-height: 56px; max-height: 76px;
   object-fit: contain; display: block;
-  border-radius: 0.9cqw;
+  /* the artwork touches the edges of its file, so no rounding or clipping here */
+  padding: 2px 3px; overflow: visible;
   filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.08));
 }
 /* The partner mark, top right: the SAS wordmark at a height that reads as the EHS logo's equal
@@ -984,12 +985,6 @@ a.btn-primary, a.btn-secondary { text-decoration: none; }
   font-size: 20px; line-height: 1; color: var(--text-faint); background: transparent; cursor: pointer;
 }
 .team-gate-close:hover { background: rgba(43,83,120,0.08); color: var(--brand-lo); }
-.team-gate-skip {
-  margin-top: 14px; background: none; cursor: pointer; text-align: center;
-  font-size: 12.5px; font-weight: 700; color: var(--brand);
-}
-.team-gate-skip span { display: block; margin-top: 3px; font-size: 11px; font-weight: 500; color: var(--text-faint); }
-.team-gate-skip:hover { text-decoration: underline; }
 .team-chip-sub { font-size: 9.5px; font-weight: 700; opacity: .75; text-transform: uppercase; letter-spacing: .08em; }
 .team-chip:hover .team-chip-sub { opacity: 1; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
@@ -1081,3 +1076,21 @@ a.btn-primary, a.btn-secondary { text-decoration: none; }
 .scr-chat-input button { width: 36px; border-radius: 11px; display: grid; place-items: center; color: #fff; background: var(--brand-grad); cursor: pointer; }
 .scr-chat-input button:disabled { opacity: .45; cursor: default; }
 .scr-chat-foot { font-size: 9px; color: var(--text-faint); text-align: center; padding: 0 10px 8px; }
+
+/* ═══ Home page doors with their sign-in details ═══ */
+.team-line { margin-top: 22px; font-size: 12px; color: var(--text-dim); }
+.team-line b { color: var(--brand-lo); font-weight: 800; }
+.doors { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; gap: 14px; margin-top: 10px; }
+.door { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+@media (max-width: 760px) { .doors { grid-template-columns: 1fr; } }
+.door .btn-primary, .door .btn-secondary { align-self: stretch; justify-content: space-between; }
+.cred-card { border-radius: 14px; padding: 9px 11px 7px; background: rgba(255,255,255,0.62); border: 1px solid rgba(43,83,120,0.16); }
+.cred-title { font-size: 9.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 4px; }
+.cred-row { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid rgba(15,23,42,0.06); }
+.cred-row:first-of-type { border-top: 0; }
+.cred-k { font-size: 10.5px; font-weight: 700; color: var(--text-dim); }
+.cred-v { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.copy-btn { padding: 4px 9px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: .04em; color: var(--brand-lo); background: rgba(43,83,120,0.08); border: 1px solid rgba(43,83,120,0.2); cursor: pointer; transition: all .15s; }
+.copy-btn:hover { background: rgba(43,83,120,0.14); }
+.copy-btn.done { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+.team-gate-note { margin-top: 12px; font-size: 11px; line-height: 1.45; color: var(--text-faint); text-align: center; }

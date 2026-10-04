@@ -46,29 +46,57 @@ const FALLBACK_LINKS = [
 const LINK_ORDER = ['ram', 'viya', 'materials'];
 const linkStyle = (id) => (id === 'ram' ? 'btn-primary btn-xl' : id === 'viya' ? 'btn-secondary btn-lg' : 'btn-secondary');
 
-/* One of the three environment buttons. Opens in a new tab; greyed out until its URL is set. */
-function EnvButton({ link }) {
+/* A value with a copy button: the sign-in name or password for Viya or RAM. */
+function CopyField({ label, value }) {
+  const [done, setDone] = useState(false);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(value); setDone(true); setTimeout(() => setDone(false), 1400); } catch { /* clipboard blocked */ }
+  };
+  return (
+    <div className="cred-row">
+      <span className="cred-k">{label}</span>
+      <code className="cred-v" title={value}>{value}</code>
+      <button type="button" className={`copy-btn ${done ? 'done' : ''}`} onClick={copy} title={`Copy ${label.toLowerCase()}`}>
+        {done ? 'Copied' : 'Copy'}
+      </button>
+    </div>
+  );
+}
+
+/* One of the two environment doors: the button that opens it, and right under it the
+   name and password to type there. Greyed out until its URL is set. */
+function Door({ link }) {
   const cls = linkStyle(link.id);
+  const creds = link.credentials;
+  const hasCreds = creds?.username || creds?.password;
   const body = (
     <span className="btn-text">
       {link.label}
-      {link.id !== 'materials' && link.sub && <span className="btn-sub">{link.sub}</span>}
+      {link.sub && <span className="btn-sub">{link.sub}</span>}
     </span>
   );
-  if (!link.url) {
-    return (
-      <span className={`${cls} btn-disabled`} title="Link will be shared on the day">
-        {body}
-      </span>
-    );
-  }
-  return (
+  const button = !link.url ? (
+    <span className={`${cls} btn-disabled`} title="Link will be shared on the day">{body}</span>
+  ) : (
     <a className={cls} href={link.url} target="_blank" rel="noopener noreferrer" title={link.url}>
       {body}
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M7 17L17 7M9 7h8v8" />
       </svg>
     </a>
+  );
+  if (link.id === 'materials') return button;
+  return (
+    <div className={`door ${link.id}`}>
+      {button}
+      {hasCreds && (
+        <div className="cred-card">
+          <div className="cred-title">Sign in to {link.label} with</div>
+          {creds.username && <CopyField label="Username" value={creds.username} />}
+          {creds.password && <CopyField label="Password" value={creds.password} />}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -108,12 +136,21 @@ export default function LandingPage() {
             </h1>
             <p className="hero-lede mt-5 reveal d3">
               Two days, three places. <b>Example 1</b> is a finished agent to learn from, with its data and
-              guidelines. <b>Example 2</b> is a screening check: your risk, the right test, the nearest place.
+              guidelines. <b>Example 2</b> is a screening check: your risk, the right test, the nearest place.{' '}
               <b>RAM</b> is where you build and test your own.
             </p>
-            <div className="flex flex-wrap items-center gap-3 mt-6 reveal d4">
+            {team && (
+              <div className="team-line reveal d4">
+                <b>{team.name}</b> · Environment {team.environment}
+                {team.shared_with?.length > 0 && <span> · shared with {team.shared_with.join(' and ')}</span>}
+              </div>
+            )}
+            <div className="doors reveal d4">
               {[...links].sort((a, b) => LINK_ORDER.indexOf(a.id) - LINK_ORDER.indexOf(b.id))
-                .map((l) => <EnvButton key={l.id} link={l} />)}
+                .filter((l) => l.id !== 'materials').map((l) => <Door key={l.id} link={l} />)}
+            </div>
+            <div className="mt-3 reveal d4">
+              {links.filter((l) => l.id === 'materials').map((l) => <Door key={l.id} link={l} />)}
             </div>
           </div>
 

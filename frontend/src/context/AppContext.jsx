@@ -45,17 +45,9 @@ export function AppProvider({ children }) {
       setSessionScope(r?.current?.id || null);
     }).catch(() => {}).finally(() => setTeamsLoaded(true));
   }, []);
-  // The sign-in card can be closed without signing in (the shared environment is
-  // used then) and reopened from the header. Dismissal lasts for this tab.
-  const [gateDismissed, setGateDismissed] = useState(() => {
-    try { return sessionStorage.getItem('team_gate_dismissed') === '1'; } catch { return false; }
-  });
-  const gateOpen = teamsLoaded && teamsEnabled && !team && !gateDismissed;
-  const openGate = useCallback(() => setGateDismissed(false), []);
-  const closeGate = useCallback(() => {
-    setGateDismissed(true);
-    try { sessionStorage.setItem('team_gate_dismissed', '1'); } catch { /* private mode */ }
-  }, []);
+  // The sign-in card stays up until this browser has signed in as a team. The cookie
+  // keeps the sign-in across refreshes; "switch" in the header brings the card back.
+  const gateOpen = teamsLoaded && teamsEnabled && !team;
   const signInTeam = useCallback(async (username, password) => {
     const r = await loginTeam(username, password);
     setTeam(r.current);
@@ -66,8 +58,6 @@ export function AppProvider({ children }) {
     try { await logoutTeam(); } catch { /* the cookie is gone either way on the next load */ }
     setTeam(null);
     setSessionScope(null);
-    setGateDismissed(false);   // switching team: show the card again
-    try { sessionStorage.removeItem('team_gate_dismissed'); } catch { /* ignore */ }
   }, []);
   // Dashboard cross-filter: {tier: 'High', facility: '...'}; shared by every dashboard tab.
   const [dashFilter, setDashFilter] = useState({});
@@ -137,7 +127,7 @@ export function AppProvider({ children }) {
   }, [persona]);
 
   return (
-    <Ctx.Provider value={{ teamsEnabled, team, teamsLoaded, signInTeam, signOutTeam, gateOpen, openGate, closeGate,
+    <Ctx.Provider value={{ teamsEnabled, team, teamsLoaded, signInTeam, signOutTeam, gateOpen,
       persona, setPersona, personaInfo: PERSONAS[persona],
       chats: visibleChats, activeChat, activeChatId: activeChat?.id,
       setActiveChatId, createNewChat, addMessage, renameChat, deleteChat,
