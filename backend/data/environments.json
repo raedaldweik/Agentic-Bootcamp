@@ -1,9 +1,0 @@
-{
-  "_comment": "The SAS environments for the hackathon: one Viya + one RAM per environment. Teams are spread over them in order (team 1 -> 1, team 2 -> 2, ..., team 7 -> 1 again). Add a row when a new environment is ready. No passwords in this file, ever.",
-  "environments": [
-    {"id": "1", "viya_url": "https://viya-kcv3u9t87q.engage.sas.com", "ram_url": "https://viya-mulh9cfuy9.engage.sas.com"},
-    {"id": "2", "viya_url": "https://viya-z83kuy70lh.engage.sas.com", "ram_url": "https://viya-4zvb029ax5.engage.sas.com"},
-    {"id": "3", "viya_url": "https://viya-5nwwat4z30.engage.sas.com", "ram_url": "https://viya-qrajqe1xnv.engage.sas.com"},
-    {"id": "4", "viya_url": "https://viya-3owok7i3cb.engage.sas.com", "ram_url": "https://viya-90onlhu9vw.engage.sas.com"}
-  ]
-}

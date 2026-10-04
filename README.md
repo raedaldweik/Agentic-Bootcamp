@@ -16,22 +16,31 @@ Health Services (facilitators: EHS, BITS Pilani, SAS).
 
 ## Teams and environments
 
-The hackathon runs on a handful of SAS environments, one Viya and one RAM each, listed in
-`backend/data/environments.json` (URLs only, nothing secret). Ten teams are spread over them in
-order and wrap around: with four environments team 5 is on environment 1 again, so some
-environments carry two teams. Add a row when a new environment is ready.
+The hackathon runs on a handful of SAS environments, one Viya and one RAM each, configured as plain
+variables on the server, numbered in order:
 
-When that file has rows the app opens with a team sign-in that cannot be skipped: username `team3`,
-password `TEAM_PASSWORD` (one shared password for every team; `TEAM3_PASSWORD` overrides one team,
-`TEAM3_ENV` pins a team to an environment, `TEAM_COUNT` changes the number of teams from 10). The
-sign-in is a cookie, so a refresh does not ask again; the team chip in the header switches team. From
-then on the home page shows the team's RAM and Viya buttons. The Viya and RAM usernames and passwords
-are deliberately not shown in the app, so no browser offers to save or flag them; they go on a slide.
-The **Hackathon Agent** tab talks to that team's RAM, and RAM sign-ins are kept per browser per team.
+```
+ENV1_VIYA_URL=https://viya-....engage.sas.com
+ENV1_RAM_URL=https://viya-....engage.sas.com/SASRetrievalAgentManager
+ENV2_VIYA_URL=...
+ENV2_RAM_URL=...
+TEAM_PASSWORD=...
+```
 
-An empty environments file means one environment for everyone, from `VIYA_URL`, `RAM_URL` and
-`RAM_API_URL`, and no team sign-in. `ENVIRONMENTS_JSON` (the same list as one string) overrides
-the file without a commit.
+Ten teams are spread over the environments in order and wrap around: with four environments team 5 is
+on environment 1 again, so some environments carry two teams. Add `ENV5_` and `ENV6_` when those are
+ready and the teams move across by themselves.
+
+As soon as `ENV1_` exists the app opens with a team sign-in that cannot be skipped: username `team3`,
+password `TEAM_PASSWORD` (`TEAM_COUNT` changes the number of teams from 10, `TEAM3_PASSWORD` overrides
+one team, `TEAM3_ENV` pins a team to an environment). The sign-in is a cookie, so a refresh does not
+ask again; the team chip in the header switches team. From then on the home page shows the team's RAM
+and Viya buttons. The Viya and RAM usernames and passwords are deliberately not shown in the app, so no
+browser offers to save or flag them; they go on a slide. The **Hackathon Agent** tab talks to that
+team's RAM, and RAM sign-ins are kept per browser per team.
+
+No `ENV1_` means one environment for everyone, from `VIYA_URL`, `RAM_URL` and `RAM_API_URL`, and no
+team sign-in.
 
 ## The hackathon app
 

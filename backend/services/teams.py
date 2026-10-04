@@ -5,37 +5,35 @@ teams. Teams are spread over the environments in order: team 1 on environment 1,
 team 2 on 2, and when the environments run out it wraps, so with four
 environments team 5 is back on 1 and two teams share it.
 
-Environments live in ``backend/data/environments.json`` (URLs only, nothing
-secret), or in ``ENVIRONMENTS_JSON`` as the same list in one string. Each row:
+Everything is plain variables on the server, one per value:
 
-    {"id": "3", "viya_url": "https://viya-....engage.sas.com",
-     "ram_url": "https://viya-....engage.sas.com",
-     "ram_api_url": "", "ram_realm": "", "ram_client_id": ""}     (the last three optional)
+    ENV1_VIYA_URL=https://viya-....engage.sas.com
+    ENV1_RAM_URL=https://viya-....engage.sas.com/SASRetrievalAgentManager
+    ENV2_VIYA_URL=...        ENV2_RAM_URL=...        (and so on, as many as exist)
+    TEAM_PASSWORD=...        the one password every team signs in with
+    TEAM_COUNT=10            how many teams (default 10)
 
-The RAM API address is derived from the RAM address when not given. Realm and
-client fall back to RAM_REALM and RAM_CLIENT_ID.
+Optional per environment: ENVn_RAM_API_URL (derived from the RAM address when
+absent), ENVn_RAM_REALM and ENVn_RAM_CLIENT_ID (fall back to RAM_REALM and
+RAM_CLIENT_ID). Optional per team: TEAMn_PASSWORD, TEAMn_ENV (pin a team to an
+environment), TEAMn_NAME.
 
-Teams: TEAM_COUNT of them (default 10 when environments exist), signing in on the
-app as team1, team2, ... with the shared TEAM_PASSWORD (TEAMn_PASSWORD overrides
-one; without either the password is the username; TEAMn_ENV pins a team to an
-environment). The Viya and RAM sign-in details are not shown anywhere in the app;
-they go on a slide. The sign-in is a cookie; the app shows nothing
-else until it is there. With no environments configured nothing changes: one
-environment from VIYA_URL / RAM_URL / RAM_API_URL and no team sign-in.
+Teams sign in on the app as team1, team2, ... with TEAM_PASSWORD; the sign-in is
+a cookie and the app shows nothing until it is there. The Viya and RAM sign-in
+details are not shown anywhere in the app; they go on a slide. With no ENVn_
+variables at all nothing changes: one environment from VIYA_URL / RAM_URL /
+RAM_API_URL and no team sign-in.
 """
 from __future__ import annotations
 
 import hmac
-import json
 import os
 from contextvars import ContextVar
-from pathlib import Path
-from typing import Any
 
 COOKIE = "hackathon_team"
 COOKIE_MAX_AGE = 400 * 24 * 3600
-DEFAULT_FILE = Path(__file__).resolve().parent.parent / "data" / "environments.json"
 RAM_API_SUFFIX = "/SASRetrievalAgentManager/api/v1"
+MAX_ENVIRONMENTS = 50
 
 # environment-row key -> process variable it stands in for
 FIELDS = {"viya_url": "VIYA_URL", "ram_url": "RAM_URL", "ram_api_url": "RAM_API_URL",
@@ -43,53 +41,25 @@ FIELDS = {"viya_url": "VIYA_URL", "ram_url": "RAM_URL", "ram_api_url": "RAM_API_
 _ENV_TO_FIELD = {v: k for k, v in FIELDS.items()}
 
 _current: ContextVar[str | None] = ContextVar("hackathon_team", default=None)
-_cache: dict[str, Any] = {"key": None, "envs": []}
 
 
 def _env(name: str) -> str:
     return (os.getenv(name) or "").strip()
 
 
-def _clean_envs(data: Any) -> list[dict]:
-    rows = data.get("environments") if isinstance(data, dict) else data
-    out: list[dict] = []
-    for i, r in enumerate(rows or [], start=1):
-        if not isinstance(r, dict):
-            continue
-        row = {"id": str(r.get("id") or i).strip()}
-        for k in FIELDS:
-            row[k] = str(r.get(k) or "").strip().rstrip("/")
-        if row["ram_url"] and not row["ram_api_url"]:
-            base = row["ram_url"].split("/SASRetrievalAgentManager")[0]
-            row["ram_api_url"] = base + RAM_API_SUFFIX
-        if row["viya_url"] or row["ram_url"]:
-            out.append(row)
-    return out
-
-
 def environments() -> list[dict]:
-    raw = _env("ENVIRONMENTS_JSON")
-    if raw:
-        key = ("json", raw)
-        if _cache["key"] != key:
-            try:
-                _cache["envs"] = _clean_envs(json.loads(raw))
-            except ValueError:
-                _cache["envs"] = []
-            _cache["key"] = key
-        return _cache["envs"]
-    path = Path(_env("ENVIRONMENTS_FILE") or DEFAULT_FILE)
-    try:
-        key = ("file", str(path), path.stat().st_mtime)
-    except OSError:
-        return []
-    if _cache["key"] != key:
-        try:
-            _cache["envs"] = _clean_envs(json.loads(path.read_text()))
-        except (OSError, ValueError):
-            _cache["envs"] = []
-        _cache["key"] = key
-    return _cache["envs"]
+    """ENV1_, ENV2_, ... in order; the list ends at the first number with neither URL."""
+    out: list[dict] = []
+    for n in range(1, MAX_ENVIRONMENTS + 1):
+        row = {"id": str(n)}
+        for k, var in FIELDS.items():
+            row[k] = _env(f"ENV{n}_{var}").rstrip("/")
+        if not (row["viya_url"] or row["ram_url"]):
+            break
+        if row["ram_url"] and not row["ram_api_url"]:
+            row["ram_api_url"] = row["ram_url"].split("/SASRetrievalAgentManager")[0] + RAM_API_SUFFIX
+        out.append(row)
+    return out
 
 
 def teams() -> list[dict]:
