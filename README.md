@@ -9,7 +9,7 @@ Health Services (facilitators: EHS, BITS Pilani, SAS).
 | `bootcamp/` | **The hackathon kit**: the flow, the pre-built Design Thinking Agent (prompt + config), the Population Health Agent template and test questions, the CAS-ready registry CSVs with a data dictionary, the NHA guideline PDFs for the RAM collection, and the SAS Viya MCP tool selection for each agent. |
 | `bootcamp_mcp/` | **The Bootcamp MCP server**: a pip-installable, containerised MCP server built on the SAS Viya MCP server, with eight tools scoped by `ALLOWED_TABLES` / `ALLOWED_MODELS` so each team's agent sees only its own table and model. Registered in RAM once per team. |
 | `Day1/Session2_How_an_AI_Agent_Works/` | Session 2 deck (10:45 – 11:30): *How an AI agent works and makes decisions*. Speaker notes and the build script included. |
-| `Day1/Agentic_AI_Overview_and_Live_Demo/` | 45-minute deck: *Agentic AI in action*, an overview of Agentic AI, RAG, MCP and composite AI followed by the live demo of the Population Health Agent and the bridge to the hands-on build. Speaker notes and the build script included. |
+| `Hackathon/Live_Demo_RWE_in_Action_with_Agentic_AI/` | 45-minute hackathon session deck: *Real-World Evidence in Action with Agentic AI (SAS)*. The evidence on agentic AI in health care, then the two live examples from this app (population health, cancer early warning), problem and solution for each. Speaker notes, sources and the build script included. |
 | `templates/SAS_External_Template.pptx` | Clean SAS EXTERNAL PowerPoint template (SAS-2023 palette, Anova fonts embedded). Base for every SAS-delivered session. |
 
 ---
