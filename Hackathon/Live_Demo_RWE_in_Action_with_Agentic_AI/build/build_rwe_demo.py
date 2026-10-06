@@ -321,6 +321,71 @@ def table(slide, x, y, w, h, rows, colw, header_size=14, body_size=12, header_h=
     tblPr.set('firstRow', '1'); tblPr.set('bandRow', '0')
     return tbl
 
+
+def solution_overview(s, left_top, left_bottom, agent, tools, bridge, delivers):
+    """The solution-overview diagram: unstructured and structured inputs on the left, the agent in the middle,
+    the MCP server and its tools on the right, the bridge element underneath, what it delivers at the bottom."""
+    # -- left column, top: unstructured input, three steps down
+    t_label, t_src, t_sub, t_mid, t_end = left_top
+    text(s, X0, 2.5, 4.3, 0.4, t_label, size=16, color=BLUE, bold=True, align='c')
+    rect(s, X0, 2.9, 4.3, 3.25, fill=None, radius=0.25, line=BLUE, line_w=1.25, dash=MSO_LINE.ROUND_DOT)
+    d1 = rect(s, X0 + 0.3, 3.1, 3.7, 0.7, fill=PANEL, radius=0.12)
+    shape_text(d1, t_src, size=13, color=INK, bold=True)
+    text(s, X0 + 0.3, 3.82, 3.7, 0.5, t_sub, size=11, color=SLATE, align='c')
+    arrow(s, X0 + 2.15 - 0.17, 4.34, 0.34, 0.32, kind='down')
+    e1 = rect(s, X0 + 0.6, 4.7, 3.1, 0.52, fill=LIGHT, radius=0.1)
+    shape_text(e1, t_mid, size=13, color=NAVY, bold=True)
+    arrow(s, X0 + 2.15 - 0.17, 5.26, 0.34, 0.3, kind='down')
+    v1 = rect(s, X0 + 0.3, 5.58, 3.7, 0.5, fill=BLUE, radius=0.1)
+    shape_text(v1, t_end, size=13, color=WHITE, bold=True)
+    # -- left column, bottom: structured input
+    b_label, b_src, b_sub = left_bottom
+    text(s, X0, 6.35, 4.3, 0.4, b_label, size=16, color=BLUE, bold=True, align='c')
+    rect(s, X0, 6.75, 4.3, 1.95, fill=None, radius=0.25, line=BLUE, line_w=1.25, dash=MSO_LINE.ROUND_DOT)
+    d2 = rect(s, X0 + 0.3, 6.95, 3.7, 0.7, fill=PANEL, radius=0.12)
+    shape_text(d2, b_src, size=13, color=INK, bold=True)
+    text(s, X0 + 0.3, 7.7, 3.7, 0.75, b_sub, size=11, color=SLATE, align='c')
+    # -- the agent
+    a_name, a_desc, a_inner, a_arrow = agent
+    AX, AY, AW, AH = 7.0, 2.65, 4.4, 5.35
+    text(s, X0 + 4.3, 4.1, AX - X0 - 4.3, 0.4, a_arrow, size=12, color=BLUE, bold=True, align='c')
+    arrow(s, X0 + 4.3 + 0.08, 4.5, AX - X0 - 4.3 - 0.16, 0.36, kind='right')
+    card(s, AX, AY, AW, AH, fill=BLUE)
+    text(s, AX + 0.3, AY + 0.25, AW - 0.6, 0.55, a_name, size=20, color=WHITE, bold=True, align='c')
+    rect(s, AX + 0.9, AY + 0.85, AW - 1.8, 0.03, fill=WHITE, radius=0)
+    text(s, AX + 0.3, AY + 1.0, AW - 0.6, 1.45, a_desc, size=14, color=WHITE, align='c', anchor='t')
+    rect(s, AX + 0.3, AY + 2.6, AW - 0.6, 2.5, fill=PALE, radius=0.18)
+    text(s, AX + 0.5, AY + 2.75, AW - 1.0, 2.25, [{'t': ln, 'bullet': True, 'space_before': (0 if i == 0 else 4)} for i, ln in enumerate(a_inner)],
+         size=13, color=NAVY, anchor='m')
+    # -- MCP server and tools
+    MX, MY, MW, MH = 12.3, 3.5, 2.3, 2.3
+    arrow(s, AX + AW + 0.08, 4.5, MX - AX - AW - 0.16, 0.36, kind='right')
+    rect(s, MX, MY, MW, MH, fill=LIGHT, radius=0.3, shadow=True)
+    icon(s, 'usb', 'n', MX + MW / 2 - 0.4, MY + 0.3, 0.8)
+    text(s, MX, MY + 1.2, MW, 0.9, ['MCP server', {'t': 'one plug, every tool', 'size': 11, 'bold': False}], size=18, color=NAVY, bold=True, align='c', anchor='t')
+    TX, TW, TH, TG = 15.4, X1 - 15.4, 0.72, 0.22
+    text(s, TX, 2.5, TW, 0.4, 'Tools', size=16, color=BLUE, bold=True, align='c')
+    palette = [(SLATE, WHITE), (LIGHT, NAVY), (SKY, WHITE), (BLUE, WHITE), (NAVY, WHITE)]
+    tool_y = []
+    for i, t in enumerate(tools):
+        col, tc = palette[i % len(palette)]
+        yy = 3.05 + i * (TH + TG); tool_y.append(yy)
+        tt = rect(s, TX, yy, TW, TH, fill=col, radius=0.1, shadow=True)
+        shape_text(tt, t, size=12, color=tc, bold=True, margins=(0.1, 0.03, 0.1, 0.03))
+        connector(s, MX + MW + 0.04, MY + MH / 2, TX - 0.05, yy + TH / 2, color=BLUE, width=1.5, tail=True)
+    # -- the bridge element under the agent, fed by the structured input and read by the last tool
+    br_icon, br_label, br_tool = bridge
+    icon(s, br_icon, 'b', AX + 0.35, 8.17, 0.5)
+    text(s, AX + 0.95, 8.15, 3.6, 0.5, br_label, size=16, color=BLUE, bold=True, anchor='m')
+    connector(s, X0 + 4.3, 7.65, AX + 0.3, 8.4, color=BLUE, width=1.5, dash=MSO_LINE.ROUND_DOT, tail=True)
+    connector(s, AX + 3.9, 8.4, TX + TW / 2, tool_y[br_tool] + TH + 0.02, color=BLUE, width=1.5, dash=MSO_LINE.ROUND_DOT, tail=True)
+    # -- what it delivers, three plain lines
+    gvw = (XW - 2 * 0.4) / 3
+    for i, g in enumerate(delivers):
+        x = X0 + i * (gvw + 0.4)
+        icon(s, 'check', 'b', x, 9.17, 0.4)
+        text(s, x + 0.55, 9.05, gvw - 0.55, 0.75, g, size=13, color=INK, anchor='m')
+
 def copyright_line(slide, color=LIGHT):
     text(slide, 1.37, 10.78, 6.0, 0.27, 'Copyright © SAS Institute Inc. All rights reserved.', size=10, color=color, anchor='b')
 
@@ -580,52 +645,26 @@ demo: a third well controlled, 760 overdue a test, AED 64 million a year. Be exp
 the guidelines are a teaching set; the numbers are real for this data only.
 """)
 
-# 11 ---- Example 1: the solution -------------------------------------------------------------
-s = action_slide('The solution: one supervisor agent, five specialists, and a person who signs every action', 'EXAMPLE 1 · POPULATION HEALTH')
-label(s, X0, 2.5, 4.3, 'Real-world data')
-srcs = [('database', 'Diabetes registry', 'Tables in SAS Viya: 4,000 patients, 36 months, 54 fields, from the health information exchange'),
-        ('files', 'National guidelines', 'Four documents, chunked, embedded, cited by section'),
-        ('model', 'Deployed models', 'Deterioration risk with drivers, programme simulation, demand forecast')]
-for i, (ic, t, d) in enumerate(srcs):
-    y = 2.9 + i * 2.25
-    card(s, X0, y, 4.3, 1.95)
-    icon_circle(s, X0 + 0.6, y + 0.55, 0.7, NAVY if i % 2 == 0 else BLUE, ic, shadow=False, scale=0.55)
-    text(s, X0 + 1.1, y + 0.28, 3.05, 0.5, t, size=15, color=INK, bold=True)
-    text(s, X0 + 0.35, y + 0.95, 3.6, 0.95, d, size=12, color=INK)
-arrow(s, X0 + 4.45, 5.75, 0.8, 0.45, kind='right')
-AX, AW = 6.65, 6.9
-card(s, AX, 2.5, AW, 7.4, fill=BLUE)
-text(s, AX + 0.35, 2.75, AW - 0.7, 0.5, 'Basira  ·  supervisor agent', size=20, color=WHITE, bold=True)
-text(s, AX + 0.35, 3.3, AW - 0.7, 0.9, 'Reads the question, picks the specialists, writes the cited answer and draws the chart. English or Arabic, text or voice.', size=12.5, color=WHITE)
-specs = [('Cohort specialist', 'queries the exchange: records, timelines, cohort filters'),
-         ('Guideline specialist', 'retrieves and cites guideline sections (RAG)'),
-         ('Risk specialist', 'scores the deployed models, explains the drivers, simulates programmes'),
-         ('Population-health specialist', 'quality measures, care gaps, policy what-ifs, over an MCP server'),
-         ('Action specialist', 'drafts prescriptions, recalls and referrals, for approval only')]
-for i, (t, d) in enumerate(specs):
-    y = 4.35 + i * 1.08
-    b = rect(s, AX + 0.35, y, AW - 0.7, 0.92, fill=WHITE, radius=0.15)
-    shape_text(b, [{'t': t + '  ', 'bold': True, 'size': 13, 'color': NAVY}, {'t': d, 'size': 12, 'color': INK}], align='l', anchor='m', margins=(0.2, 0.04, 0.2, 0.04))
-arrow(s, AX + AW + 0.15, 5.75, 0.8, 0.45, kind='right')
-RX = 14.3; RW = X1 - RX
-label(s, RX, 2.5, RW, 'What comes out')
-outs = [('cite', 'A cited answer and a chart', 'Every number with its cohort, every clinical statement with its section', BLUE),
-        ('inbox', 'A draft, never an action', 'Prescriptions, recall lists and referrals land in an approval queue', BLUE),
-        ('users', 'A person decides', 'The clinician or programme lead approves, edits or rejects', NAVY),
-        ('log', 'An audit trail', 'Every specialist call, query and retrieval, next to the answer', NAVY)]
-for i, (ic, t, d, col) in enumerate(outs):
-    y = 2.9 + i * 1.78
-    card(s, RX, y, RW, 1.55)
-    icon_circle(s, RX + 0.5, y + 0.45, 0.6, col, ic, shadow=False, scale=0.55)
-    text(s, RX + 0.95, y + 0.2, RW - 1.1, 0.5, t, size=13.5, color=INK, bold=True)
-    text(s, RX + 0.3, y + 0.72, RW - 0.5, 0.8, d, size=11.5, color=INK)
+# 11 ---- Example 1: the solution overview --------------------------------------------------
+s = action_slide('The solution: one agent over the registry, the guidelines and the models, and a person who signs every action', 'EXAMPLE 1 · POPULATION HEALTH')
+solution_overview(s,
+    left_top=('Unstructured data', 'Clinical guidelines & policy documents', 'National guidelines, care protocols, policy frameworks', 'Embedding model', 'Vector store (RAG)'),
+    left_bottom=('Structured data', 'National HIE  ·  diabetes registry', 'Patients, encounters, diagnoses, facilities: 4,000 patients, 36 months'),
+    agent=('Population Health Agent', 'Patient-level questions, population insights, cost and policy what-ifs, with cited, traceable reasoning. English or Arabic.',
+           ['Orchestrator: a supervisor sends five specialists to work', 'Guideline grounding: every clinical statement cites its section', 'Audit log: every call on record, next to the answer'],
+           'Agentic retrieval'),
+    tools=['Score & simulate (deployed ML models)', 'Quality measures & care gaps', 'Draft action → approval queue', 'Generate charts', 'Query data (SQL)'],
+    bridge=('table', 'CAS table (SAS Viya)', 4),
+    delivers=['Ask in plain language; get governed numbers, cohorts and charts', 'Risk scoring, programme simulation and demand forecasts on demand',
+              'Every answer cites the guideline, shows its tool calls, and ends in a draft a person approves'])
 notes(s, """
-The architecture, left to right. Real-world data on the left: the registry as tables in SAS Viya, the four national
-guidelines chunked and embedded, and the deployed models. In the middle, Basira: a supervisor agent that reads the
-question and sends five specialists to work, each wrapped as a tool with its own narrow job: cohort, guideline, risk,
-population health (through an MCP server), action. On the right, what comes out: a cited answer and a chart, a draft
-that lands in an approval queue, a person who decides, and an audit trail. Nothing the agent drafts reaches the
-record; the queue is the only exit. That is the slide-5 pattern, filled in.
+The one picture to remember. Left: two kinds of data. The guidelines are chunked, embedded and stored as vectors (the
+knowledge base the agent quotes from); the registry is loaded as a CAS table in SAS Viya. Middle: the agent, a
+supervisor that sends five specialists to work (cohort, guideline, risk, population health, action), grounds every
+clinical statement in a guideline section, and logs every call. Right: the MCP server and the tools it exposes: score
+and simulate with the deployed models, quality measures and care gaps, a draft that lands in the approval queue, a
+chart, a query. Follow the dotted line: the registry becomes a CAS table and the SQL tool reads it; the agent itself
+never touches the table. Nothing the agent drafts reaches the record; the approval queue is the only exit.
 """)
 
 # 12 ---- Example 1: the demo plan ------------------------------------------------------------
@@ -719,47 +758,27 @@ straight to the urgent route, and a programme view of who is due. Be clear that 
 published score and a simplified version of the programme; it does not diagnose.
 """)
 
-# 16 ---- Example 2: the solution -------------------------------------------------------------
-s = action_slide('The solution: an early-warning check that scores risk, picks the pathway and points to the nearest door', 'EXAMPLE 2 · CANCER EARLY WARNING')
-card(s, X0, 2.55, 4.3, 7.1)
-label(s, X0 + 0.35, 2.85, 3.6, 'What the person enters')
-text(s, X0 + 0.35, 3.25, 3.65, 6.3, [{'t': t, 'bullet': True} for t in [
-    'Age, sex, height and weight', 'Smoking and diabetes', 'Bowel cancer in a parent, sibling or child, and at what age',
-    'Own history: polyps, inflammatory bowel disease, an inherited syndrome', 'Warning symptoms, and for how long', 'Last screening test and when',
-    'Diet, activity, alcohol', 'Where they live', 'Anything else, in their own words']], size=12.5, color=INK, space_after=6)
-arrow(s, X0 + 4.45, 5.85, 0.7, 0.45, kind='right')
-EX, EW = 6.55, 7.2
-label(s, EX, 2.5, EW, 'The engine')
-eng = [('1 · Risk tier', 'The Asia-Pacific Colorectal Screening score (Gut, 2011): age, sex, family history, smoking, BMI. Each tier carries a measured rate of advanced findings at colonoscopy, about 1%, 3% and 5%.', NAVY),
-       ('2 · Pathway rules', 'The national programme: FIT yearly or colonoscopy ten-yearly from 40 to 75. Colonoscopy five-yearly from ten years before a young relative\'s diagnosis. Surveillance after polyps, IBD or a syndrome. Any red flag: a doctor within two weeks.', BLUE),
-       ('3 · Nearest door', 'Eighteen hospitals and health centres and what each offers: FIT kits and GP review at health centres, endoscopy at hospitals. Distance and travel time from where the person lives, on a map.', NAVY),
-       ('4 · The assistant', 'A language model that reads the free text ("you mentioned blood: tick it, it changes the advice"), answers questions in English or Arabic, and never diagnoses or changes the pathway.', BLUE)]
-eh = 1.5; eg = 0.18
-for i, (t, d, col) in enumerate(eng):
-    y = 2.9 + i * (eh + eg)
-    card(s, EX, y, EW, eh)
-    p = rect(s, EX + 0.3, y + 0.25, 2.2, 0.42, fill=col, radius=0.21)
-    shape_text(p, t, size=12, color=WHITE, bold=True, margins=(0.08, 0.02, 0.08, 0.02))
-    text(s, EX + 2.7, y + 0.12, EW - 2.95, eh - 0.2, d, size=11.5, color=INK, anchor='m')
-arrow(s, EX + EW + 0.15, 5.85, 0.7, 0.45, kind='right')
-OX = 14.6; OW = X1 - OX
-card(s, OX, 2.55, OW, 7.1)
-label(s, OX + 0.3, 2.85, OW - 0.6, 'What comes back')
-outs = [('gauge', 'A risk tier, and the chance of finding something'), ('workflow', 'The pathway: which test, when, and why'),
-        ('map', 'Where to go, with distance and minutes'), ('trend', 'What they can change: smoking, weight, activity, diet'),
-        ('alarm', 'Red flags override everything: the urgent route, not screening')]
-for i, (ic, t) in enumerate(outs):
-    y = 3.35 + i * 1.22
-    icon_circle(s, OX + 0.6, y + 0.3, 0.56, RED if ic == 'alarm' else (NAVY if i % 2 == 0 else BLUE), ic, shadow=False, scale=0.55)
-    text(s, OX + 1.05, y - 0.05, OW - 1.3, 0.95, t, size=12, color=INK, bold=True, anchor='m')
-text(s, X0, 9.78, XW, 0.4, 'Educational prototype: a published score, a simplified version of the national programme, no diagnosis, nothing stored.', size=12, color=SLATE)
+# 16 ---- Example 2: the solution overview --------------------------------------------------
+s = action_slide('The solution: a screening agent that scores risk, picks the pathway and points to the nearest door', 'EXAMPLE 2 · CANCER EARLY WARNING')
+solution_overview(s,
+    left_top=('Unstructured input', 'What the person writes in their own words', 'Symptoms, family history, worries, questions', 'Language model reads it', 'Flags to tick, questions answered'),
+    left_bottom=('Structured input', 'The screening form', 'Age, sex, BMI, smoking, family history, own history, symptoms, last test, location'),
+    agent=('Screening Agent', 'Scores risk, picks the pathway, finds the nearest door, explains the result and answers questions. English or Arabic.',
+           ['Rules first: a published score and the national programme decide', 'Red flags override everything: a doctor within two weeks', 'Never diagnoses, nothing stored'],
+           'Free text in'),
+    tools=['Score risk (APCS, Gut 2011)', 'Apply pathway rules (national programme)', 'Find the nearest facility (distance, minutes)', 'Lifestyle levers', 'Answer questions (LLM)'],
+    bridge=('map', 'Facilities & services table', 2),
+    delivers=['A risk tier with the measured chance of a finding at colonoscopy', 'The right test, when it is due, and where to go, on a map',
+              'Red flags routed to a doctor within two weeks, not into the screening queue'])
+text(s, X0, 9.85, XW, 0.4, 'Educational prototype: a published score, a simplified version of the national programme, no diagnosis, nothing stored.', size=11, color=SLATE)
 notes(s, """
-Left to right. What the person enters, in two minutes, including free text in their own words. The engine: a
-published risk score with measured tiers; the pathway rules of the national programme, with the family-history,
-surveillance and red-flag branches; the nearest door with the right service; and a language model that reads the
-free text and answers questions but never diagnoses and never overrides the rules. What comes back: a tier, a
-pathway, a place, what to change, and, above all, red flags sent to the urgent route rather than the screening queue.
-This is the slide-5 pattern again: the rules and the score are the tools, the model only explains.
+Same picture, second example. Left: what the person writes in their own words is read by the language model and turned
+into flags to tick ("you mentioned blood") and questions answered; what they enter in the form feeds the score and the
+rules. Middle: the screening agent, with the rules in charge: a published score and the national programme decide the
+pathway, red flags override everything, the model only explains, nothing is stored. Right: the tools behind the MCP
+server: the score, the pathway rules, the nearest facility with distance and minutes, the lifestyle levers, and the
+question-answering model. Follow the dotted line: the facilities table feeds the nearest-door tool. What it delivers: a
+tier with a measured chance, the right test and place, and red flags sent to a doctor rather than the screening queue.
 """)
 
 # 17 ---- Example 2: the demo plan, four personas --------------------------------------------

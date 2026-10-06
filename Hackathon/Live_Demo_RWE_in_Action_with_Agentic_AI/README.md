@@ -11,8 +11,8 @@
 | Executive summary | 3 | 2 | Agentic AI has left the pilot stage; the value is in real-world data you already hold |
 | Why now, what it is | 5 | 3 – 5 | The real-world-evidence loop and where the hours go; analytical vs generative vs agentic AI; what surrounds the model |
 | The evidence | 7 | 6 – 8 | Six production deployments with measured results; where agentic AI can go to work across the care pathway (six places, two use cases each); why most pilots fail and what the successes share |
-| Example 1 · Population health | 5 + 10 live | 9 – 13 | Problem, solution (Basira: supervisor + five specialists + approval queue), the four demo questions, the anatomy of one answer (backup) |
-| Example 2 · Cancer early warning | 5 + 7 live | 14 – 18 | Problem, solution (APCS score + UAE pathway rules + nearest door + assistant), the four demo personas, the programme-scale view with the published evidence |
+| Example 1 · Population health | 5 + 10 live | 9 – 13 | Problem, the solution overview (data, agent, MCP server, tools, CAS table), the four demo questions, the anatomy of one answer (backup) |
+| Example 2 · Cancer early warning | 5 + 7 live | 14 – 18 | Problem, the solution overview in the same diagram (inputs, screening agent, MCP server, tools, facilities table), the four demo personas, the programme-scale view with the published evidence |
 | What it means | 3 | 19 – 20 | The blueprint both examples share; five tests for an agentic use case worth building |
 | Sources, close | | 21 – 22 | Fifteen numbered sources; thank you |
 
