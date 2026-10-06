@@ -242,7 +242,7 @@ for el in list(mlst)[1:]:
 M = prs.slide_masters[0]
 LAY = {l.name: l for l in M.slide_layouts}
 
-def action_slide(title, tag=None, title_size=None, arc=True):
+def action_slide(title, tag=None, title_size=None, arc=True, title_w=None):
     """A content slide with an action title (the finding, as a sentence, up to two lines) and no subtitle."""
     s = prs.slides.add_slide(LAY['SAS - Title & Subtitle'])
     if arc: arc_bg(s)
@@ -250,7 +250,7 @@ def action_slide(title, tag=None, title_size=None, arc=True):
     t.text = title
     if not title_size:
         title_size = 36 if len(title) <= 60 else 32
-    t.left = Inches(X0); t.top = Inches(0.78); t.width = Inches(XW); t.height = Inches(1.35)
+    t.left = Inches(X0); t.top = Inches(0.78); t.width = Inches(title_w or XW); t.height = Inches(1.35)
     tf = t.text_frame; tf.word_wrap = True; tf.vertical_anchor = MSO_ANCHOR.TOP
     for p in tf.paragraphs:
         for r in p.runs: r.font.size = Pt(title_size)
@@ -331,49 +331,55 @@ def copyright_line(slide, color=LIGHT):
 s = prs.slides.add_slide(LAY['SAS - Title'])
 set_ph(s.shapes.title, 'Real-World Evidence in Action\nwith Agentic AI', size=60)
 set_ph(placeholder(s, 10), 'Live demonstration  ·  SAS', size=36)
-set_ph(placeholder(s, 11), 'Raed Aldweik  |  SAS\nEHS × SAS Agentic AI Hackathon', size=24)
+set_ph(placeholder(s, 11), 'Raed Aldweik  |  SAS\nAgentic AI Hackathon', size=24)
 notes(s, """
 Forty-five minutes, two live demonstrations, one argument: agentic AI has moved from pilots to production in health
 care, and the value sits in real-world data that health systems already hold and nobody has the hours to act on.
-Timing: executive summary 3 min (slide 2); why now and what it is 5 min (3-5); the evidence 7 min (6-8); Example 1,
-population health, 5 min on slides (10-13) and 10 min live; Example 2, cancer early warning, 5 min on slides (15-18)
-and 7 min live; what it means 3 min (19-20); questions. Slides 13 and 18 are backups if a live environment misbehaves.
-Before the session: open the app on the second screen with Example 1 (Basira) warmed up on the morning briefing and
-Example 2 loaded with Fatima's profile; check the trace panel is visible.
+Timing: executive summary 3 min (slide 2); why now and what it is 5 min (3-5); the evidence and the use-case map
+7 min (6-8); Example 1, population health, 5 min on slides (10-13) and 10 min live; Example 2, cancer early warning,
+5 min on slides (15-18) and 7 min live; what it means 3 min (19-20); questions. Slides 13 and 18 are backups if a
+live environment misbehaves. Before the session: open the app on the second screen with Example 1 warmed up on the
+morning briefing and Example 2 loaded with Fatima's profile; check the trace panel is visible.
 """)
 
 # 2 ---- Executive summary -------------------------------------------------------------------
-s = action_slide('Agentic AI has left the pilot stage; the value is in real-world data you already hold', 'EXECUTIVE SUMMARY')
+s = action_slide('Agentic AI has left the pilot stage; the value is in real-world data you already hold', 'EXECUTIVE SUMMARY', title_w=12.0)
+panel = rect(s, 13.7, 0, 6.3, 11.25, fill=NAVY, radius=0)
+send_to_back(s, panel, index=3)
 msgs = [
     ('Production deployments now report measured outcomes',
-     'Documentation time down 16 minutes per 8 patient-hours (JAMA, 2026). Clinician burnout 52% to 39% in 30 days (JAMA Network Open, 2025). '
-     'Two-year mortality 43% lower after ML-guided screening outreach (Geisinger). 40% of prior authorisations completed with no human touch (MUSC Health).'),
-    ('The UAE is moving first, and EHS is already live',
-     'Amal, the UAE\'s first AI physician assistant and its first multi-agent clinical platform, launched by EHS in February 2026. '
-     'Half of government services to run on agentic AI within two years, announced April 2026.'),
+     'Documentation time down 16 minutes a day (JAMA, 2026). Clinician burnout 52% to 39% in 30 days (JAMA Network Open, 2025). '
+     'Two-year mortality 43% lower after ML-guided screening outreach (Geisinger). 40% of prior authorisations with no human touch (MUSC Health).'),
+    ('The use cases are known; the question is which workflow first',
+     'The same pattern runs before, during and after the visit, in population health and prevention, in operations and finance, and in research.'),
     ('The pattern behind every success is the same',
      'A language model that reasons, surrounded by your data, your models and your guidelines as governed tools, with a person at the decision '
-     'and a trace of every step. The model never touches a system on its own.'),
-    ('Today: two live examples on synthetic EHS data',
+     'and a trace of every step.'),
+    ('Today: two live examples on synthetic data',
      'A population-health agent over a diabetes registry, and a bowel-cancer early-warning check. Both turn real-world data into evidence '
      'and a next action in seconds, and show their working.'),
 ]
 for i, (a, b) in enumerate(msgs):
-    numbered_row(s, X0, 2.6 + i * 1.85, 11.3, i + 1, a, b, row_h=1.7)
-card(s, 13.1, 2.5, 5.52, 7.45)
-heading(s, 13.5, 2.85, 4.8, 'The next 45 minutes', size=19)
-plan = [('presentation', 'The evidence', '10 min. What is working, what is not, and why'),
+    y = 2.6 + i * 1.9
+    text(s, X0, y - 0.12, 1.4, 0.9, f'0{i + 1}', size=36, color=BLUE, bold=True)
+    text(s, X0 + 1.45, y, 10.3, 0.5, a, size=18, color=INK, bold=True)
+    text(s, X0 + 1.45, y + 0.5, 10.3, 1.3, b, size=13, color=INK)
+text(s, 14.3, 2.6, 5.2, 0.5, 'The next 45 minutes', size=18, color=WHITE, bold=True)
+plan = [('presentation', 'The evidence', '10 min. What is working, what is not, and where it could go next'),
         ('heart', 'Example 1 · Population health', '15 min. Five on slides, ten live'),
         ('scan', 'Example 2 · Cancer early warning', '12 min. Five on slides, seven live'),
         ('check', 'What it means for your use case', '8 min. One blueprint, five tests, questions')]
 for i, (ic, a, b) in enumerate(plan):
-    icon_row(s, 13.5, 3.6 + i * 1.55, 4.8, ic, a, b, circle=NAVY if i % 2 == 0 else BLUE, d=0.6, label_size=14.5, desc_size=12.5, row_h=1.4)
+    y = 3.5 + i * 1.6
+    icon_circle(s, 14.6, y + 0.3, 0.6, BLUE, ic, shadow=False, scale=0.55)
+    text(s, 15.1, y - 0.02, 4.5, 0.45, a, size=14, color=WHITE, bold=True)
+    text(s, 15.1, y + 0.42, 4.5, 0.9, b, size=12, color=LIGHT)
 notes(s, """
 The whole session on one page; say it in ninety seconds and the room knows where you are going. Four messages: the
-evidence is in (measured outcomes, not pilots); the UAE is already acting (EHS's own Amal, the federal agentic-AI
-target); the winning pattern is always the same (model in the middle, your data and guidelines around it, a person
-at the decision); and today you will see that pattern twice, live, on synthetic EHS data. The card on the right is
-the running order.
+evidence is in (measured outcomes, not pilots); the use cases are known across the whole pathway, so the question is
+which workflow first; the winning pattern is always the same (model in the middle, your data and guidelines around
+it, a person at the decision); and today you will see that pattern twice, live, on synthetic data. The panel on the
+right is the running order.
 """)
 
 # 3 ---- Why now: the RWE loop ----------------------------------------------------------------
@@ -393,9 +399,9 @@ arrow(s, X0 + 1.9, 4.65, 0.5, 2.45, kind='up')
 text(s, X0 + 2.7, 5.0, 4.2, 1.75, ['The bottleneck is not data.', {'t': 'It is analyst and clinician hours.', 'color': BLUE}],
      size=15, color=NAVY, bold=True, align='c', anchor='m')
 tx = 11.4; tw = X1 - tx; th = 2.15
-stat_tile(s, tx, 2.6, tw, th, '20.7%', 'of UAE adults live with diabetes: 1.27 million people, among the highest rates in the world (IDF Diabetes Atlas, 11th edition).')
-stat_tile(s, tx, 2.6 + th + 0.3, tw, th, 'No. 1', 'Bowel cancer is the most common cancer among men in the UAE, and a quarter to a half of cases are diagnosed before the age of 50 (UAE National Cancer Registry; CA Cancer J Clin, 2024).')
-stat_tile(s, tx, 2.6 + 2 * (th + 0.3), tw, th, '~70%', 'of new drug and biologic submissions to the US FDA now include real-world evidence. Regulators, not only providers, run on registry data (2026).')
+stat_tile(s, tx, 2.6, tw, th, '20.7%', 'of adults in the UAE live with diabetes: 1.27 million people, among the highest rates in the world (IDF Diabetes Atlas, 11th edition).', num_color=BLUE)
+stat_tile(s, tx, 2.6 + th + 0.3, tw, th, 'No. 1', 'Bowel cancer is the most common cancer among men in the UAE, and a quarter to a half of cases are diagnosed before the age of 50 (National Cancer Registry; CA Cancer J Clin, 2024).', num_color=BLUE)
+stat_tile(s, tx, 2.6 + 2 * (th + 0.3), tw, th, '~70%', 'of new drug and biologic submissions to the US FDA now include real-world evidence. Regulators, not only providers, run on registry data (2026).', num_color=BLUE)
 sources(s, 'Sources: International Diabetes Federation, IDF Diabetes Atlas 11th ed. (2025), UAE profile  ·  UAE National Cancer Registry, Cancer Incidence in UAE 2021 (MOHAP)  ·  '
            'Al-Shamsi et al., CA: A Cancer Journal for Clinicians, 2024  ·  MedCity News, March 2026.')
 notes(s, """
@@ -408,24 +414,33 @@ world evidence is now mainstream even with regulators. Agentic AI is the first t
 just one step of it.
 """)
 
-# 4 ---- What agentic AI is: comparison table ------------------------------------------------
+# 4 ---- What agentic AI is: three cards -----------------------------------------------------
 s = action_slide('Agentic AI is the step from answering questions to completing work', 'WHAT AGENTIC AI IS')
-rows = [('', 'Analytical AI', 'Generative AI', 'Agentic AI'),
-        ('You give it', 'Data', 'A prompt', 'A goal'),
-        ('It gives back', 'A prediction: a risk score, a forecast, a classification', 'Text: a summary, a draft, an answer', 'Finished work, with every step it took shown'),
-        ('It stops when', 'The score is computed', 'The answer is written', 'The goal is met, or a person must decide'),
-        ('It needs around it', 'Clean data and a target', 'Context and a reviewer', 'Tools, knowledge, rules and a human in the loop'),
-        ('In today\'s demos', 'The deterioration-risk model; the APCS screening score', 'Writes every answer and explanation, in English or Arabic',
-         'Basira and the screening check: decide what to run, run it, check it, hand over')]
-table(s, X0, 2.55, XW, 5.7, rows, [2.75, 4.8, 4.8, 4.9], header_size=15, body_size=13.5, center_cols=())
-text(s, X0, 8.65, XW, 1.3, 'An agent pursues a goal by reasoning about the next step, using tools to act, checking the result, and staying inside limits set by people. '
-     'Nothing in the third column replaces the first two: the agent puts them to work.', size=15, color=NAVY)
+cols = [('model', 'Analytical AI', [('You give it', 'Data'), ('It gives back', 'A prediction: a risk score, a forecast, a classification'),
+                                   ('It stops when', 'The score is computed'), ('In today\'s demos', 'The deterioration-risk model; the screening score')], WHITE, NAVY),
+        ('sparkles', 'Generative AI', [('You give it', 'A prompt'), ('It gives back', 'Text: a summary, a draft, an answer'),
+                                       ('It stops when', 'The answer is written'), ('In today\'s demos', 'Writes every answer and explanation, in English or Arabic')], WHITE, SKY),
+        ('robot', 'Agentic AI', [('You give it', 'A goal'), ('It gives back', 'Finished work, with every step it took shown'),
+                                 ('It stops when', 'The goal is met, or a person must decide'), ('In today\'s demos', 'The agents: they decide what to run, run it, check it, and hand over')], BLUE, WHITE)]
+cw3 = (XW - 2 * 0.4) / 3
+for i, (ic, t, rows_, fill, circ) in enumerate(cols):
+    x = X0 + i * (cw3 + 0.4); y = 2.6; h = 6.5
+    dark = fill == BLUE
+    card(s, x, y, cw3, h, fill=fill)
+    icon_circle(s, x + 0.7, y + 0.7, 0.9, circ, ic, variant=('b' if dark else 'w'), shadow=False)
+    text(s, x + 1.35, y + 0.42, cw3 - 1.6, 0.6, t, size=22, color=(WHITE if dark else INK), bold=True)
+    for j, (lab, val) in enumerate(rows_):
+        yy = y + 1.65 + j * 1.18
+        text(s, x + 0.4, yy, cw3 - 0.8, 0.3, lab.upper(), size=10.5, color=(LIGHT if dark else BLUE), bold=True)
+        text(s, x + 0.4, yy + 0.3, cw3 - 0.8, 0.85, val, size=14, color=(WHITE if dark else INK))
+text(s, X0, 9.4, XW, 0.7, 'An agent pursues a goal by reasoning about the next step, using tools to act, checking the result, and staying inside limits set by people. Nothing in the third column replaces the first two: the agent puts them to work.',
+     size=13, color=SLATE)
 notes(s, """
-One table instead of three definitions. Read it column by column. Analytical AI predicts, and EHS already runs it.
-Generative AI writes, and most of the room has used it. Agentic AI is given a goal, decides which tools to use, uses
-them, checks the result and keeps going until the job is done or a person has to decide. The last row ties each
-column to what they will see: the risk model and the screening score are analytical; the language model writes;
-the agent is the thing that orchestrates both. The sentence underneath is the only definition in the deck.
+Three cards instead of three definitions. Analytical AI predicts, and most health systems already run it. Generative
+AI writes, and most of the room has used it. Agentic AI is given a goal, decides which tools to use, uses them,
+checks the result and keeps going until the job is done or a person has to decide. The last row of each card ties it
+to what they will see: the risk model and the screening score are analytical; the language model writes; the agent
+orchestrates both. The sentence underneath is the only definition in the deck.
 """)
 
 # 5 ---- What surrounds the model ------------------------------------------------------------
@@ -448,7 +463,7 @@ oval(s, cx, cy, 3.1, fill=NAVY, shadow=True)
 oval(s, cx, cy, 2.75, fill=None, line=WHITE, line_w=1.5)
 icon(s, 'brain', 'w', cx - 0.4, cy - 1.05, 0.8)
 text(s, cx - 1.3, cy - 0.2, 2.6, 1.2, ['The model', {'t': 'reasons, plans, writes', 'size': 13}], size=20, color=WHITE, bold=True, align='c', anchor='t')
-text(s, X0, 9.45, XW, 0.5, 'The model never touches a system. The four blocks around it do, with the permissions you gave them. Every deployment on the next slide is built this way.', size=14, color=SLATE)
+text(s, X0, 9.45, XW, 0.5, 'The model never touches a system. The four blocks around it do, with the permissions you gave them. Every deployment on the next slide is built this way.', size=13, color=SLATE)
 notes(s, """
 The architecture every successful deployment shares, and the one both demos use. The language model sits in the
 middle and only reasons, plans and writes. Knowledge is what it may quote: your guidelines, retrieved and cited.
@@ -457,63 +472,66 @@ know exactly what it can reach. Oversight is the person at the decision. Trace i
 than bolted on. Say the footer slowly; it is the sentence that settles the security conversation.
 """)
 
-# 6 ---- Evidence table ----------------------------------------------------------------------
+# 6 ---- Evidence cards ----------------------------------------------------------------------
 s = action_slide('Agentic AI is already in production across the care pathway, with measured results', 'THE EVIDENCE')
-rows = [('Where', 'Who', 'What the agent does', 'Measured result'),
-        ('Clinical documentation', 'Five US academic health systems, 8,581 clinicians', 'Listens to the visit and drafts the note for the clinician to finalise',
-         '16 minutes less documentation per 8 patient-hours; 0.49 more visits a week (JAMA, 2026)'),
-        ('Clinician burnout', 'Six health systems, 263 clinicians', 'Ambient scribe (Abridge) in daily use for 30 days',
-         'Burnout 51.9% to 38.8%; higher ability to give patients full attention (JAMA Network Open, 2025)'),
-        ('Cancer screening outreach', 'Geisinger', 'Machine learning ranks who is at risk and overdue; outreach works the list',
-         '6.9% more colonoscopies completed within six months; two-year mortality 43% lower than controls (M&SOM, 2026)'),
-        ('Multilingual outreach', 'WellSpan Health with Hippocratic AI, 1,878 patients', 'A voice agent calls people due for bowel screening, in their language, and offers the FIT kit',
-         'FIT opt-in 18.2% among Spanish speakers vs 7.1% among English speakers; connect rate 88.8% vs 53.3% (2025)'),
-        ('Prior authorisation', 'MUSC Health with Notable', 'Agents work the payer portals end to end; denials are escalated to a person',
-         '40% of authorisations with no human touch; about 30 minutes to about 1 minute per case (2025)'),
-        ('Clinical trial matching', 'US National Institutes of Health, TrialGPT', 'Screens patient records against trial criteria and explains each match',
-         '87.3% criterion-level accuracy; 42.6% less clinician screening time (Nature Communications, 2024)')]
-table(s, X0, 2.55, XW, 7.35, rows, [2.7, 3.4, 5.4, 5.75], header_size=14, body_size=12, color_cols={3: NAVY})
+ev = [('16 min', 'less documentation per clinician per day', 'Ambient AI scribes draft the note while the clinician listens. Five US academic health systems, 8,581 clinicians; 0.49 more visits a week.', 'JAMA, 2026'),
+      ('52% → 39%', 'clinician burnout after 30 days', 'An ambient scribe in daily use, with the clinician finalising every note. Six health systems, 263 clinicians.', 'JAMA Network Open, 2025'),
+      ('43%', 'lower two-year mortality than controls', 'Machine learning ranks who is at risk and overdue for bowel screening; outreach works the list. 6.9% more colonoscopies within six months.', 'Geisinger · M&SOM, 2026'),
+      ('2.6×', 'the FIT opt-in among Spanish speakers', 'A voice agent calls people due for bowel screening in their own language and offers the kit: 18.2% vs 7.1%. 1,878 patients.', 'WellSpan Health with Hippocratic AI, 2025'),
+      ('40%', 'of prior authorisations with no human touch', 'Agents work the payer portals end to end; denials are escalated to a person. About 30 minutes to about 1 minute per case.', 'MUSC Health with Notable, 2025'),
+      ('87%', 'accuracy in clinical trial matching', 'A language model screens patient records against trial criteria and explains each match; 42.6% less clinician screening time.', 'NIH TrialGPT · Nature Communications, 2024')]
+ew = (XW - 2 * 0.4) / 3; eh = 3.45
+for i, (n, lab, d, src) in enumerate(ev):
+    r, c = divmod(i, 3)
+    x = X0 + c * (ew + 0.4); y = 2.55 + r * (eh + 0.35)
+    card(s, x, y, ew, eh)
+    text(s, x + 0.4, y + 0.25, ew - 0.8, 0.75, n, size=32, color=BLUE if c != 1 else NAVY, bold=True)
+    text(s, x + 0.4, y + 1.0, ew - 0.8, 0.55, lab, size=13.5, color=INK, bold=True)
+    text(s, x + 0.4, y + 1.6, ew - 0.8, 1.3, d, size=12, color=INK)
+    text(s, x + 0.4, y + eh - 0.55, ew - 0.8, 0.4, src, size=10.5, color=SLATE)
 sources(s, 'Sources: JAMA, April 2026, multisite AI-scribe study (Mass General Brigham, Emory, UCSF, Yale New Haven, UC Davis)  ·  Olson et al., JAMA Network Open, October 2025  ·  '
            'Manufacturing & Service Operations Management, 2026 (Geisinger)  ·  WellSpan Health / Hippocratic AI retrospective analysis, 2025  ·  Becker\'s Hospital Review, 2025 (MUSC Health)  ·  Jin et al., Nature Communications, 2024.')
 notes(s, """
-Six deployments, six measured results, all published or reported in the last two years. Walk the fourth column only.
+Six deployments, six measured results, all published or reported in the last two years. Read the big numbers only.
 Documentation: sixteen minutes a day across five academic systems and 8,581 clinicians, modest and real. Burnout: from
 half of clinicians to under four in ten in a month. Screening outreach: a machine-learning list and a phone call, and
 two-year mortality 43% lower than controls. Multilingual outreach: the agent reached the group the system was failing.
 Prior authorisation: 40% of cases never touched by a human. Trial matching: 87% accuracy, 43% less screening time.
-Note what they have in common: a named workflow, a number, and a person still in the loop. Keep this slide up during
-questions; it is the one they photograph.
+What they have in common: a named workflow, a number, and a person still in the loop.
 """)
 
-# 7 ---- The UAE -----------------------------------------------------------------------------
-s = action_slide('The UAE is setting the pace: EHS already has a multi-agent assistant in front of patients', 'THE EVIDENCE')
-card(s, X0, 2.6, 9.9, 5.25)
-pill(s, X0 + 0.45, 2.95, 5.6, 0.46, 'EHS × Boston Health AI  ·  February 2026', fill=LIGHT, color=NAVY, size=12)
-text(s, X0 + 0.45, 3.6, 9.0, 0.6, 'Amal: the UAE\'s first AI physician assistant', size=22, color=INK, bold=True)
-text(s, X0 + 0.45, 4.3, 9.0, 4.1, [
-    {'t': 'Holds a conversational medical interview with the patient before the visit, in the patient\'s preferred language', 'bullet': True},
-    {'t': 'Structures the history and symptoms into a clinical summary the treating clinician reads before the encounter', 'bullet': True},
-    {'t': 'The first multi-agent clinical intelligence platform deployed in the UAE public health system', 'bullet': True},
-    {'t': 'Runs on UAE-hosted infrastructure with full data sovereignty and end-to-end encryption', 'bullet': True},
-    {'t': 'Unveiled at WHX Dubai 2026, rolled out across the EHS network', 'bullet': True},
-], size=15, color=INK, space_after=10)
-rx = 11.75; rw = X1 - rx
-stat_tile(s, rx, 2.6, rw, 2.5, '50%', 'of UAE government sectors, services and operations to run on agentic AI within two years. Announced on 23 April 2026, the first country to set such a target.')
-text(s, X0, 8.2, XW, 0.9, 'Same pattern as the previous slide, in production here: a model that converses and summarises, specialists behind it, the clinician at the decision. For the hackathon the question is no longer whether, but which workflows first.', size=13, color=SLATE)
-stat_tile(s, rx, 5.35, rw, 2.5, '>80%', 'of health care leaders worldwide expect generative and agentic AI to deliver moderate-to-significant value in 2026, up from fewer than half in 2024 (Deloitte, 2026 Global Health Care Outlook).')
-sources(s, 'Sources: Emirates Health Services and Boston Health AI, press release, 19 February 2026  ·  UAE Government announcement, 23 April 2026 (Gulf News, Khaleej Times)  ·  Deloitte Center for Health Solutions, 2026 Global Health Care Outlook, December 2025.')
+# 7 ---- Use-case landscape ------------------------------------------------------------------
+s = action_slide('Where agentic AI can go to work: six places across the care pathway', 'THE EVIDENCE')
+uc = [('clipboard', 'Before the visit', ['A conversational pre-visit interview, summarised for the clinician', 'Symptoms triaged to the right route and the right slot'], False),
+      ('stethoscope', 'During the visit', ['The note drafted while the clinician listens', 'Decision support that cites the guideline by section'], False),
+      ('phone', 'After the visit', ['Post-discharge follow-up calls, in the patient\'s language', 'Adherence and refill reminders, with a nurse on call'], False),
+      ('heart', 'Population and prevention', ['Registry surveillance: who is slipping, where the care gaps are', 'Screening outreach and early warning: who is due, who has red flags'], True),
+      ('coins', 'Operations and finance', ['Prior authorisation worked end to end, denials to a person', 'Capacity and demand forecasting, with the draft plan attached'], False),
+      ('flask', 'Research and evidence', ['Trial matching with explained eligibility', 'Continuous real-world evidence: safety signals, outcomes, registries'], False)]
+uw = (XW - 2 * 0.4) / 3; uh = 3.45
+for i, (ic, t, lines, live) in enumerate(uc):
+    r, c = divmod(i, 3)
+    x = X0 + c * (uw + 0.4); y = 2.55 + r * (uh + 0.35)
+    card(s, x, y, uw, uh, fill=BLUE if live else WHITE)
+    icon_circle(s, x + 0.65, y + 0.65, 0.78, WHITE if live else NAVY, ic, variant=('b' if live else 'w'), shadow=False, scale=0.55)
+    text(s, x + 1.25, y + 0.35, uw - 1.5 - (1.7 if live else 0), 0.6, t, size=18, color=WHITE if live else INK, bold=True)
+    if live:
+        pill(s, x + uw - 1.85, y + 0.45, 1.55, 0.44, 'Live today', fill=WHITE, color=BLUE, size=11)
+    text(s, x + 0.4, y + 1.45, uw - 0.8, uh - 1.6, [{'t': l, 'bullet': True, 'bullet_color': (LIGHT if live else BLUE)} for l in lines],
+         size=13.5, color=WHITE if live else INK, space_after=8)
+text(s, X0, 9.95, XW, 0.4, 'Every one of these follows the pattern on the previous two slides: a goal, governed tools over data that already exists, a person at the decision, a trace.', size=12.5, color=SLATE)
 notes(s, """
-Bring it home. The room works for EHS, and EHS is already running a multi-agent assistant with real patients: Amal
-interviews the patient before the visit, in their language, and hands the clinician a structured summary. That is
-the same pattern as the previous slide, in production here, since February. On the right, the policy context: half
-of federal services on agentic AI within two years, and four in five health leaders worldwide expecting value this
-year. The point for the hackathon: the question is no longer whether, but which workflows first.
+The map of where this goes. Six places along the pathway, two use cases each, all of them running somewhere today in
+some form: before the visit (intake, triage), during (documentation, cited decision support), after (follow-up calls,
+adherence), population and prevention (registry surveillance, screening outreach and early warning), operations and
+finance (prior authorisation, capacity), research (trial matching, continuous real-world evidence). The blue card is
+where the two demos sit. Invite the room to place their own idea on this map; most land in one of the six.
 """)
 
 # 8 ---- Reality check -----------------------------------------------------------------------
 s = action_slide('Most AI pilots never show a return; the deployments that do share four traits', 'THE EVIDENCE')
-stat_tile(s, X0, 2.6, 6.4, 3.0, '95%', 'of organisations saw no measurable return from their generative-AI pilots, against USD 30 to 40 billion invested. Brittle workflows and poor fit with daily operations, not the models (MIT NANDA, The GenAI Divide, July 2025, preliminary).')
-stat_tile(s, X0, 5.9, 6.4, 3.0, '>40%', 'of agentic AI projects will be cancelled by the end of 2027: escalating cost, unclear business value, inadequate risk controls. Of thousands of "agentic" vendors, Gartner counts about 130 as real (Gartner, June 2025).')
+stat_tile(s, X0, 2.6, 6.4, 3.0, '95%', 'of organisations saw no measurable return from their generative-AI pilots, against USD 30 to 40 billion invested. Brittle workflows and poor fit with daily operations, not the models (MIT NANDA, July 2025, preliminary).', num_size=40, num_color=BLUE)
+stat_tile(s, X0, 5.9, 6.4, 3.0, '>40%', 'of agentic AI projects will be cancelled by the end of 2027: escalating cost, unclear business value, inadequate risk controls. Of thousands of "agentic" vendors, Gartner counts about 130 as real (Gartner, June 2025).', num_size=40, num_color=BLUE)
 rx = 8.4; rw = X1 - rx
 heading(s, rx, 2.55, rw, 'What the deployments that work have in common', size=19)
 traits = [('A named workflow with a number attached', 'Minutes per note, completions per hundred invitations, authorisations per day. Not "transformation".'),
@@ -539,7 +557,7 @@ notes(s, "Example 1. Five minutes on the problem, the solution and the demo plan
 s = action_slide('The problem: the registry already knows who is slipping, but every answer costs days of analyst time', 'EXAMPLE 1 · POPULATION HEALTH')
 lw = 10.0
 scq(s, X0, 2.55, lw, 'Situation',
-    'A programme lead runs diabetes care for 4,000 registered patients across 18 EHS hospitals and health centres in five emirates. The registry holds 54 fields per patient: '
+    'A programme lead runs diabetes care for 4,000 registered patients across 18 hospitals and health centres in five regions. The registry holds 54 fields per patient: '
     'HbA1c, blood pressure, lipids, kidney function, therapy, adherence, open care gaps, visits and cost, over 36 months.', h=2.0)
 scq(s, X0, 5.1, lw, 'Complication',
     'The questions that matter every week (who is uncontrolled, where the gaps are, who is at risk, what the guideline says, what a programme would save) each need an analyst request, '
@@ -548,27 +566,25 @@ scq(s, X0, 7.65, lw, 'What good looks like',
     'Ask the registry in plain language and get the number with its cohort, the guideline section that applies, a chart, and a draft action ready for a clinician to approve. '
     'In seconds, with the trail to prove where every figure came from.', h=2.0)
 tx = 12.1; tw = (X1 - tx - 0.3) / 2; th = 1.95
-tiles = [('4,000', 'patients, 18 facilities, 5 emirates'), ('34.9%', 'well controlled (HbA1c below 7%)'),
+tiles = [('4,000', 'patients, 18 facilities, 5 regions'), ('34.9%', 'well controlled (HbA1c below 7%)'),
          ('760', 'patients overdue an HbA1c test'), ('AED 64.0M', 'annual cost, last 12 months')]
 for i, (n, lab) in enumerate(tiles):
     r, c = divmod(i, 2)
-    stat_tile(s, tx + c * (tw + 0.3), 2.6 + r * (th + 0.3), tw, th, n, lab, num_size=28, label_size=13)
-text(s, tx, 7.15, X1 - tx, 1.6, 'Synthetic registry modelled on EHS diabetes care across the Northern Emirates, with the hackathon\'s teaching set of national guidelines. '
-     'The numbers are real for this data, not for EHS.', size=12, color=SLATE)
+    stat_tile(s, tx + c * (tw + 0.3), 2.6 + r * (th + 0.3), tw, th, n, lab, num_size=30, label_size=13, num_color=BLUE)
+text(s, tx, 7.15, X1 - tx, 1.6, 'A synthetic registry modelled on a national health information exchange, with a teaching set of national guidelines. The numbers are real for this data only.', size=12, color=SLATE)
 notes(s, """
 Situation, complication, what good looks like. The programme lead has the data: 4,000 patients, 54 fields, three
 years of history. What they do not have is the hours: every question is an analyst request and a guideline lookup,
 so questions are asked rarely and gaps are found late. The tiles give the room a feel for the registry before the
 demo: a third well controlled, 760 overdue a test, AED 64 million a year. Be explicit that the data is synthetic and
-the guidelines are a teaching set; the numbers are real for this data, not for EHS.
+the guidelines are a teaching set; the numbers are real for this data only.
 """)
 
 # 11 ---- Example 1: the solution -------------------------------------------------------------
 s = action_slide('The solution: one supervisor agent, five specialists, and a person who signs every action', 'EXAMPLE 1 · POPULATION HEALTH')
-# left: real-world data
 label(s, X0, 2.5, 4.3, 'Real-world data')
-srcs = [('database', 'HIE diabetes registry', 'CAS tables in SAS Viya: 4,000 patients, 36 months, 54 fields'),
-        ('files', 'National guidelines', 'Four NHA documents, chunked, embedded, cited by section'),
+srcs = [('database', 'Diabetes registry', 'Tables in SAS Viya: 4,000 patients, 36 months, 54 fields, from the health information exchange'),
+        ('files', 'National guidelines', 'Four documents, chunked, embedded, cited by section'),
         ('model', 'Deployed models', 'Deterioration risk with drivers, programme simulation, demand forecast')]
 for i, (ic, t, d) in enumerate(srcs):
     y = 2.9 + i * 2.25
@@ -577,13 +593,12 @@ for i, (ic, t, d) in enumerate(srcs):
     text(s, X0 + 1.1, y + 0.28, 3.05, 0.5, t, size=15, color=INK, bold=True)
     text(s, X0 + 0.35, y + 0.95, 3.6, 0.95, d, size=12, color=INK)
 arrow(s, X0 + 4.45, 5.75, 0.8, 0.45, kind='right')
-# centre: Basira
 AX, AW = 6.65, 6.9
 card(s, AX, 2.5, AW, 7.4, fill=BLUE)
 text(s, AX + 0.35, 2.75, AW - 0.7, 0.5, 'Basira  ·  supervisor agent', size=20, color=WHITE, bold=True)
 text(s, AX + 0.35, 3.3, AW - 0.7, 0.9, 'Reads the question, picks the specialists, writes the cited answer and draws the chart. English or Arabic, text or voice.', size=12.5, color=WHITE)
-specs = [('Cohort specialist', 'queries the HIE: records, timelines, cohort filters'),
-         ('Guideline specialist', 'retrieves and cites NHA sections (RAG)'),
+specs = [('Cohort specialist', 'queries the exchange: records, timelines, cohort filters'),
+         ('Guideline specialist', 'retrieves and cites guideline sections (RAG)'),
          ('Risk specialist', 'scores the deployed models, explains the drivers, simulates programmes'),
          ('Population-health specialist', 'quality measures, care gaps, policy what-ifs, over an MCP server'),
          ('Action specialist', 'drafts prescriptions, recalls and referrals, for approval only')]
@@ -591,11 +606,7 @@ for i, (t, d) in enumerate(specs):
     y = 4.35 + i * 1.08
     b = rect(s, AX + 0.35, y, AW - 0.7, 0.92, fill=WHITE, radius=0.15)
     shape_text(b, [{'t': t + '  ', 'bold': True, 'size': 13, 'color': NAVY}, {'t': d, 'size': 12, 'color': INK}], align='l', anchor='m', margins=(0.2, 0.04, 0.2, 0.04))
-# connect the specialists' text into one paragraph per box
-for shp in list(s.shapes)[-10:]:
-    pass
 arrow(s, AX + AW + 0.15, 5.75, 0.8, 0.45, kind='right')
-# right: outputs
 RX = 14.3; RW = X1 - RX
 label(s, RX, 2.5, RW, 'What comes out')
 outs = [('cite', 'A cited answer and a chart', 'Every number with its cohort, every clinical statement with its section', BLUE),
@@ -609,28 +620,36 @@ for i, (ic, t, d, col) in enumerate(outs):
     text(s, RX + 0.95, y + 0.2, RW - 1.1, 0.5, t, size=13.5, color=INK, bold=True)
     text(s, RX + 0.3, y + 0.72, RW - 0.5, 0.8, d, size=11.5, color=INK)
 notes(s, """
-The architecture, left to right. Real-world data on the left: the registry as CAS tables in SAS Viya, the four
-national guidelines chunked and embedded, and the deployed models. In the middle, Basira: a supervisor agent that
-reads the question and sends five specialists to work, each wrapped as a tool with its own narrow job: cohort,
-guideline, risk, population health (through an MCP server), action. On the right, what comes out: a cited answer
-and a chart, a draft that lands in an approval queue, a person who decides, and an audit trail. Nothing the agent
-drafts reaches the record; the queue is the only exit. That is the slide-5 pattern, filled in.
+The architecture, left to right. Real-world data on the left: the registry as tables in SAS Viya, the four national
+guidelines chunked and embedded, and the deployed models. In the middle, Basira: a supervisor agent that reads the
+question and sends five specialists to work, each wrapped as a tool with its own narrow job: cohort, guideline, risk,
+population health (through an MCP server), action. On the right, what comes out: a cited answer and a chart, a draft
+that lands in an approval queue, a person who decides, and an audit trail. Nothing the agent drafts reaches the
+record; the queue is the only exit. That is the slide-5 pattern, filled in.
 """)
 
 # 12 ---- Example 1: the demo plan ------------------------------------------------------------
 s = action_slide('What you will see: four questions a programme lead asks on a Monday morning', 'EXAMPLE 1 · POPULATION HEALTH')
-rows = [('#', 'The question', 'What happens underneath', 'The evidence it produces', 'Who decides'),
-        ('1', 'Give me my morning briefing: review the panel and tell me who needs attention today.',
-         'The cohort and risk specialists scan the panel; the supervisor ranks who needs attention and why', 'A ranked list, one reason per name', 'The programme lead'),
-        ('2', 'Review my highest-risk patient whose HbA1c is rising on metformin alone: summarise, score the risk, check the guideline, and draft what is needed.',
-         'The record and 36-month trajectory; the model score with its drivers; NHA-CG-01 §4; a draft prescription change', 'A summary, a risk score, a citation, a draft', 'The clinician, in the approval queue'),
-        ('3', 'How many type 2 patients with HbA1c above 8% are not on an SGLT2 inhibitor or GLP-1 agonist, what is closing that gap worth, and draft the review list.',
-         'A cohort query; the intervention priced from the measured effects in NHA-PP-01 §5; a review list drafted', 'A number with its cohort, a value in AED, a list', 'The clinic, from the queue'),
-        ('4', 'Which patients are overdue for retinal screening, where is the backlog, and draft the recall.',
-         'A care-gap query by facility; a chart of the backlog; a recall campaign drafted', 'A chart, a facility ranking, a recall draft', 'The programme lead')]
-table(s, X0, 2.55, XW, 6.7, rows, [0.6, 6.2, 5.0, 3.35, 2.1], header_size=14, body_size=12.5, bold_cols=(0, 1), color_cols={0: BLUE, 1: NAVY}, center_cols=(0,))
-text(s, X0, 9.45, XW, 0.8, 'If time allows: the programme simulation on the ML model, the equity analysis by nationality, the 12-month demand forecast, and the quality scorecard over MCP. '
-     'Keep the trace panel open: every specialist call appears as it happens.', size=12.5, color=SLATE)
+qs = [('Give me my morning briefing: review the panel and tell me who needs attention today.',
+       'The cohort and risk specialists scan the panel; the supervisor ranks who needs attention and why.', 'A ranked list, one reason per name. The programme lead decides.'),
+      ('Review my highest-risk patient whose HbA1c is rising on metformin alone: summarise, score the risk, check the guideline, and draft what is needed.',
+       'The record and 36-month trajectory; the model score with its drivers; the guideline section; a draft prescription change.', 'A summary, a score, a citation, a draft. The clinician decides, in the approval queue.'),
+      ('How many type 2 patients with HbA1c above 8% are not on an SGLT2 inhibitor or GLP-1 agonist, what is closing that gap worth, and draft the review list.',
+       'A cohort query; the intervention priced from the measured effects in the policy document; a review list drafted.', 'A number with its cohort, a value in AED, a list. The clinic decides, from the queue.'),
+      ('Which patients are overdue for retinal screening, where is the backlog, and draft the recall.',
+       'A care-gap query by facility; a chart of the backlog; a recall campaign drafted.', 'A chart, a facility ranking, a recall draft. The programme lead decides.')]
+qw = (XW - 0.4) / 2; qh = 3.55
+for i, (q, under, out) in enumerate(qs):
+    r, c = divmod(i, 2)
+    x = X0 + c * (qw + 0.4); y = 2.5 + r * (qh + 0.3)
+    card(s, x, y, qw, qh)
+    o = oval(s, x + 0.6, y + 0.6, 0.62, fill=BLUE); shape_text(o, str(i + 1), size=18, color=WHITE, bold=True, margins=(0, 0, 0, 0))
+    text(s, x + 1.1, y + 0.25, qw - 1.4, 1.35, '“' + q + '”', size=14, color=NAVY, bold=True)
+    text(s, x + 0.4, y + 1.7, qw - 0.8, 0.3, 'UNDERNEATH', size=10.5, color=BLUE, bold=True)
+    text(s, x + 0.4, y + 1.98, qw - 0.8, 0.7, under, size=12.5, color=INK)
+    text(s, x + 0.4, y + 2.65, qw - 0.8, 0.3, 'OUT, AND WHO DECIDES', size=10.5, color=BLUE, bold=True)
+    text(s, x + 0.4, y + 2.93, qw - 0.8, 0.6, out, size=12.5, color=INK)
+text(s, X0, 10.0, XW, 0.4, 'If time allows: the programme simulation on the ML model, the equity analysis, the 12-month demand forecast, the quality scorecard over MCP. Keep the trace panel open.', size=12, color=SLATE)
 notes(s, """
 One minute, then switch to the app. Four questions in a deliberate order: a briefing (the agent reads the whole
 panel), a single patient (record, score, guideline, draft), a cohort with a value attached (what closing the gap is
@@ -642,9 +661,9 @@ is slow, drop question 4; if it fails, use the next slide.
 # 13 ---- Example 1: anatomy of one answer ----------------------------------------------------
 s = action_slide('Every number traces to a query, every recommendation to a guideline section, every action to a person', 'EXAMPLE 1 · POPULATION HEALTH')
 rect(s, X0, 2.55, XW, 7.5, fill=PANEL, radius=0.35, shadow=True)
-steps = [('1 · Cohort specialist', 'Pulls the patient\'s record and 36-month trajectory from the HIE: HbA1c rising from 9.2% to 10.3% on metformin alone, BMI 31.7, adherence 45%.', NAVY),
+steps = [('1 · Cohort specialist', 'Pulls the patient\'s record and 36-month trajectory from the exchange: HbA1c rising from 9.2% to 10.3% on metformin alone, BMI 31.7, adherence 45%.', NAVY),
          ('2 · Risk specialist', 'Scores the deployed model: a deterioration risk well above the 10.4% base rate, with the drivers that moved it.', SKY),
-         ('3 · Guideline specialist', 'Retrieves NHA-CG-01 §4: consider a GLP-1 receptor agonist when HbA1c stays above target and BMI is over 30. Cited by section.', BLUE),
+         ('3 · Guideline specialist', 'Retrieves the diabetes guideline, section 4: consider a GLP-1 receptor agonist when HbA1c stays above target and BMI is over 30. Cited by section.', BLUE),
          ('4 · Action specialist', 'Drafts the prescription change and the referral, citation attached. Nothing reaches the record.', NAVY),
          ('5 · Supervisor', 'Writes the answer: summary, score, citation, draft, and a source line listing every call it made.', BLUE),
          ('6 · The clinician', 'Approves, edits or rejects in the queue. The decision and the full trace are logged together.', GREEN)]
@@ -687,7 +706,7 @@ tiles = [('No. 1', 'cancer among men in the UAE; third overall'), ('532', 'new c
          ('24–50%', 'of cases diagnosed before the age of 50'), ('40', 'the age screening starts in the UAE; 45 to 50 elsewhere')]
 for i, (n, lab) in enumerate(tiles):
     r, c = divmod(i, 2)
-    stat_tile(s, tx + c * (tw + 0.3), 2.6 + r * (th + 0.3), tw, th, n, lab, num_size=28, label_size=13)
+    stat_tile(s, tx + c * (tw + 0.3), 2.6 + r * (th + 0.3), tw, th, n, lab, num_size=30, label_size=13, num_color=BLUE)
 text(s, tx, 7.15, X1 - tx, 1.6, 'The check is an educational prototype on a published risk score and a simplified version of the national programme. It does not diagnose, and it says so.', size=12, color=SLATE)
 sources(s, 'Sources: UAE National Cancer Registry, Cancer Incidence in UAE, annual report (MOHAP)  ·  Al-Shamsi et al., "Not only a Western world issue: cancer incidence in younger individuals in the UAE", CA: A Cancer Journal for Clinicians, 2024  ·  '
            'UAE National Guideline for Colorectal Cancer Screening and Diagnosis (MOHAP).')
@@ -702,7 +721,6 @@ published score and a simplified version of the programme; it does not diagnose.
 
 # 16 ---- Example 2: the solution -------------------------------------------------------------
 s = action_slide('The solution: an early-warning check that scores risk, picks the pathway and points to the nearest door', 'EXAMPLE 2 · CANCER EARLY WARNING')
-# inputs
 card(s, X0, 2.55, 4.3, 7.1)
 label(s, X0 + 0.35, 2.85, 3.6, 'What the person enters')
 text(s, X0 + 0.35, 3.25, 3.65, 6.3, [{'t': t, 'bullet': True} for t in [
@@ -710,12 +728,11 @@ text(s, X0 + 0.35, 3.25, 3.65, 6.3, [{'t': t, 'bullet': True} for t in [
     'Own history: polyps, inflammatory bowel disease, an inherited syndrome', 'Warning symptoms, and for how long', 'Last screening test and when',
     'Diet, activity, alcohol', 'Where they live', 'Anything else, in their own words']], size=12.5, color=INK, space_after=6)
 arrow(s, X0 + 4.45, 5.85, 0.7, 0.45, kind='right')
-# engine
 EX, EW = 6.55, 7.2
 label(s, EX, 2.5, EW, 'The engine')
 eng = [('1 · Risk tier', 'The Asia-Pacific Colorectal Screening score (Gut, 2011): age, sex, family history, smoking, BMI. Each tier carries a measured rate of advanced findings at colonoscopy, about 1%, 3% and 5%.', NAVY),
-       ('2 · Pathway rules', 'The UAE programme: FIT yearly or colonoscopy ten-yearly from 40 to 75. Colonoscopy five-yearly from ten years before a young relative\'s diagnosis. Surveillance after polyps, IBD or a syndrome. Any red flag: a doctor within two weeks.', BLUE),
-       ('3 · Nearest door', 'The 18 EHS facilities and what each offers: FIT kits and GP review at health centres, endoscopy at hospitals. Distance and travel time from where the person lives, on a map.', NAVY),
+       ('2 · Pathway rules', 'The national programme: FIT yearly or colonoscopy ten-yearly from 40 to 75. Colonoscopy five-yearly from ten years before a young relative\'s diagnosis. Surveillance after polyps, IBD or a syndrome. Any red flag: a doctor within two weeks.', BLUE),
+       ('3 · Nearest door', 'Eighteen hospitals and health centres and what each offers: FIT kits and GP review at health centres, endoscopy at hospitals. Distance and travel time from where the person lives, on a map.', NAVY),
        ('4 · The assistant', 'A language model that reads the free text ("you mentioned blood: tick it, it changes the advice"), answers questions in English or Arabic, and never diagnoses or changes the pathway.', BLUE)]
 eh = 1.5; eg = 0.18
 for i, (t, d, col) in enumerate(eng):
@@ -725,7 +742,6 @@ for i, (t, d, col) in enumerate(eng):
     shape_text(p, t, size=12, color=WHITE, bold=True, margins=(0.08, 0.02, 0.08, 0.02))
     text(s, EX + 2.7, y + 0.12, EW - 2.95, eh - 0.2, d, size=11.5, color=INK, anchor='m')
 arrow(s, EX + EW + 0.15, 5.85, 0.7, 0.45, kind='right')
-# outputs
 OX = 14.6; OW = X1 - OX
 card(s, OX, 2.55, OW, 7.1)
 label(s, OX + 0.3, 2.85, OW - 0.6, 'What comes back')
@@ -740,22 +756,36 @@ text(s, X0, 9.78, XW, 0.4, 'Educational prototype: a published score, a simplifi
 notes(s, """
 Left to right. What the person enters, in two minutes, including free text in their own words. The engine: a
 published risk score with measured tiers; the pathway rules of the national programme, with the family-history,
-surveillance and red-flag branches; the nearest EHS door with the right service; and a language model that reads the
+surveillance and red-flag branches; the nearest door with the right service; and a language model that reads the
 free text and answers questions but never diagnoses and never overrides the rules. What comes back: a tier, a
 pathway, a place, what to change, and, above all, red flags sent to the urgent route rather than the screening queue.
 This is the slide-5 pattern again: the rules and the score are the tools, the model only explains.
 """)
 
-# 17 ---- Example 2: the demo plan ------------------------------------------------------------
+# 17 ---- Example 2: the demo plan, four personas --------------------------------------------
 s = action_slide('What you will see: four people, four different routes through the same programme', 'EXAMPLE 2 · CANCER EARLY WARNING')
-rows = [('Who', 'What they enter', 'Risk tier', 'The route', 'Where'),
-        ('Fatima, 44', 'Never screened, no family history, non-smoker, BMI 24', 'Average (0 of 8 points)', 'Due now: a FIT kit at home, repeated yearly', 'The nearest health centre, Sharjah'),
-        ('Khalid, 56', 'Smoker, diabetes, BMI 30, father diagnosed at 71, never screened', 'Higher (7 of 8)', 'Due now; with this tier, colonoscopy is worth considering directly', 'Health centre or hospital, Ras Al Khaimah'),
-        ('Mariam, 38', 'Sister diagnosed at 46; otherwise healthy, active, non-smoker', 'Moderately raised (2 of 8)', 'Colonoscopy every five years, starting at 36: due now, not at 40', 'Hospital endoscopy unit, Fujairah'),
-        ('Youssef, 61', 'Bleeding and a changed bowel habit for three weeks; last colonoscopy over ten years ago', 'Higher (5 of 8), but the symptoms decide', 'Urgent: a doctor within two weeks, then colonoscopy by referral. Not screening.', 'The nearest doctor this week, Ajman')]
-table(s, X0, 2.55, XW, 6.1, rows, [2.4, 5.2, 2.9, 4.35, 2.4], header_size=14, body_size=12.5, bold_cols=(0,), color_cols={0: NAVY, 3: NAVY})
-text(s, X0, 8.85, XW, 1.2, 'Then: type "I noticed some blood last week" into the notes and watch the check pick it up and ask for it to be ticked. '
-     'Ask the assistant what a FIT test involves, in Arabic. Finally, zoom out: the same engine over the registry becomes a programme view.', size=12.5, color=SLATE)
+people = [('Fatima', '44', 'Never screened, no family history, non-smoker, BMI 24', 'Average · 0 of 8 points', LIGHT, NAVY,
+           'Due now: a FIT kit at home, repeated yearly', 'The nearest health centre'),
+          ('Khalid', '56', 'Smoker, diabetes, BMI 30, father diagnosed at 71, never screened', 'Higher · 7 of 8 points', BLUE, WHITE,
+           'Due now; with this tier, colonoscopy is worth considering directly', 'A health centre for FIT, or a hospital for colonoscopy'),
+          ('Mariam', '38', 'Sister diagnosed at 46; otherwise healthy, active, non-smoker', 'Moderately raised · 2 of 8', SKY, WHITE,
+           'Colonoscopy every five years from 36: due now, not at 40', 'A hospital endoscopy unit'),
+          ('Youssef', '61', 'Bleeding and a changed bowel habit for three weeks; last colonoscopy over ten years ago', 'Symptoms decide, not the score', RED, WHITE,
+           'Urgent: a doctor within two weeks, then colonoscopy by referral. Not screening.', 'The nearest doctor, this week')]
+pw = (XW - 3 * 0.4) / 4; ph = 6.7
+for i, (name, age, enters, tier, tcol, ttxt, route, where) in enumerate(people):
+    x = X0 + i * (pw + 0.4); y = 2.55
+    card(s, x, y, pw, ph)
+    text(s, x + 0.35, y + 0.3, pw - 0.7, 0.55, [{'t': name + '  ', 'size': 22, 'bold': True}, {'t': age, 'size': 16, 'color': SLATE}], color=INK)
+    text(s, x + 0.35, y + 1.05, pw - 0.7, 0.3, 'ENTERS', size=10.5, color=BLUE, bold=True)
+    text(s, x + 0.35, y + 1.33, pw - 0.7, 1.3, enters, size=12.5, color=INK)
+    p = rect(s, x + 0.35, y + 2.75, pw - 0.7, 0.5, fill=tcol, radius=0.25)
+    shape_text(p, tier, size=11.5, color=ttxt, bold=True, margins=(0.1, 0.02, 0.1, 0.02))
+    text(s, x + 0.35, y + 3.5, pw - 0.7, 0.3, 'THE ROUTE', size=10.5, color=BLUE, bold=True)
+    text(s, x + 0.35, y + 3.78, pw - 0.7, 1.55, route, size=13, color=NAVY, bold=True)
+    text(s, x + 0.35, y + 5.35, pw - 0.7, 0.3, 'WHERE', size=10.5, color=BLUE, bold=True)
+    text(s, x + 0.35, y + 5.63, pw - 0.7, 0.95, where, size=12.5, color=INK)
+text(s, X0, 9.5, XW, 0.7, 'Then: type "I noticed some blood last week" into the notes and watch the check pick it up. Ask the assistant what a FIT test involves, in Arabic. Finally, zoom out to the programme view.', size=12, color=SLATE)
 notes(s, """
 Four people, chosen so that the same programme sends each one somewhere different. Fatima: average risk, due for
 her first FIT at the nearest health centre. Khalid: seven points out of eight, due now, and the check says
@@ -768,15 +798,15 @@ two weeks. Then the two things that show the agent: free text being picked up, a
 s = action_slide('From one person to a programme: the same engine over the registry becomes an early-warning system', 'EXAMPLE 2 · CANCER EARLY WARNING')
 lw = 9.3
 heading(s, X0, 2.55, lw, 'What the engine does at population scale', size=19)
-rowsL = [('users', 'Who is due, and who is overdue', 'By facility and emirate, with the test that applies to each person, so outreach starts from a list rather than a campaign.'),
+rowsL = [('users', 'Who is due, and who is overdue', 'By facility and region, with the test that applies to each person, so outreach starts from a list rather than a campaign.'),
          ('alarm', 'Red flags into the urgent route', 'Symptoms reported anywhere (a form, a note, a call) are triaged to a doctor within two weeks, not into the screening queue.'),
          ('map', 'Capacity matched to demand', 'FIT kits at health centres, endoscopy slots at hospitals, and the travel time in between, so the list is bookable.')]
 for i, (ic, a, b) in enumerate(rowsL):
     icon_row(s, X0, 3.4 + i * 1.9, lw, ic, a, b, circle=RED if ic == 'alarm' else (NAVY if i % 2 == 0 else BLUE), d=0.7, label_size=16, desc_size=13.5, row_h=1.7)
 rx = 11.4; rw = X1 - rx
 heading(s, rx, 2.55, rw, 'What the evidence says it is worth', size=19)
-stat_tile(s, rx, 3.3, rw, 2.7, '43%', 'lower two-year mortality when machine learning picks who to call and the outreach follows the list; 6.9% more colonoscopies completed within six months (Geisinger, 2026).')
-stat_tile(s, rx, 6.3, rw, 2.7, '2.6×', 'the FIT opt-in rate when an AI agent calls people in their own language: 18.2% among Spanish speakers against 7.1% among English speakers (WellSpan Health with Hippocratic AI, 2025).')
+stat_tile(s, rx, 3.3, rw, 2.7, '43%', 'lower two-year mortality when machine learning picks who to call and the outreach follows the list; 6.9% more colonoscopies completed within six months (Geisinger, 2026).', num_size=36, num_color=BLUE)
+stat_tile(s, rx, 6.3, rw, 2.7, '2.6×', 'the FIT opt-in rate when an AI agent calls people in their own language: 18.2% among Spanish speakers against 7.1% among English speakers (WellSpan Health with Hippocratic AI, 2025).', num_size=36, num_color=BLUE)
 sources(s, 'Sources: "Cancer Screening Outreach Guided by Machine Learning: The Benefits of Proactive Care", Manufacturing & Service Operations Management, 2026 (Geisinger)  ·  '
            'WellSpan Health / Hippocratic AI, retrospective analysis of a multilingual AI care agent for colorectal cancer screening, 2025 (completion rates not measured).')
 notes(s, """
@@ -792,16 +822,14 @@ real-world data, published evidence, and a number to beat.
 # 19 ---- Blueprint comparison ---------------------------------------------------------------
 s = action_slide('Both examples follow one blueprint: real-world data, published evidence, governed tools, a human decision', 'WHAT IT MEANS')
 rows = [('', 'Example 1  ·  Population health', 'Example 2  ·  Cancer early warning'),
-        ('Real-world data', 'The HIE diabetes registry: 4,000 patients, 36 months, 54 fields', 'What one person enters, plus the 18 EHS facilities and their services'),
-        ('Published evidence', 'Four national guidelines, cited by section', 'The APCS score (Gut, 2011) and the UAE national screening programme'),
-        ('Model', 'A deterioration-risk model, published for scoring, with drivers', 'A validated clinical score and explicit pathway rules'),
-        ('Tools the agent calls', 'HIE queries, model scoring, quality measures and care gaps over MCP, guideline retrieval', 'The score, the pathway rules, distance to facilities; the language model only explains'),
-        ('Output', 'A cited answer, a chart, a draft in the approval queue', 'A tier, a pathway, a place to go, what to change'),
-        ('Who decides', 'The clinician or the programme lead, in the queue', 'The person and their GP; red flags go to a doctor within two weeks'),
+        ('Real-world data', 'A diabetes registry from the health information exchange: 4,000 patients, 36 months', 'What one person enters, plus the facilities and the services each offers'),
+        ('Evidence it stands on', 'Four national guidelines, cited by section; a deterioration-risk model with drivers', 'A validated clinical score (Gut, 2011) and the national screening programme'),
+        ('Tools the agent calls', 'Registry queries, model scoring, quality measures and care gaps over MCP, guideline retrieval', 'The score, the pathway rules, distance to facilities; the language model only explains'),
+        ('Output, and who decides', 'A cited answer, a chart, a draft in the approval queue; the clinician or programme lead decides', 'A tier, a pathway, a place to go, what to change; the person and their doctor decide'),
         ('What is logged', 'Every specialist call, query and retrieval, next to the answer', 'Every input and the rule that fired, next to the result')]
-table(s, X0, 2.55, XW, 7.3, rows, [3.35, 6.95, 6.95], header_size=15, body_size=13, first_col_color=NAVY)
+table(s, X0, 2.55, XW, 6.9, rows, [3.35, 6.95, 6.95], header_size=15, body_size=14, header_h=0.7, first_col_color=NAVY)
 notes(s, """
-One table, two columns, seven rows: the blueprint. Both examples start from real-world data that already exists,
+One table, two columns, five rows: the blueprint. Both examples start from real-world data that already exists,
 stand on published evidence (guidelines, a validated score, a national programme), use a model and explicit rules
 as tools, produce a draft or a recommendation rather than an action, leave the decision with a person, and log
 everything. The language model is in neither column as a source of facts; it reads, chooses and writes. This is the
@@ -817,13 +845,14 @@ tests = [('A workflow with a number on it', 'Someone does it by hand today, and 
          ('A trace you could show an auditor', 'Every query, retrieval and model call next to the answer. If you cannot see how it got there, you cannot trust it.')]
 sw5 = (XW - 4 * 0.4) / 5
 for i, (t, d) in enumerate(tests):
-    x = X0 + i * (sw5 + 0.4); y = 2.7; h = 4.7
-    card(s, x, y, sw5, h)
-    c = oval(s, x + 0.65, y + 0.65, 0.8, fill=NAVY if i % 2 == 0 else BLUE)
-    shape_text(c, str(i + 1), size=22, color=WHITE, bold=True, margins=(0, 0, 0, 0))
-    text(s, x + 0.3, y + 1.35, sw5 - 0.6, 1.2, t, size=17, color=INK, bold=True)
-    text(s, x + 0.3, y + 2.6, sw5 - 0.6, h - 2.8, d, size=14.5, color=INK)
-text(s, X0, 7.75, XW, 1.1, 'On SAS Viya this is the standard toolkit: Intelligent Decisioning sets the autonomy-to-oversight ratio for an agent and approves, audits and traces its decisions; '
+    x = X0 + i * (sw5 + 0.4); y = 2.7; h = 5.3
+    card(s, x, y, sw5, h, fill=NAVY if i == 4 else WHITE)
+    dark = i == 4
+    c = oval(s, x + 0.7, y + 0.7, 0.9, fill=WHITE if dark else (NAVY if i % 2 == 0 else BLUE))
+    shape_text(c, str(i + 1), size=24, color=NAVY if dark else WHITE, bold=True, margins=(0, 0, 0, 0))
+    text(s, x + 0.3, y + 1.45, sw5 - 0.6, 1.25, t, size=17, color=WHITE if dark else INK, bold=True)
+    text(s, x + 0.3, y + 2.75, sw5 - 0.6, h - 2.95, d, size=14, color=WHITE if dark else INK)
+text(s, X0, 8.35, XW, 1.1, 'On SAS Viya this is the standard toolkit: Intelligent Decisioning sets the autonomy-to-oversight ratio for an agent and approves, audits and traces its decisions; '
      'Retrieval Agent Manager builds the knowledge base and the agent without code; the models come from Model Studio. (SAS Innovate, April 2026.)', size=12.5, color=SLATE)
 notes(s, """
 The close, and the hand-over to the hackathon teams. Five tests, drawn from the evidence slide and the two demos: a
@@ -844,18 +873,15 @@ srcL = [
     '6. JAMA, April 2026. Changes in clinician time expenditure and visit quantity with adoption of AI-powered scribes: a multisite study (Mass General Brigham, Emory, UCSF, Yale New Haven Health, UC Davis).',
     '7. Olson KE et al. Ambient artificial intelligence scribes to reduce administrative burden and professional burnout. JAMA Network Open, October 2025.',
     '8. Cancer screening outreach guided by machine learning: the benefits of proactive care. Manufacturing & Service Operations Management, 2026 (Geisinger).',
-    '9. WellSpan Health and Hippocratic AI. Using a multilingual AI care agent to reduce disparities in colorectal cancer screening: higher FIT adoption among Spanish-speaking patients. Retrospective analysis, 2025.',
 ]
 srcR = [
+    '9. WellSpan Health and Hippocratic AI. Using a multilingual AI care agent to reduce disparities in colorectal cancer screening: higher FIT adoption among Spanish-speaking patients. Retrospective analysis, 2025.',
     '10. Becker\'s Hospital Review, 2025. Prior authorizations, patient check-ins: MUSC Health\'s AI agents; Notable customer story.',
     '11. Jin Q et al. Matching patients to clinical trials with large language models (TrialGPT). Nature Communications, 2024.',
-    '12. Emirates Health Services and Boston Health AI. Press release, 19 February 2026: the UAE\'s first AI physician assistant, Amal, unveiled at WHX Dubai.',
-    '13. UAE Government announcement, 23 April 2026: 50% of government sectors, services and operations to run on agentic AI within two years (Gulf News; Khaleej Times).',
-    '14. Deloitte Center for Health Solutions. 2026 Global Health Care Outlook, December 2025.',
-    '15. MIT NANDA. The GenAI Divide: State of AI in Business 2025. Preliminary report, July 2025.',
-    '16. Gartner. Press release, 25 June 2025: Gartner predicts over 40% of agentic AI projects will be canceled by end of 2027.',
-    '17. SAS. Press releases, SAS Innovate, April 2026: SAS Viya governed AI assistants and agentic AI capabilities; SAS Intelligent Decisioning; SAS Retrieval Agent Manager.',
-    '18. MedCity News, March 2026. Real-world evidence meets machine learning (RWE in about 70% of new drug and biologic submissions to the FDA).',
+    '12. MIT NANDA. The GenAI Divide: State of AI in Business 2025. Preliminary report, July 2025.',
+    '13. Gartner. Press release, 25 June 2025: Gartner predicts over 40% of agentic AI projects will be canceled by end of 2027.',
+    '14. SAS. Press releases, SAS Innovate, April 2026: SAS Viya governed AI assistants and agentic AI capabilities; SAS Intelligent Decisioning; SAS Retrieval Agent Manager.',
+    '15. MedCity News, March 2026. Real-world evidence meets machine learning (RWE in about 70% of new drug and biologic submissions to the FDA).',
 ]
 text(s, X0, 2.4, 8.45, 7.7, [{'t': t, 'space_after': 9} for t in srcL], size=11.5, color=INK)
 text(s, X0 + 8.8, 2.4, 8.45, 7.7, [{'t': t, 'space_after': 9} for t in srcR], size=11.5, color=INK)
