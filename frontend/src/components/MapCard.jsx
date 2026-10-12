@@ -5,8 +5,8 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 /*
  * MapCard, a colour-coded map of the EHS facilities across the Northern Emirates (MapLibre GL).
  *  - key-free light basemap (CARTO Positron raster), matching the pearl glass
- *  - facility circles sized by patients, coloured sand → maroon by the metric
- *  - glass popups on hover, optional gold rings for highlighted facilities
+ *  - facility circles sized by patients, coloured light → deep blue by the metric
+ *  - glass popups on hover, optional cyan rings for highlighted facilities
  * Used by the Geography dashboard and by the agent's render_map chat cards.
  */
 
@@ -37,7 +37,7 @@ export const FALLBACK_STYLE = {
 };
 
 // sand → teal sequential ramp (worse = darker)
-const RAMP = ['#efe1cf', '#E0E8F0', '#A9C0D5', '#5E86AC', '#2B5378', '#1B3650'];
+const RAMP = ['#e6f0fb', '#c9ddf5', '#8fbcee', '#3F8FEA', '#0766D1', '#0A3D7A'];
 const lerp = (a, b, t) => a + (b - a) * t;
 const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 function rampColor(t) {
@@ -86,7 +86,7 @@ export default function MapCard({ spec, height = 340, onSelect, selectedId, comp
       map.addLayer({ id: 'fac-glow', type: 'circle', source: 'fac', paint: {
         'circle-radius': ['+', ['get', 'r'], 9], 'circle-color': ['get', 'color'], 'circle-opacity': 0.18, 'circle-blur': 0.6 } });
       map.addLayer({ id: 'fac-ring', type: 'circle', source: 'fac', filter: ['==', ['get', 'hl'], 1], paint: {
-        'circle-radius': ['+', ['get', 'r'], 7], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': '#b8862e', 'circle-stroke-width': 2.5 } });
+        'circle-radius': ['+', ['get', 'r'], 7], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': '#0A9BD8', 'circle-stroke-width': 2.5 } });
       map.addLayer({ id: 'fac-dot', type: 'circle', source: 'fac', paint: {
         'circle-radius': ['get', 'r'], 'circle-color': ['get', 'color'], 'circle-opacity': 0.9,
         'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 } });

@@ -4,8 +4,8 @@ import { setSessionScope } from '../ram/api';
 
 export const PERSONAS = {
   executive: {
-    id: 'executive', name: 'Population Health Executive', sub: 'Emirates Health Services',
-    avatar: 'You', color: 'bg-[#2B5378]',
+    id: 'executive', name: 'Population Health Executive', sub: 'Population health',
+    avatar: 'You', color: 'bg-[#0766D1]',
     welcome: "Welcome. Ask about registry outcomes, care gaps, cost, equity or demand, or run one of the scenarios below. Every figure is computed from the registry and every clinical statement is cited to a guideline page.",
   },
 };

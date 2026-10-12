@@ -98,9 +98,8 @@ export default function LandingPage() {
     <div className="landing">
       <div className="landing-inner">
         <section className="hero">
-          <img src="/ehs-mark.png" alt="" className="hero-g" />
           <div className="relative z-[1]">
-            <div className="section-eyebrow reveal d1">Emirates Health Services × SAS</div>
+            <div className="section-eyebrow reveal d1">SAS Agentic AI Hackathon</div>
             <h1 className="hero-title reveal d2">
               Build a population-health <span className="hero-grad">agent.</span>
             </h1>
@@ -112,7 +111,9 @@ export default function LandingPage() {
             {team && (
               <div className="team-line reveal d4">
                 <b>{team.name}</b> · Environment {team.environment}
-                {team.shared_with?.length > 0 && <span> · shared with {team.shared_with.join(' and ')}</span>}
+                {team.shared_with?.length > 0 && (
+                  <span> · shared with {team.shared_with.length > 2 ? `${team.shared_with.length} other teams` : team.shared_with.join(' and ')}</span>
+                )}
               </div>
             )}
             <div className="doors reveal d4">
@@ -134,7 +135,7 @@ export default function LandingPage() {
                 <svg viewBox="0 0 640 160" style={{ width: '100%', height: '100%' }} preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="ecg-grad" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0" stopColor="#2B5378" /><stop offset="0.6" stopColor="#b8862e" /><stop offset="1" stopColor="#d4a64f" />
+                      <stop offset="0" stopColor="#0766D1" /><stop offset="0.6" stopColor="#0A9BD8" /><stop offset="1" stopColor="#5BC0F0" />
                     </linearGradient>
                   </defs>
                   <path d={ECG_D} className="ecg-base" />

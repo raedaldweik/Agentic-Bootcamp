@@ -19,7 +19,7 @@ import { Panel, Spinner } from '../components/ui';
  * Every number comes from the backend: the model is re-scored on each change (debounced).
  */
 
-const BAND_COLOR = { Low: '#3a8e5a', Moderate: '#b8862e', High: '#d97706', 'Very High': '#3A6890' };
+const BAND_COLOR = { Low: '#3a8e5a', Moderate: '#0A9BD8', High: '#d97706', 'Very High': '#3F8FEA' };
 const UP = '#b03c3c';
 const DOWN = '#3a8e5a';
 

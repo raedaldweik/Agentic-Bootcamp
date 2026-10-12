@@ -9,12 +9,12 @@
    ═══════════════════════════════════════════════════════════════════════ */
 
 .ram-page {
-  --sas: #2B5378;
-  --sas-hi: #4A78A0;
-  --sas-lo: #1B3650;
-  --sas-grad: linear-gradient(135deg, #4A78A0, #2B5378, #1B3650);
+  --sas: #0766D1;
+  --sas-hi: #3F8FEA;
+  --sas-lo: #0A3D7A;
+  --sas-grad: linear-gradient(135deg, #3F8FEA, #0766D1, #0A3D7A);
   --nav-grad: linear-gradient(135deg, #0a1628 0%, #1e293b 45%, #14202f 75%, #243447 100%);
-  --teal: #3A6890;
+  --teal: #3F8FEA;
 
   height: 100%;
   min-height: 0;
@@ -43,15 +43,15 @@
 }
 .ram-page .ram-accent {
   flex: 1; min-width: 24px; height: 1px;
-  background: linear-gradient(90deg, var(--sas-hi) 0%, var(--sas) 50%, rgba(43,83,120,0.4) 80%, transparent 100%);
-  box-shadow: 0 0 6px rgba(43,83,120,0.25);
+  background: linear-gradient(90deg, var(--sas-hi) 0%, var(--sas) 50%, rgba(7,102,209,0.4) 80%, transparent 100%);
+  box-shadow: 0 0 6px rgba(7,102,209,0.25);
 }
 .ram-page .ram-lang-btn {
   padding: 6px 12px; border-radius: 999px;
   font-size: 11px; font-weight: 700; line-height: 1;
   color: var(--sas-lo);
-  background: rgba(43,83,120,0.08);
-  border: 1px solid rgba(43,83,120,0.22);
+  background: rgba(7,102,209,0.08);
+  border: 1px solid rgba(7,102,209,0.22);
   cursor: pointer; transition: all 0.15s;
   white-space: nowrap;
 }
@@ -67,7 +67,7 @@
 /* ─── SAS-blue re-skins of the host's shared chat classes ──────────── */
 .ram-page .panel-title {
   border-left: 2px solid var(--sas);
-  box-shadow: -1px 0 0 rgba(43,83,120,0.15);
+  box-shadow: -1px 0 0 rgba(7,102,209,0.15);
 }
 .ram-page .chat-watermark {
   width: 280px; height: 280px; opacity: 0.06;
@@ -76,8 +76,8 @@
   border-left: 3px solid var(--sas);
 }
 .ram-page .msg-user-bubble {
-  background: linear-gradient(135deg, rgba(43,83,120,0.08), rgba(43,83,120,0.03));
-  border: 1px solid rgba(43,83,120,0.14);
+  background: linear-gradient(135deg, rgba(7,102,209,0.08), rgba(7,102,209,0.03));
+  border: 1px solid rgba(7,102,209,0.14);
   border-radius: 14px;
   border-top-right-radius: 4px;
 }
@@ -168,13 +168,13 @@
 }
 /* Mirror the accent line so it fades away from the title in RTL */
 .ram-page[dir="rtl"] .ram-accent {
-  background: linear-gradient(270deg, var(--sas-hi) 0%, var(--sas) 50%, rgba(43,83,120,0.4) 80%, transparent 100%);
+  background: linear-gradient(270deg, var(--sas-hi) 0%, var(--sas) 50%, rgba(7,102,209,0.4) 80%, transparent 100%);
 }
 /* Panel titles: blue marker bar sits on the reading side */
 .ram-page[dir="rtl"] .panel-title {
   padding-left: 0; padding-right: 8px;
   border-left: none; border-right: 2px solid var(--sas);
-  box-shadow: 1px 0 0 rgba(43,83,120,0.15);
+  box-shadow: 1px 0 0 rgba(7,102,209,0.15);
 }
 /* Chat bubbles: the accent edge and the "tail" corner follow the reading side */
 .ram-page[dir="rtl"] .msg-bot-bubble {

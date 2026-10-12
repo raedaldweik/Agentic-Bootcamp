@@ -1,5 +1,7 @@
 # Agentic AI Hackathon — SAS × EHS
 
+> **This branch (`claude/hackathon-sas-theme`) is the SAS-themed copy**: same app, SAS logo and colours only, no EHS branding. The EHS-branded version is `claude/hackathon-ux-simplified`.
+
 Material and the demo application for the two-day Agentic AI Hackathon delivered with Emirates
 Health Services (facilitators: EHS, BITS Pilani, SAS).
 

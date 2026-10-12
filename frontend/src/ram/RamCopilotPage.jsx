@@ -34,7 +34,7 @@ const AttachIcon = ({ size = 12 }) => (
 const AssistantAvatar = () => (
   <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center p-1.5"
     style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(15,23,42,0.10)', boxShadow: '0 1px 3px rgba(15,23,42,0.08)' }}>
-    <img src="/ehs-mark.png" alt="EHS" className="w-full h-full object-contain" onError={hideOnError} />
+    <img src="/sas-mark.png" alt="SAS" className="w-full h-full object-contain" onError={hideOnError} />
   </div>
 );
 
@@ -288,17 +288,17 @@ function ChatBody() {
                       className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs text-start truncate transition-all ${
                         chat.id === activeChatId
                           ? 'font-semibold'
-                          : 'hover:bg-[rgba(43,83,120,0.05)] border border-transparent'
+                          : 'hover:bg-[rgba(7,102,209,0.05)] border border-transparent'
                       }`}
                       style={chat.id === activeChatId
-                        ? { color: 'var(--sas-lo)', background: 'rgba(43,83,120,0.14)', border: '1px solid rgba(43,83,120,0.30)', borderInlineStart: '3px solid var(--sas)' }
+                        ? { color: 'var(--sas-lo)', background: 'rgba(7,102,209,0.14)', border: '1px solid rgba(7,102,209,0.30)', borderInlineStart: '3px solid var(--sas)' }
                         : { color: 'var(--text-md)' }
                       }>
                       <span className="text-sm">💬</span>
                       <span className="truncate flex-1">{chat.title === 'New conversation' ? t('newConversationTitle') : chat.title}</span>
                     </button>
                     <button onClick={e => { e.stopPropagation(); setChatMenu(menuOpen ? null : chat.id); }}
-                      className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[rgba(43,83,120,0.1)] transition-all shrink-0 ms-0.5"
+                      className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[rgba(7,102,209,0.1)] transition-all shrink-0 ms-0.5"
                       style={{ color: 'var(--text-faint)' }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
@@ -310,8 +310,8 @@ function ChatBody() {
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setChatMenu(null)} />
                     <div className="absolute end-0 top-full mt-0.5 rounded-xl shadow-xl overflow-hidden z-50 min-w-[130px] animate-fade-up"
-                      style={{ background: 'rgba(255,255,255,0.96)', border: '1px solid rgba(43,83,120,0.2)', backdropFilter: 'blur(20px)' }}>
-                      <button onClick={() => startRename(chat)} className="w-full flex items-center gap-2 px-3 py-2 text-[11px] hover:bg-[rgba(43,83,120,0.05)]" style={{ color: 'var(--text-md)' }}>
+                      style={{ background: 'rgba(255,255,255,0.96)', border: '1px solid rgba(7,102,209,0.2)', backdropFilter: 'blur(20px)' }}>
+                      <button onClick={() => startRename(chat)} className="w-full flex items-center gap-2 px-3 py-2 text-[11px] hover:bg-[rgba(7,102,209,0.05)]" style={{ color: 'var(--text-md)' }}>
                         {t('rename')}
                       </button>
                       <button onClick={() => { deleteChat(chat.id); setChatMenu(null); }} className="w-full flex items-center gap-2 px-3 py-2 text-[11px] hover:bg-[var(--red-bg)]" style={{ color: 'var(--red)' }}>
@@ -327,7 +327,7 @@ function ChatBody() {
         <div className="p-3 border-t border-[rgba(15,23,42,0.07)]">
           <button onClick={() => { createNewChat(); }}
             className="w-full py-2.5 rounded-lg text-xs font-bold transition-all"
-            style={{ border: '2px dashed rgba(43,83,120,0.35)', color: 'var(--sas)', background: 'rgba(43,83,120,0.03)' }}>
+            style={{ border: '2px dashed rgba(7,102,209,0.35)', color: 'var(--sas)', background: 'rgba(7,102,209,0.03)' }}>
             {t('newConversation')}
           </button>
         </div>
@@ -335,7 +335,7 @@ function ChatBody() {
 
       {/* Main chat area */}
       <div className="flex-1 min-w-0 glass-card flex flex-col relative" style={{ boxShadow: 'var(--glass-shadow-lg)' }}>
-        <img src="/ehs-logo.png" alt="" className="chat-watermark" onError={hideOnError} />
+        <img src="/sas-logo.png" alt="" className="chat-watermark" onError={hideOnError} />
 
         {/* Header: conversation title + agent dropdown */}
         <div className="flex items-center justify-between gap-3 px-6 py-3 border-b border-[rgba(15,23,42,0.07)] relative z-[5]">
@@ -359,7 +359,7 @@ function ChatBody() {
               {/* Avatar */}
               {msg.role === 'user' ? (
                 <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-[10px] font-bold"
-                  style={{ background: 'rgba(43,83,120,0.12)', border: '1px solid rgba(43,83,120,0.28)', color: 'var(--sas-lo)' }}>
+                  style={{ background: 'rgba(7,102,209,0.12)', border: '1px solid rgba(7,102,209,0.28)', color: 'var(--sas-lo)' }}>
                   {t('you')}
                 </div>
               ) : (
@@ -377,7 +377,7 @@ function ChatBody() {
                     style={{ color: msg.isError ? undefined : 'var(--text)' }}>
                     {msg.attachmentName && (
                       <div className="flex items-center gap-1.5 mb-2 px-2 py-1 rounded-md text-[11px] font-semibold w-fit"
-                        style={{ background: 'rgba(43,83,120,0.10)', border: '1px solid rgba(43,83,120,0.22)', color: 'var(--sas-lo)' }}>
+                        style={{ background: 'rgba(7,102,209,0.10)', border: '1px solid rgba(7,102,209,0.22)', color: 'var(--sas-lo)' }}>
                         <AttachIcon size={11} />
                         {msg.attachmentName}
                       </div>
@@ -441,13 +441,13 @@ function ChatBody() {
               </div>
             ) : attaching ? (
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11.5px]"
-                style={{ background: 'rgba(43,83,120,0.07)', border: '1px solid rgba(43,83,120,0.20)', color: 'var(--text-dim)' }}>
+                style={{ background: 'rgba(7,102,209,0.07)', border: '1px solid rgba(7,102,209,0.20)', color: 'var(--text-dim)' }}>
                 <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--sas)' }} />
                 {t('readingDocument')}
               </div>
             ) : (
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11.5px] font-semibold"
-                style={{ background: 'rgba(43,83,120,0.08)', border: '1px solid rgba(43,83,120,0.25)', color: 'var(--sas-lo)' }}>
+                style={{ background: 'rgba(7,102,209,0.08)', border: '1px solid rgba(7,102,209,0.25)', color: 'var(--sas-lo)' }}>
                 <AttachIcon size={12} />
                 {attachment.name}
                 <span className="font-normal" style={{ color: 'var(--text-dim)' }}>
@@ -462,7 +462,7 @@ function ChatBody() {
 
         {/* Input bar */}
         <div className="px-5 pb-4 pt-2 relative z-[1]">
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl border border-[rgba(15,23,42,0.10)] transition-all focus-within:border-[var(--sas-hi)] focus-within:shadow-[0_0_0_3px_rgba(43,83,120,0.10)]"
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl border border-[rgba(15,23,42,0.10)] transition-all focus-within:border-[var(--sas-hi)] focus-within:shadow-[0_0_0_3px_rgba(7,102,209,0.10)]"
             style={{ background: 'var(--glass-strong)', backdropFilter: 'blur(12px)' }}>
             <textarea ref={inputRef} rows="1" value={input}
               onChange={e => setInput(e.target.value)}
@@ -473,7 +473,7 @@ function ChatBody() {
 
             <button onClick={() => send()}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0 hover:scale-105 transition-transform"
-              style={{ background: 'var(--sas-grad)', boxShadow: '0 3px 12px rgba(43,83,120,0.30)' }}>
+              style={{ background: 'var(--sas-grad)', boxShadow: '0 3px 12px rgba(7,102,209,0.30)' }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
                 className="ram-send-icon">
                 <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>

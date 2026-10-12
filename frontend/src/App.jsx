@@ -53,7 +53,6 @@ const EXAMPLE_HOME = 'overview';
 function Header({ tab, setTab }) {
   const { team, teamsEnabled, signOutTeam } = useApp();
   const [health, setHealth] = useState(null);
-  const [ehsLogo, setEhsLogo] = useState('/ehs-logo.png');
   const [sasLogo, setSasLogo] = useState(sasLogoUrl);
   useEffect(() => {
     let timer;
@@ -63,11 +62,8 @@ function Header({ tab, setTab }) {
       if (h?.mode === 'multi-agent' && !h.warmup?.ready) timer = setTimeout(tick, 3000);
     }).catch(() => setHealth({ status: 'down' }));
     tick();
-    // A hosted logo can be plugged in through EHS_LOGO_URL without a rebuild.
-    getLinks().then((r) => {
-      if (r?.branding?.ehs_logo_url) setEhsLogo(r.branding.ehs_logo_url);
-      if (r?.branding?.sas_logo_url) setSasLogo(r.branding.sas_logo_url);
-    }).catch(() => {});
+    // A hosted logo can be plugged in through SAS_LOGO_URL without a rebuild.
+    getLinks().then((r) => { if (r?.branding?.sas_logo_url) setSasLogo(r.branding.sas_logo_url); }).catch(() => {});
     return () => clearTimeout(timer);
   }, []);
   const ok = health?.status === 'ok';
@@ -81,12 +77,12 @@ function Header({ tab, setTab }) {
   return (
     <header className="app-header">
       <button onClick={() => setTab('landing')} title="Home">
-        <img className="brand-logo" src={ehsLogo} alt="Emirates Health Services"
-          onError={(e) => { if (e.target.src.indexOf('/ehs-logo.png') === -1) e.target.src = '/ehs-logo.png'; }} />
+        <img className="brand-logo" src={sasLogo} alt="SAS"
+          onError={(e) => { if (e.target.src !== sasLogoUrl) e.target.src = sasLogoUrl; }} />
       </button>
 
       <div className="title-block">
-        <div className="header-eyebrow">Emirates Health Services × SAS</div>
+        <div className="header-eyebrow">SAS Viya · SAS Retrieval Agent Manager</div>
         <div className="title-row">
           <h1 className="app-title">
             <b>Agentic AI Hackathon</b>
@@ -138,8 +134,6 @@ function Header({ tab, setTab }) {
             </span>
           </div>
         )}
-        <img className="partner-logo" src={sasLogo} alt="SAS"
-          onError={(e) => { if (e.target.src !== sasLogoUrl) e.target.src = sasLogoUrl; }} />
       </div>
     </header>
   );

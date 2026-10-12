@@ -26,7 +26,7 @@ export default function TeamGate() {
   return (
     <div className="team-gate" role="dialog" aria-modal="true" aria-labelledby="team-gate-title">
       <form className="team-gate-card" onSubmit={submit} autoComplete="off">
-        <div className="section-eyebrow">Emirates Health Services × SAS</div>
+        <div className="section-eyebrow">SAS Agentic AI Hackathon</div>
         <h2 id="team-gate-title" className="team-gate-title">Sign in as your team</h2>
         <p className="team-gate-lede">
           Your team name is on the card at your table, for example team3. The password is on the screen.

@@ -47,7 +47,7 @@ export default function DashboardMap() {
             Control is concentrated around Sharjah city. Facilities on the East Coast and in the far north carry more open gaps and worse control; distance from the tertiary hospitals and the access gradient follow the same line.
           </p>
         </div>
-        <p className="text-[10px]" style={{ color: 'var(--text-faint)' }}>18 facilities · EHS hospitals + primary healthcare centres · gold ring = flagged</p>
+        <p className="text-[10px]" style={{ color: 'var(--text-faint)' }}>18 facilities · hospitals + primary healthcare centres · ring = flagged</p>
       </div>
 
       <KpiStrip items={[
