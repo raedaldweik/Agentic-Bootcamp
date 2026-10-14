@@ -314,6 +314,111 @@ def person(person_id: str) -> dict:
     return {"person": prof, "assessment": assessment, "risk": risk}
 
 
+# ── The decision, tested on real records (SAS Intelligent Decisioning's scoring test) ──────────
+RULE_NODE = {"R1": "rs_symptoms", "R2": "rs_history", "R3": "rs_family", "R9": "rs_family", "R4": "rs_window", "R5": "rs_window",
+             "R6": "rs_window", "R7": "rs_window", "R8": "rs_window", "R10": "rs_routing", "R11": "rs_outreach", "R12": "rs_safety",
+             "R13": "rs_guard"}
+
+
+@lru_cache(maxsize=1)
+def decision_test_cases() -> list[dict]:
+    """Eight records that walk every branch of the decision, picked deterministically from the population."""
+    d = scored(); d = d[d["consent_status"] != "restricted"]
+    due = d[d["due_status"].isin(["due", "overdue"]) & (d["invited_12m"] == 0)].sort_values(["apcs_points", "age", "person_id"], ascending=[False, False, True])
+    picks = []
+    def take(frame, label, sub):
+        if len(frame):
+            r = frame.iloc[0]; picks.append({"id": r["person_id"], "label": label, "sub": sub})
+    take(due[due["uptake_band"].isin(["High", "Very high"])], "Due, unlikely to act", "the model sends a navigator")
+    take(due[due["uptake_band"] == "Low"], "Due, likely to act", "an app notification is enough")
+    take(d[d["due_status"] == "urgent"], "Symptoms reported", "rule R1, no model")
+    take(d[d["fit_positive_no_colonoscopy"] == 1], "Positive FIT, no colonoscopy", "the safety net fires")
+    take(d[d["own_history"] == "polyps"], "Polyps removed before", "surveillance, FIT not enough")
+    take(d[d["family_history"].isin(["one_under60", "two_plus"]) & (d["age"] < 40)], "Family history, under 40", "colonoscopy pathway starts early")
+    take(d[d["due_status"] == "up_to_date"], "Up to date", "nothing due")
+    take(d[d["due_status"] == "shared_decision"], "Aged 76 to 85", "a shared decision")
+    return picks
+
+
+def decision_run(person_id: str) -> dict:
+    """Run CRC_Screening_Pathway on one record: inputs, the path through the nodes, every rule's
+    outcome, the model node's score, and the output variables."""
+    b = person(person_id)
+    if b.get("error") or b.get("consent") == "DENIED":
+        return b
+    from services import crc_ml
+    prs, a, risk = b["person"], b["assessment"], b["risk"]
+    flow = crc.decision_flow()
+    decided = a["decided_by"]
+    by_rule = {r["id"]: r for r in a["rule_trace"]}
+    due = a["pathway"]["id"] in ("screen_now", "family_high") and a["pathway"]["urgency"] in ("now", "soon")
+    days_since_fit = ((TODAY - date.fromisoformat(prs["fit_date_latest"])).days if prs.get("fit_date_latest") else None)
+    safety = bool(prs.get("fit_positive_no_colonoscopy")) and (days_since_fit or 0) > 56
+    chain = ["rs_symptoms", "rs_history", "rs_family", "rs_window"]
+    stop_at = RULE_NODE[decided]
+    path = ["start"]
+    for n in chain:
+        path.append(n)
+        if n == stop_at:
+            break
+    if due:
+        path += ["model_uptake", "rs_outreach", "rs_guard"]
+    path += ["rs_routing", "rs_safety", "end"]
+
+    nodes = {}
+    for n in flow["nodes"]:
+        nid = n["id"]; reached = nid in path
+        rules = []
+        for r in n.get("rules", []):
+            tr = by_rule.get(r["id"])
+            if r["id"] == "R11":
+                fired = due and risk is not None
+                note = (f"band {risk['band']} ({risk['probability']*100:.0f}%) → {risk['outreach']['channel']}" if fired else "not on a due pathway")
+            elif r["id"] == "R12":
+                fired = safety
+                note = (f"positive FIT {days_since_fit} days ago, no colonoscopy" if safety else
+                        ("positive FIT, colonoscopy done" if prs.get("fit_result_latest") == "positive" else "no positive FIT outstanding"))
+            elif r["id"] == "R13":
+                fired = False; note = "runs when the agent drafts a message (Agent tab)"
+            else:
+                fired = bool(tr and tr["status"] in ("decided", "applied")); note = tr["note"] if tr else ""
+            rules.append({"id": r["id"], "name": r["name"], "fired": fired, "evaluated": reached and r["id"] != "R13",
+                          "note": note, "condition": r["condition"], "actions": r["actions"], "source": r["source"]})
+        if n["kind"] == "model":
+            status = "scored" if (reached and risk) else "skipped"
+            note = (f"{risk['probability']*100:.0f}% · {risk['band']}" if status == "scored" else
+                    ("deterministic rule precedence (§9.1)" if decided == "R1" else "no outreach decision needed"))
+        elif n["kind"] in ("start", "end"):
+            status = "reached"; note = ""
+        elif nid == "rs_guard":
+            status = "deferred" if reached else "skipped"; note = "on the agent's draft" if reached else "no message on this path"
+        elif not reached:
+            status = "skipped"; note = "not reached: decided upstream" if nid in chain else "not on this path"
+        else:
+            status = "fired" if any(r["fired"] for r in rules) else "evaluated"
+            note = "; ".join(f"{r['id']} {r['note']}" for r in rules if r["fired"]) or "no rule fired"
+        nodes[nid] = {"status": status, "note": note, "rules": rules}
+
+    fac = a["facilities"][0]["name"] if a["facilities"] else prs.get("nearest_facility_name")
+    outputs = {
+        "apcs_points": a["score"]["points"], "apcs_tier": a["score"]["tier"], "pathway_id": a["pathway"]["id"],
+        "test": a["pathway"]["test"], "interval": a["pathway"]["interval"], "urgency": a["pathway"]["urgency"], "where": a["pathway"]["where"],
+        "facility": fac, "uptake_p": (round(risk["probability"], 3) if (due and risk) else None),
+        "outreach_band": (risk["band"] if (due and risk) else None), "outreach_channel": (risk["outreach"]["channel"] if (due and risk) else None),
+        "navigator": (risk["outreach"]["navigator"] if (due and risk) else None), "safety_net": safety, "model_consulted": bool(due and risk),
+    }
+    inputs = {
+        "age": prs["age"], "sex": prs["sex"], "bmi": prs["bmi"], "smoking": prs["smoking"], "diabetes": bool(prs["diabetes"]),
+        "family_history": prs["family_history"], "youngest_relative_age": None, "personal_history": a["inputs"]["history"],
+        "symptoms": a["inputs"]["symptoms"], "last_screen": prs["last_screen"], "distance_km": prs["distance_km"], "language": prs["language"],
+        "insurance": prs["insurance"], "employment": prs["employment"], "gp_visits_12m": prs["gp_visits_12m"],
+        "missed_appointments_12m": prs["missed_appointments_12m"], "fit_result_latest": prs.get("fit_result_latest"), "days_since_fit": days_since_fit,
+    }
+    fired = [{"ruleset": nid, "rule": r["id"], "name": r["name"], "fired": r["fired"]} for nid in path for r in nodes.get(nid, {}).get("rules", [])]
+    return {"decision": {"id": flow["id"], "version": flow["version"]}, "person_id": person_id, "inputs": inputs, "path": path,
+            "nodes": nodes, "outputs": outputs, "rule_fired": fired, "decided_by": decided}
+
+
 def facility(facility_id: str) -> dict | None:
     f = tables()["facilities"]
     r = f[f["facility_id"] == facility_id]

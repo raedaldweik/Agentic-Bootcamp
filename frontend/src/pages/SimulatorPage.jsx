@@ -359,7 +359,7 @@ export default function SimulatorPage() {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex flex-col justify-center gap-1.5 px-1">
+                <div className="h-full min-h-0 overflow-y-auto flex flex-col gap-1.5 px-1 py-1">
                   <div className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: 'var(--text-faint)' }}>Baseline drivers of the profile</div>
                   {(base.drivers || []).slice(0, 6).map((d) => (
                     <div key={d.feature} className="flex items-center gap-2 text-[11px]">

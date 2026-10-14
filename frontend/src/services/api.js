@@ -141,6 +141,8 @@ export const logoutTeam = () => fetch('/api/teams/logout', { method: 'POST' }).t
 // ── Cancer screening: colorectal screening, the composite AI example ──
 const CRC = '/api/screening/crc';
 export const getCrcRules = () => fetch(`${CRC}/rules`).then(json);
+export const getCrcDecisionCases = () => fetch(`${CRC}/rules/test_cases`).then(json);
+export const runCrcDecision = (personId) => fetch(`${CRC}/rules/run/${encodeURIComponent(personId)}`).then(json);
 export const getCrcDashboard = (filters) => {
   const q = filters && Object.keys(filters).length ? `?filters=${encodeURIComponent(JSON.stringify(filters))}` : '';
   return fetch(`${CRC}/dashboard${q}`).then(json);

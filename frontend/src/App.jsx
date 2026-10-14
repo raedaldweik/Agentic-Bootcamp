@@ -42,26 +42,28 @@ export const TABS = [
 ];
 
 // Everything inside Population health: a second row of pills appears while one of them is open.
+// The story order: the registry (the hook), the raw material (data, documents), the model, the agent.
 export const EXAMPLE_TABS = [
   { id: 'overview', label: 'Registry' },
   { id: 'geography', label: 'Geography' },
-  { id: 'simulator', label: 'Simulator' },
   { id: 'data', label: 'Data' },
   { id: 'documents', label: 'Documents' },
+  { id: 'simulator', label: 'Simulator' },
   { id: 'assistant', label: 'Agent' },
 ];
 const EXAMPLE_IDS = EXAMPLE_TABS.map((t) => t.id);
 const EXAMPLE_HOME = 'overview';
 
-// Everything inside Cancer screening, told in order: the programme, the policy, the prediction,
-// one person through both, the data and documents behind it, and the agent that brings it together.
+// Everything inside Cancer screening, told in order: the programme (the hook), the raw material the
+// rules cite and the model learns from (data, documents), the policy as a decision flow, the
+// prediction, one person through both, and the agent that brings it all together.
 export const EXAMPLE2_TABS = [
   { id: 'crc_programme', label: 'Programme' },
+  { id: 'crc_data', label: 'Data' },
+  { id: 'crc_documents', label: 'Documents' },
   { id: 'crc_rules', label: 'Rules' },
   { id: 'crc_model', label: 'Model' },
   { id: 'screening', label: 'Screening check' },
-  { id: 'crc_data', label: 'Data' },
-  { id: 'crc_documents', label: 'Documents' },
   { id: 'crc_agent', label: 'Agent' },
 ];
 const EXAMPLE2_IDS = EXAMPLE2_TABS.map((t) => t.id);

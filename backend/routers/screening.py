@@ -82,8 +82,20 @@ async def chat(req: ChatRequest):
 # ── the rules ──
 @router.get("/rules")
 def rules():
-    return {"rules": crc.rules_catalogue(), "guide": crc.GUIDE,
-            "examples": crc.EXAMPLES}
+    return {"rules": crc.rules_catalogue(), "guide": crc.GUIDE, "examples": crc.EXAMPLES, "decision": crc.decision_flow()}
+
+
+@router.get("/rules/test_cases")
+def rules_test_cases():
+    return {"cases": screening.decision_test_cases()}
+
+
+@router.get("/rules/run/{person_id}")
+def rules_run(person_id: str):
+    r = screening.decision_run(person_id)
+    if r.get("error"):
+        raise HTTPException(404, r["error"])
+    return r
 
 
 # ── the programme ──

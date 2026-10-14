@@ -168,21 +168,23 @@ LEVERS: list[dict] = [
 ]
 LEVER_KEYS = {l["key"] for l in LEVERS}
 
+# Five people drawn from the programme's population: each profile is the real (synthetic) record
+# closest to the centre of its group, shown with an illustrative first name that matches its sex.
 PROFILES: list[dict] = [
-    {"id": "engaged_nearby", "label": "Engaged and nearby",
-     "description": "Sees a GP, lives within 3 km of a health centre, screened before",
+    {"id": "engaged_nearby", "label": "Sees a GP, lives near a centre", "names": ("Salem", "Aisha"),
+     "description": "Sees a GP regularly, lives within 3 km of a health centre, has been screened before",
      "rule": lambda d: (d["gp_visits_12m"] >= 2) & (d["distance_km"] <= 3) & (d["last_screen"] != "never")},
-    {"id": "far_from_care", "label": "Far from a facility",
-     "description": "More than 12 km from the nearest centre, never screened",
+    {"id": "far_from_care", "label": "Far from any facility", "names": ("Rashid", "Mariam"),
+     "description": "Lives more than 12 km from the nearest health centre and has never been screened",
      "rule": lambda d: (d["distance_km"] >= 12) & (d["last_screen"] == "never")},
-    {"id": "shift_worker", "label": "Shift worker, never screened",
-     "description": "Works shifts, speaks neither Arabic nor English at home, never screened",
+    {"id": "shift_worker", "label": "Shift worker, language barrier", "names": ("Arjun", "Lakshmi"),
+     "description": "Works shifts, speaks neither Arabic nor English at home, has never been screened",
      "rule": lambda d: (d["employment"] == "shift") & (~d["language"].isin(["ar", "en"])) & (d["last_screen"] == "never")},
-    {"id": "diabetes_misses", "label": "Diabetes, misses appointments",
-     "description": "Living with diabetes, two or more missed appointments this year",
+    {"id": "diabetes_misses", "label": "Diabetes, misses appointments", "names": ("Hamad", "Noura"),
+     "description": "Lives with diabetes and has missed two or more appointments this year",
      "rule": lambda d: (d["diabetes"] == 1) & (d["missed_appointments_12m"] >= 2)},
-    {"id": "family_history", "label": "Family history, due early",
-     "description": "A parent or sibling had bowel cancer; on the colonoscopy pathway",
+    {"id": "family_history", "label": "Family history, due early", "names": ("Yousef", "Hessa"),
+     "description": "A parent or sibling had bowel cancer, so the colonoscopy pathway starts early",
      "rule": lambda d: (d["family_history"].isin(["one_under60", "two_plus"])) & (d["age"] < 50)},
 ]
 PRESETS = {
@@ -227,8 +229,12 @@ def _lever_values(X: pd.Series) -> dict:
     return {l["key"]: (int(X[l["key"]]) if l["kind"] == "toggle" else _clean(X[l["key"]])) for l in LEVERS}
 
 
+def _name(row: pd.Series, prof: dict) -> str:
+    return prof["names"][0] if row["sex"] == "male" else prof["names"][1]
+
+
 def _header(row: pd.Series, prof: dict) -> dict:
-    return {"id": prof["id"], "label": prof["label"], "description": prof["description"],
+    return {"id": prof["id"], "label": prof["label"], "description": prof["description"], "name": _name(row, prof),
             "age": int(row["age"]), "sex": row["sex"], "emirate": row["emirate"], "apcs_tier": row["apcs_tier"],
             "pathway_id": row["pathway_id"], "pathway_test": row["pathway_test"], "due_status": row["due_status"],
             "last_screen": row["last_screen"], "nearest_facility": row["nearest_facility_name"]}
@@ -244,8 +250,8 @@ def _profiles_cached() -> list[dict]:
     for prof in PROFILES:
         row = _row(_profile_rows()[prof["id"]])
         p, _ = contribs(row)
-        out.append({"id": prof["id"], "label": prof["label"], "description": prof["description"],
-                    "probability": round(p, 4), "band": band(p), "age": int(row["age"]), "due_status": row["due_status"]})
+        out.append({"id": prof["id"], "label": prof["label"], "description": prof["description"], "name": _name(row, prof),
+                    "sex": row["sex"], "probability": round(p, 4), "band": band(p), "age": int(row["age"]), "due_status": row["due_status"]})
     return out
 
 

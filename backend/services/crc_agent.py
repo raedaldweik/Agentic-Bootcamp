@@ -167,7 +167,7 @@ async def sc_batch(_: str = ""):
     ev = [
         {"agent": "cohort_agent", "tool": "find_due_people", "args_summary": "status in (due, overdue), not invited in 12 months, 20 by clinical priority (APCS points, age)",
          "result_summary": f"{due_total:,} due or overdue in the programme; 20 selected"},
-        {"agent": "rules_agent", "tool": "assess_pathway", "args_summary": "20 people through NHA-CS-01 §3 to §7",
+        {"agent": "rules_agent", "tool": "run_decision", "args_summary": "CRC_Screening_Pathway v1.0 on 20 records",
          "result_summary": f"20/20 confirmed due: {fit_n} FIT pathway, {colo_n} colonoscopy pathway; 0 overridden by symptoms or history"},
         {"agent": "risk_agent", "tool": "predict_uptake", "args_summary": "screening_uptake v1.0.0, 20 people",
          "result_summary": "bands: " + ", ".join(f"{k} {v}" for k, v in bands.items())},
@@ -216,7 +216,7 @@ async def sc_person(message: str = "", person_id: str | None = None):
     pid = person_id
     b = _person_bundle(pid)
     if b.get("consent") == "DENIED":
-        ev = [{"agent": "rules_agent", "tool": "assess_pathway", "args_summary": pid, "result_summary": "blocked: restricted consent"}]
+        ev = [{"agent": "rules_agent", "tool": "run_decision", "args_summary": pid, "result_summary": "blocked: restricted consent"}]
         async for e in _steps(ev):
             yield e
         yield _final(f"**{pid} has restricted consent.** The record cannot be opened or scored; the attempt is on the audit trail.", ev)
@@ -245,7 +245,7 @@ async def sc_person(message: str = "", person_id: str | None = None):
     drv = ", ".join(f"{d['label'].lower()} {('yes' if d['value'] else 'no') if d['feature'] in ('is_male','uninsured','language_barrier','shift_work','smoker_current','diabetes','never_screened','family_history_any') else d['value']}"
                     for d in risk["drivers"][:3])
     ev = [
-        {"agent": "rules_agent", "tool": "assess_pathway", "args_summary": f"{pid}: age {prs['age']}, {prs['family_history'].replace('_', ' ')}, last screen {prs['last_screen']}",
+        {"agent": "rules_agent", "tool": "run_decision", "args_summary": f"CRC_Screening_Pathway v1.0 · {pid}: age {prs['age']}, {prs['family_history'].replace('_', ' ')}, last screen {prs['last_screen']}",
          "result_summary": _rule_summary(a)},
         {"agent": "risk_agent", "tool": "predict_uptake", "args_summary": f"{pid} through screening_uptake v1.0.0",
          "result_summary": f"{risk['probability']*100:.0f}% non-completion · {risk['band']} band · drivers: {drv}"},
@@ -296,7 +296,7 @@ async def sc_symptoms(_: str = ""):
                         person_id=pid, citation="R1 · NHA-CS-01 §6.1")
     audit_svc.log("SCREENING·RULE", ACTOR, f"R1 red-flag override for {pid}: model not consulted (§9.1)", pid, "warning")
     ev = [
-        {"agent": "rules_agent", "tool": "assess_pathway", "args_summary": f"{pid}: symptoms reported in the app",
+        {"agent": "rules_agent", "tool": "run_decision", "args_summary": f"CRC_Screening_Pathway v1.0 · {pid}: symptoms reported in the app",
          "result_summary": "R1 decided: red-flag symptoms override every screening rule (NHA-CS-01 §6.1); R8 overridden"},
         {"agent": "risk_agent", "tool": "predict_uptake", "args_summary": "skipped",
          "result_summary": "not consulted: a deterministic rule takes precedence and the model may not alter the pathway (§9.1)"},

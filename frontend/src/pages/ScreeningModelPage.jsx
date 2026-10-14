@@ -146,14 +146,15 @@ export default function ScreeningModelPage() {
             Model: who will not act on an invitation
           </h1>
           <p className="text-[10.5px] mt-1" style={{ color: 'var(--text-dim)' }}>
-            Pick a profile and move a factor; the deployed model re-scores it live. The band feeds exactly one rule, outreach intensity (NHA-CS-01 §8.3); eligibility and the test never depend on it. Profiles are anonymous archetypes drawn from the programme's population.
+            Five people drawn from the programme's population. Pick one and move a factor; the deployed model re-scores them live. The percentage is the chance they will not act on an invitation within 90 days. It feeds exactly one rule, outreach intensity (NHA-CS-01 §8.3); eligibility and the test never depend on it.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
           {profiles.map((p) => (
             <button key={p.id} className={`sim-chip ${p.id === pid ? 'active' : ''}`} onClick={() => setPid(p.id)} title={p.description}>
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: BAND_COLOR[p.band] }} />
-              <span>{p.label}</span>
+              <span>{p.name}, {p.age}</span>
+              <span className="font-normal" style={{ color: 'var(--text-dim)' }}>{p.label}</span>
               <span className="font-normal" style={{ color: 'var(--text-faint)' }}>{pct(p.probability)}</span>
             </button>
           ))}
@@ -171,8 +172,8 @@ export default function ScreeningModelPage() {
                 {(base.presets || []).map((p) => <button key={p.id} className="sim-chip" title={p.description} onClick={() => applyPreset(p.id)}>{p.label}</button>)}</div>}>
               <div className="h-full min-h-0 overflow-y-auto px-3.5 pb-3">
                 <div className="py-2 border-b border-[rgba(15,23,42,0.06)]">
-                  <div className="text-[12.5px] font-extrabold leading-tight" style={{ color: 'var(--text)' }}>{pr.label} <span className="text-[10px] font-normal" style={{ color: 'var(--text-faint)' }}>profile</span></div>
-                  <div className="text-[10px] leading-snug" style={{ color: 'var(--text-dim)' }}>{pr.age} · {pr.sex} · {pr.emirate} · {pr.description}</div>
+                  <div className="text-[12.5px] font-extrabold leading-tight" style={{ color: 'var(--text)' }}>{pr.name}, {pr.age} <span className="text-[10px] font-normal" style={{ color: 'var(--text-faint)' }}>{pr.sex} · {pr.emirate} · illustrative person from the population</span></div>
+                  <div className="text-[10px] leading-snug mt-0.5" style={{ color: 'var(--text-dim)' }}>{pr.description}.</div>
                   <div className="text-[9.5px] leading-snug mt-1" style={{ color: 'var(--text-faint)' }}>Rules say: <b style={{ color: 'var(--text-md)' }}>{pr.pathway_test}</b> ({pr.due_status.replace('_', ' ')}) · nearest {pr.nearest_facility}</div>
                 </div>
                 {groups.map(([g, ls]) => (
@@ -254,8 +255,8 @@ export default function ScreeningModelPage() {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex flex-col justify-center gap-1.5 px-1">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: 'var(--text-faint)' }}>Baseline drivers of the profile</div>
+                <div className="h-full min-h-0 overflow-y-auto flex flex-col gap-1.5 px-1 py-1">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: 'var(--text-faint)' }}>Why the estimate is where it is: baseline drivers</div>
                   {(base.drivers || []).slice(0, 6).map((d) => (
                     <div key={d.feature} className="flex items-center gap-2 text-[11px]">
                       <span className="w-[190px] truncate font-semibold" style={{ color: 'var(--text-md)' }}>{d.label}</span>
@@ -266,7 +267,7 @@ export default function ScreeningModelPage() {
                       <span className="w-[44px] text-right tabular-nums text-[10px] font-bold" style={{ color: d.contribution > 0 ? UP : DOWN }}>{d.contribution > 0 ? '+' : ''}{d.contribution.toFixed(2)}</span>
                     </div>
                   ))}
-                  <div className="text-[9.5px] mt-1" style={{ color: 'var(--text-faint)' }}>SHAP-style contributions in log-odds; red pushes towards not completing. Move a lever to see what changes the estimate.</div>
+                  <div className="text-[9.5px] mt-0.5" style={{ color: 'var(--text-faint)' }}>SHAP-style contributions in log-odds; red pushes towards not completing. Move a factor on the left to see what changes the estimate.</div>
                 </div>
               )}
             </Panel>

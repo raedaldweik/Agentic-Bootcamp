@@ -104,57 +104,108 @@ SERVICES = {
 GUIDE = "NHA-CS-01"
 RULES: list[dict] = [
     {"id": "R1", "name": "Red-flag symptoms override everything", "kind": "pathway", "priority": 1,
-     "when": "Any of: bleeding, bowel habit changed > 4 weeks, unexplained weight loss, iron-deficiency anaemia, persistent pain or a lump",
+      "ruleset": "rs_symptoms", "condition": "symptoms CONTAINS ANY ('bleeding','bowel_change','weight_loss','anaemia','mass_or_pain')", "actions": "pathway_id = 'symptomatic'; urgency = 'urgent'; test = 'GP assessment within 14 days, colonoscopy by referral'; where = 'endoscopy'; model_consulted = FALSE; EXIT pathway rules",
+    "when": "Any of: bleeding, bowel habit changed > 4 weeks, unexplained weight loss, iron-deficiency anaemia, persistent pain or a lump",
      "then": "Urgent: clinical assessment within 14 days and colonoscopy by referral. No FIT. The predictive model is not consulted.",
      "source": {"doc": GUIDE, "section": "§6.1"}},
     {"id": "R2", "name": "Known high-risk history", "kind": "pathway", "priority": 2,
-     "when": "Polyps removed before, previous colorectal cancer, colitis for 8+ years, or a hereditary syndrome",
+      "ruleset": "rs_history", "condition": "personal_history CONTAINS ANY ('polyps','crc','ibd8','syndrome')", "actions": "pathway_id = 'surveillance'; test = 'Colonoscopy on the specialist interval'; urgency = 'soon'; where = 'endoscopy'; EXIT pathway rules",
+    "when": "Polyps removed before, previous colorectal cancer, colitis for 8+ years, or a hereditary syndrome",
      "then": "Specialist surveillance by colonoscopy on the gastroenterologist's interval. A FIT is not a substitute.",
      "source": {"doc": GUIDE, "section": "§5"}},
     {"id": "R3", "name": "Strong family history", "kind": "pathway", "priority": 3,
-     "when": "One first-degree relative diagnosed before 60, or two or more at any age",
+      "ruleset": "rs_family", "condition": "family_history IN ('one_under60','two_plus')", "actions": "pathway_id = 'family_high'; start_age = MIN(40, youngest_relative_age - 10); test = 'Colonoscopy every 5 years'; urgency = IF age >= start_age THEN 'soon' ELSE 'later'; where = 'endoscopy'; EXIT pathway rules",
+    "when": "One first-degree relative diagnosed before 60, or two or more at any age",
      "then": "Colonoscopy every 5 years from 40, or from 10 years before the youngest relative's diagnosis, whichever is earlier.",
      "source": {"doc": GUIDE, "section": "§4.2"}},
     {"id": "R4", "name": "Under the screening age", "kind": "pathway", "priority": 4,
-     "when": "Age under 40 and none of R1 to R3", "then": "No screening yet; it starts at 40.",
+      "ruleset": "rs_window", "condition": "age < 40", "actions": "pathway_id = 'not_yet'; urgency = 'later'; where = 'primary'; EXIT pathway rules",
+    "when": "Age under 40 and none of R1 to R3", "then": "No screening yet; it starts at 40.",
      "source": {"doc": GUIDE, "section": "§3.4"}},
     {"id": "R5", "name": "Over 85", "kind": "pathway", "priority": 5,
-     "when": "Age over 85", "then": "Routine screening is no longer offered; new symptoms are still assessed.",
+      "ruleset": "rs_window", "condition": "age > 85", "actions": "pathway_id = 'stop'; urgency = 'later'; where = 'primary'; EXIT pathway rules",
+    "when": "Age over 85", "then": "Routine screening is no longer offered; new symptoms are still assessed.",
      "source": {"doc": GUIDE, "section": "§3.3"}},
     {"id": "R6", "name": "Ages 76 to 85", "kind": "pathway", "priority": 6,
-     "when": "Age 76 to 85", "then": "An individual decision with the person's doctor.",
+      "ruleset": "rs_window", "condition": "age > 75 AND age <= 85", "actions": "pathway_id = 'shared'; urgency = 'later'; where = 'primary'; EXIT pathway rules",
+    "when": "Age 76 to 85", "then": "An individual decision with the person's doctor.",
      "source": {"doc": GUIDE, "section": "§3.2"}},
     {"id": "R7", "name": "Up to date", "kind": "pathway", "priority": 7,
-     "when": "FIT within 12 months, or a normal colonoscopy within 10 years",
+      "ruleset": "rs_window", "condition": "last_screen IN ('fit_1y','colo_10y')", "actions": "pathway_id = 'up_to_date'; next_due = last_screen_date + interval; urgency = 'later'; where = 'primary'; EXIT pathway rules",
+    "when": "FIT within 12 months, or a normal colonoscopy within 10 years",
      "then": "Nothing due; the next test at the end of the interval.",
      "source": {"doc": GUIDE, "section": "§3.1"}},
     {"id": "R8", "name": "Due for screening", "kind": "pathway", "priority": 8,
-     "when": "Age 40 to 75, average risk, not up to date",
+      "ruleset": "rs_window", "condition": "age >= 40 AND age <= 75 AND last_screen NOT IN ('fit_1y','colo_10y')", "actions": "pathway_id = 'screen_now'; test = 'FIT yearly OR colonoscopy every 10 years'; urgency = 'now'; where = IF apcs_tier = 'average' THEN 'primary' ELSE 'either'",
+    "when": "Age 40 to 75, average risk, not up to date",
      "then": "A yearly FIT or a colonoscopy every 10 years. Moderate and higher APCS tiers may be offered colonoscopy directly.",
      "source": {"doc": GUIDE, "section": "§3.1, §4.1"}},
     {"id": "R9", "name": "One relative diagnosed at 60 or older", "kind": "modifier", "priority": 9,
-     "when": "Exactly one first-degree relative, diagnosed at 60+", "then": "Same tests as average risk; screening starts at 40 at the latest.",
+      "ruleset": "rs_family", "condition": "family_history = 'one_60plus' AND pathway_id IN ('screen_now','up_to_date','not_yet')", "actions": "start_age = MIN(start_age, 40); note = 'same tests as average risk, start by 40'",
+    "when": "Exactly one first-degree relative, diagnosed at 60+", "then": "Same tests as average risk; screening starts at 40 at the latest.",
      "source": {"doc": GUIDE, "section": "§4.2"}},
     {"id": "R10", "name": "Where the test is done", "kind": "routing", "priority": 10,
-     "when": "Every pathway", "then": "Colonoscopy pathways go to the nearest hospital with an endoscopy unit; FIT pathways to the nearest health centre; residents outside the footprint to their own authority.",
+      "ruleset": "rs_routing", "condition": "TRUE", "actions": "facility = CASE where WHEN 'endoscopy' THEN NEAREST(hospitals WHERE endoscopy_unit) WHEN 'primary' THEN NEAREST(health_centres) ELSE NEAREST(all) END; outside_footprint = emirate NOT IN footprint",
+    "when": "Every pathway", "then": "Colonoscopy pathways go to the nearest hospital with an endoscopy unit; FIT pathways to the nearest health centre; residents outside the footprint to their own authority.",
      "source": {"doc": GUIDE, "section": "§7"}},
     {"id": "R11", "name": "Outreach intensity follows predicted non-completion", "kind": "programme", "priority": 11,
-     "when": "A person found due by R3 or R8 (the only place the predictive model is used)",
+      "ruleset": "rs_outreach", "condition": "pathway_id IN ('screen_now','family_high') AND urgency IN ('now','soon')", "actions": "uptake_p = Screening_Uptake_v1(inputs); outreach_band = BAND(uptake_p, 0.30, 0.50, 0.70); outreach_channel = CASE outreach_band WHEN 'Low' THEN 'app' WHEN 'Moderate' THEN 'sms' ELSE 'call' END; navigator = outreach_band IN ('High','Very high')",
+    "when": "A person found due by R3 or R8 (the only place the predictive model is used)",
      "then": "Low: app notification. Moderate: SMS with reminders. High: navigator call. Very high: call plus booking help and transport note.",
      "source": {"doc": GUIDE, "section": "§8.3"}},
     {"id": "R12", "name": "Positive FIT safety net", "kind": "programme", "priority": 12,
-     "when": "A positive FIT with no colonoscopy within 8 weeks (56 days)",
+      "ruleset": "rs_safety", "condition": "fit_result_latest = 'positive' AND colonoscopy_after_fit = FALSE AND days_since_fit > 56", "actions": "safety_net = TRUE; action = 'navigator call within 5 working days'; referral = 'notified referral to the endoscopy unit'; repeat_fit_allowed = FALSE",
+    "when": "A positive FIT with no colonoscopy within 8 weeks (56 days)",
      "then": "Navigator contact within 5 working days and a notified referral to the endoscopy unit; a repeat FIT is not acceptable.",
      "source": {"doc": GUIDE, "section": "§6.2, §6.3"}},
     {"id": "R13", "name": "Guardrails on generated messages", "kind": "guardrail", "priority": 13,
-     "when": "Any message or referral drafted by a language model",
+      "ruleset": "rs_guard", "condition": "draft IS NOT NULL", "actions": "valid = NAMES(draft, test) AND NAMES(draft, facility) AND NOT CONTAINS(draft, date | time | price | phone | waiting_time | cancer_likelihood); IF NOT valid THEN draft = TEMPLATE(pathway_id); approval_required = TRUE; audit = TRUE",
+    "when": "Any message or referral drafted by a language model",
      "then": "Built from the decided pathway; names the test and the facility; no dates, prices, waiting times, phone numbers or cancer-likelihood statements; human approval before sending; everything on the audit trail.",
      "source": {"doc": GUIDE, "section": "§9.2, §9.3"}},
 ]
 
 
+# ── The decision, the way SAS Intelligent Decisioning lays one out: rule sets of IF…THEN rules over
+#    named variables, one model node, branches, and a path that can be tested. The app's rules engine
+#    (assess) is this flow; the catalogue above is its rule sets.
+DECISION = {
+    "id": "CRC_Screening_Pathway", "version": "1.0", "status": "active",
+    "description": "Who is offered colorectal screening, with which test and when; how hard the programme reaches out; where the person goes.",
+    "variables": {
+        "inputs": ["age", "sex", "bmi", "smoking", "diabetes", "family_history", "youngest_relative_age", "personal_history", "symptoms",
+                   "last_screen", "distance_km", "language", "insurance", "employment", "gp_visits_12m", "missed_appointments_12m",
+                   "fit_result_latest", "days_since_fit"],
+        "outputs": ["apcs_points", "apcs_tier", "pathway_id", "test", "interval", "urgency", "where", "facility", "uptake_p",
+                    "outreach_band", "outreach_channel", "navigator", "safety_net", "model_consulted"],
+    },
+    "nodes": [
+        {"id": "start", "kind": "start", "name": "Start", "sub": "18 input variables"},
+        {"id": "rs_symptoms", "kind": "ruleset", "name": "Symptom triage", "rules": ["R1"], "branch": "red flag → Routing"},
+        {"id": "rs_history", "kind": "ruleset", "name": "Personal history", "rules": ["R2"], "branch": "surveillance → Routing"},
+        {"id": "rs_family", "kind": "ruleset", "name": "Family history", "rules": ["R3", "R9"], "branch": "strong history → Model"},
+        {"id": "rs_window", "kind": "ruleset", "name": "Screening window", "rules": ["R4", "R5", "R6", "R7", "R8"], "branch": "due → Model · otherwise → Routing"},
+        {"id": "model_uptake", "kind": "model", "name": "Screening_Uptake_v1", "sub": "P(invitation not completed in 90 days)", "rules": []},
+        {"id": "rs_outreach", "kind": "ruleset", "name": "Outreach intensity", "rules": ["R11"]},
+        {"id": "rs_guard", "kind": "ruleset", "name": "Message guardrails", "rules": ["R13"], "sub": "runs on the agent's drafts"},
+        {"id": "rs_routing", "kind": "ruleset", "name": "Routing", "rules": ["R10"]},
+        {"id": "rs_safety", "kind": "ruleset", "name": "Positive FIT safety net", "rules": ["R12"], "sub": "every record, every run"},
+        {"id": "end", "kind": "end", "name": "End", "sub": "14 output variables"},
+    ],
+}
+
+
 def rules_catalogue() -> list[dict]:
     return RULES
+
+
+def decision_flow() -> dict:
+    by_id = {r["id"]: r for r in RULES}
+    nodes = []
+    for n in DECISION["nodes"]:
+        nodes.append({**n, "rules": [by_id[r] for r in n.get("rules", [])]})
+    return {**DECISION, "nodes": nodes, "rule_sets": sum(1 for n in nodes if n["kind"] == "ruleset"),
+            "models": sum(1 for n in nodes if n["kind"] == "model"), "rule_count": len(RULES)}
 
 
 # Average-risk screening window under the UAE national programme.
