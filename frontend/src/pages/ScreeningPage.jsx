@@ -4,7 +4,7 @@ import { Panel, Spinner } from '../components/ui';
 import ScreeningMap from '../components/ScreeningMap';
 import ScreeningChat from '../components/ScreeningChat';
 
-/* Example 2: bowel (colorectal) cancer screening check. A few facts in, three things out:
+/* Cancer screening: bowel (colorectal) cancer screening check. A few facts in, three things out:
    a risk tier, the right test and when, and the nearest network facility to do it. */
 
 const TIER = {
@@ -115,7 +115,7 @@ export default function ScreeningPage() {
   };
   const bmi = form.height_cm > 100 && form.weight_kg > 25 ? (form.weight_kg / (form.height_cm / 100) ** 2).toFixed(1) : null;
 
-  if (err && !opts) return <div className="p-8 text-[13px]" style={{ color: 'var(--red)' }}>Example 2 unavailable: {err}</div>;
+  if (err && !opts) return <div className="p-8 text-[13px]" style={{ color: 'var(--red)' }}>Screening check unavailable: {err}</div>;
   if (!opts) return <Spinner />;
 
   const tier = result ? TIER[result.score.tier] : null;
@@ -126,7 +126,7 @@ export default function ScreeningPage() {
       <div className="flex items-end justify-between shrink-0 px-1 gap-4">
         <div>
           <h1 className="text-[17px] font-extrabold tracking-tight leading-none" style={{ color: 'var(--text)' }}>
-            Example 2: bowel cancer screening check
+            Screening check: one person through the rules, with a grounded assistant
           </h1>
           <p className="text-[10.5px] mt-1" style={{ color: 'var(--text-dim)' }}>
             Fill in what you know, add notes in your own words, and it tells you your risk tier, the right test and when, and the nearest network facility to do it. The answer updates as you type; the assistant at the bottom right answers questions about it.

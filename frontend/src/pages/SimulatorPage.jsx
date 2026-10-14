@@ -213,17 +213,15 @@ export default function SimulatorPage() {
     return [...g.entries()];
   }, [levers]);
 
-  const attribution = useMemo(() => (result?.attribution || []).slice(0, 8).map((a) => ({
+  const attribution = useMemo(() => (result?.attribution || []).slice(0, 7).map((a) => ({
     ...a, pts: +(a.delta_probability * 100).toFixed(1),
     change: a.from !== a.to && a.from != null ? `${fmtAttr(a.feature, a.from)} → ${fmtAttr(a.feature, a.to)}` : 'via interactions',
   })), [result]);
-  const changeOf = useMemo(() => Object.fromEntries(attribution.map((a) => [a.label, a.change])), [attribution]);
+  // One line per row, so rows never overlap when the panel is short; the value change rides on the bar label.
   const AttrTick = ({ x, y, payload }) => (
-    <text x={x} y={y} textAnchor="end">
-      <tspan x={x} dy="-1" fontSize="10.5" fontWeight="700" fill="#1e293b">{payload.value}</tspan>
-      <tspan x={x} dy="11" fontSize="9" fontWeight="600" fill="#94a3b8">{changeOf[payload.value]}</tspan>
-    </text>
+    <text x={x} y={y} dy="3.5" textAnchor="end" fontSize="10.5" fontWeight="700" fill="#1e293b">{payload.value}</text>
   );
+  const attrLabel = (v, i) => `${v > 0 ? '+' : ''}${v}${attribution[i]?.change && attribution[i].change !== 'via interactions' ? ` · ${attribution[i].change}` : ''}`;
 
   const pr = base?.profile;
   const sim = result?.simulated; const b0 = result?.baseline || base?.risk;
@@ -231,8 +229,8 @@ export default function SimulatorPage() {
   return (
     <div className="h-full p-3 overflow-hidden flex flex-col gap-2.5">
       {/* ── header ── */}
-      <div className="flex items-end justify-between gap-4 shrink-0 px-1">
-        <div className="min-w-0">
+      <div className="flex items-end justify-between gap-x-4 gap-y-2 shrink-0 px-1 flex-wrap">
+        <div className="min-w-0" style={{ flex: '1 1 460px' }}>
           <h1 className="text-[17px] font-extrabold tracking-tight leading-none" style={{ color: 'var(--text)' }}>
             Risk Simulator: the factors that change a patient's deterioration risk
           </h1>
@@ -262,7 +260,7 @@ export default function SimulatorPage() {
         <div className="flex-1 grid grid-cols-12 gap-2.5 min-h-0">
           {/* ── levers ── */}
           <div className="col-span-4 min-h-0">
-            <Panel title="Factors: the profile and what you change" pad={false}
+            <Panel title="Factors" pad={false}
               right={
                 <div className="flex items-center gap-1">
                   <button className="sim-chip" onClick={reset} disabled={!changed}>Reset</button>
@@ -343,7 +341,7 @@ export default function SimulatorPage() {
             <Panel title="What moved the estimate: model attribution (probability points)">
               {changed && attribution.length ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={attribution} layout="vertical" margin={{ top: 4, right: 44, bottom: 0, left: 4 }} barCategoryGap={5}>
+                  <BarChart data={attribution} layout="vertical" margin={{ top: 4, right: 104, bottom: 0, left: 4 }} barCategoryGap={6}>
                     <XAxis type="number" tick={{ fontSize: 9.5, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v > 0 ? '+' : ''}${v}`}
                       domain={[(min) => Math.min(Math.floor(min * 1.35), -1), (max) => Math.max(Math.ceil(max * 1.35), 1)]} />
                     <YAxis type="category" dataKey="label" width={150} tick={<AttrTick />} axisLine={false} tickLine={false} interval={0} />
@@ -352,7 +350,11 @@ export default function SimulatorPage() {
                       contentStyle={{ fontSize: 11, borderRadius: 10, border: '1px solid rgba(15,23,42,0.08)' }} />
                     <Bar dataKey="pts" radius={[4, 4, 4, 4]} isAnimationActive animationDuration={350}>
                       {attribution.map((a) => <Cell key={a.feature} fill={a.pts > 0 ? UP : DOWN} fillOpacity={0.85} />)}
-                      <LabelList dataKey="pts" position="right" style={{ fontSize: 10, fontWeight: 700, fill: '#475569' }} formatter={(v) => `${v > 0 ? '+' : ''}${v}`} />
+                      <LabelList dataKey="pts" content={({ x, y, width, height, value, index }) => (
+                        <text x={(x || 0) + Math.max(width || 0, 0) + 6} y={(y || 0) + (height || 0) / 2} dy="3.5" fontSize="10" fontWeight="700" fill="#475569">
+                          {attrLabel(value, index)}
+                        </text>
+                      )} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>

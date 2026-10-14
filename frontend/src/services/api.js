@@ -138,7 +138,7 @@ export const loginTeam = async (username, password) => {
 };
 export const logoutTeam = () => fetch('/api/teams/logout', { method: 'POST' }).then(json);
 
-// ── Example 2: colorectal screening, the composite AI example ──
+// ── Cancer screening: colorectal screening, the composite AI example ──
 const CRC = '/api/screening/crc';
 export const getCrcRules = () => fetch(`${CRC}/rules`).then(json);
 export const getCrcDashboard = (filters) => {
@@ -164,7 +164,7 @@ export const getCrcScenarios = () => fetch(`${CRC}/agent/scenarios`).then(json);
 export const getCrcQueue = () => fetch(`${CRC}/agent/queue`).then(json);
 export const getCrcAudit = () => fetch(`${CRC}/agent/audit`).then(json);
 
-/** NDJSON reader shared by the Example 2 streams: {type: meta|token|final} or {type: step|final}. */
+/** NDJSON reader shared by the Cancer screening streams: {type: meta|token|final} or {type: step|final}. */
 async function readNdjson(res, onEvent) {
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
@@ -195,7 +195,7 @@ export async function streamCrcAgent({ message, sessionId, scenarioId }, onEvent
   await readNdjson(res, onEvent);
 }
 
-// ── Example 2: the screening check ──
+// ── Cancer screening: the screening check ──
 export const getCrcOptions = () => fetch('/api/screening/crc/options').then(json);
 export const assessCrc = (body) =>
   fetch('/api/screening/crc/assess', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(json);

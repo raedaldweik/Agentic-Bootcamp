@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { assessCrc, getCrcRules } from '../services/api';
 import { Panel, Spinner } from '../components/ui';
 
-/* Example 2, the rules: the deterministic policy the agent cannot overrule, as a catalogue, and a
+/* Cancer screening, the rules: the deterministic policy the agent cannot overrule, as a catalogue, and a
    live trace of which rule decided for a chosen person. Nothing on this page involves a model. */
 
 const KIND = {
@@ -46,8 +46,8 @@ export default function ScreeningRulesPage() {
 
   return (
     <div className="h-full p-3 overflow-hidden flex flex-col gap-2.5">
-      <div className="flex items-end justify-between gap-4 shrink-0 px-1">
-        <div>
+      <div className="flex items-end justify-between gap-x-4 gap-y-2 shrink-0 px-1 flex-wrap">
+        <div className="min-w-0" style={{ flex: '1 1 420px' }}>
           <h1 className="text-[17px] font-extrabold tracking-tight leading-none" style={{ color: 'var(--text)' }}>
             Rules: the deterministic policy the agent cannot overrule
           </h1>

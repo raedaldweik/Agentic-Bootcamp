@@ -1,5 +1,5 @@
 """
-Example 2, the predictive layer: screening non-completion risk.
+Cancer screening, the predictive layer: screening non-completion risk.
 
 One model, trained in scripts/train_models.py on the programme's own invitations: given what
 is known about a person BEFORE anyone contacts them, how likely is it that an invitation
@@ -186,9 +186,9 @@ PROFILES: list[dict] = [
      "rule": lambda d: (d["family_history"].isin(["one_under60", "two_plus"])) & (d["age"] < 50)},
 ]
 PRESETS = {
-    "navigator": {"label": "Navigator support", "description": "A GP visit this month, one missed appointment forgiven, kit handed over at the centre (distance to 1 km).",
+    "navigator": {"label": "Navigator", "description": "A GP visit this month, one missed appointment forgiven, kit handed over at the centre (distance to 1 km).",
                   "set": {"gp_visits_12m": 3, "missed_appointments_12m": 0, "distance_km": 1.0}},
-    "mobile_unit": {"label": "Mobile FIT unit", "description": "A mobile unit at the workplace: distance 0.5 km, no appointment to miss.",
+    "mobile_unit": {"label": "Mobile unit", "description": "A mobile unit at the workplace: distance 0.5 km, no appointment to miss.",
                     "set": {"distance_km": 0.5, "missed_appointments_12m": 0}},
     "disengage": {"label": "Left alone", "description": "No GP contact, two more missed appointments: the trajectory if nothing is done.",
                   "set": {"gp_visits_12m": 0}, "delta": {"missed_appointments_12m": 2}},

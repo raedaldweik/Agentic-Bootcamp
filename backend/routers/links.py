@@ -1,10 +1,9 @@
 """Environment links and branding, read from the environment so the deployed app can be
-pointed at the day's SAS Viya and SAS RAM environments (and the materials repo) from the Railway
-Variables tab without a rebuild.
+pointed at the SAS Viya and SAS RAM environments from the Railway Variables tab without a rebuild.
+ENV1_VIYA_URL / ENV1_RAM_URL stand in when the plain variables are not set (services.teams).
 
-  VIYA_URL        the SAS Viya environment participants log into
+  VIYA_URL        the SAS Viya environment
   RAM_URL         the SAS Retrieval Agent Manager UI
-  MATERIALS_URL   the materials (defaults to this repository on GitHub)
   LOGO_URL    optional: an absolute URL to a hosted logo, used instead of the bundled SAS logo
 """
 from __future__ import annotations
@@ -16,9 +15,6 @@ from fastapi import APIRouter, Request
 from services import teams
 
 router = APIRouter()
-
-MATERIALS_DEFAULT = "https://github.com/raedaldweik/Agentic-Bootcamp"
-
 
 def _env(name: str, default: str = "") -> str:
     # The browser's team first (services.teams), then the process environment.
@@ -32,12 +28,10 @@ def links(request: Request):
     return {
         "team": teams.public(cur),
         "links": [
-            {"id": "ram", "label": "RAM", "sub": "Where you build and test your agent",
+            {"id": "ram", "label": "SAS RAM", "sub": "Where the agent is built and run",
              "url": _env("RAM_URL"), "icon": "ram"},
-            {"id": "viya", "label": "Viya", "sub": "Data, models and dashboards",
+            {"id": "viya", "label": "SAS Viya", "sub": "Data, models and dashboards",
              "url": _env("VIYA_URL"), "icon": "viya"},
-            {"id": "materials", "label": "Materials", "sub": "Decks, labs, data and this application",
-             "url": _env("MATERIALS_URL", MATERIALS_DEFAULT), "icon": "materials"},
         ],
         "branding": {
             # one logo now, the SAS wordmark top left; SAS_LOGO_URL is honoured as the older name

@@ -1,5 +1,5 @@
 """
-Example 2, synthetic colorectal-cancer screening programme generator.
+Cancer screening, synthetic colorectal-cancer screening programme generator.
 
 A population of residents of the Northern Emirates in and around the screening age, the
 programme's activity over 36 months (invitations, FIT tests, colonoscopies) and the

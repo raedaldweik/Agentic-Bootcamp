@@ -7,11 +7,11 @@ import { Panel, Spinner } from '../components/ui';
 import { Lever, Stat } from './SimulatorPage';
 
 /*
- * Example 2, the model: the one predictive layer in the composite, on anonymous profiles.
+ * Cancer screening, the model: the one predictive layer in the composite, on anonymous profiles.
  *   Left    · the factors you can move (access, engagement, profile)
  *   Centre  · the model's estimate before and after, the band, and the ONE rule the band feeds (outreach, §8.3)
  *   Right   · what moved the estimate (attribution) and the narrated explanation; the model card below
- * Same visual language as Example 1's simulator; the model never touches eligibility or the test.
+ * Same visual language as the population-health story's simulator; the model never touches eligibility or the test.
  */
 
 const BAND_COLOR = { Low: '#3a8e5a', Moderate: '#b8862e', High: '#d97706', 'Very high': '#b03c3c' };
@@ -122,17 +122,15 @@ export default function ScreeningModelPage() {
   };
 
   const groups = useMemo(() => { const g = new Map(); for (const l of levers) { if (!g.has(l.group)) g.set(l.group, []); g.get(l.group).push(l); } return [...g.entries()]; }, [levers]);
-  const attribution = useMemo(() => (result?.attribution || []).slice(0, 8).map((a) => ({
+  const attribution = useMemo(() => (result?.attribution || []).slice(0, 7).map((a) => ({
     ...a, pts: +(a.delta_probability * 100).toFixed(1),
     change: a.from !== a.to && a.from != null ? `${fmtAttr(a.feature, a.from)} → ${fmtAttr(a.feature, a.to)}` : 'via interactions',
   })), [result]);
-  const changeOf = useMemo(() => Object.fromEntries(attribution.map((a) => [a.label, a.change])), [attribution]);
+  // One line per row, so rows never overlap when the panel is short; the value change rides on the bar label.
   const AttrTick = ({ x, y, payload }) => (
-    <text x={x} y={y} textAnchor="end">
-      <tspan x={x} dy="-1" fontSize="10.5" fontWeight="700" fill="#1e293b">{payload.value}</tspan>
-      <tspan x={x} dy="11" fontSize="9" fontWeight="600" fill="#94a3b8">{changeOf[payload.value]}</tspan>
-    </text>
+    <text x={x} y={y} dy="3.5" textAnchor="end" fontSize="10.5" fontWeight="700" fill="#1e293b">{payload.value}</text>
   );
+  const attrLabel = (v, i) => `${v > 0 ? '+' : ''}${v}${attribution[i]?.change && attribution[i].change !== 'via interactions' ? ` · ${attribution[i].change}` : ''}`;
 
   const pr = base?.profile;
   const sim = result?.simulated; const b0 = result?.baseline || base?.risk;
@@ -142,8 +140,8 @@ export default function ScreeningModelPage() {
 
   return (
     <div className="h-full p-3 overflow-hidden flex flex-col gap-2.5">
-      <div className="flex items-end justify-between gap-4 shrink-0 px-1">
-        <div className="min-w-0">
+      <div className="flex items-end justify-between gap-x-4 gap-y-2 shrink-0 px-1 flex-wrap">
+        <div className="min-w-0" style={{ flex: '1 1 460px' }}>
           <h1 className="text-[17px] font-extrabold tracking-tight leading-none" style={{ color: 'var(--text)' }}>
             Model: who will not act on an invitation
           </h1>
@@ -168,7 +166,7 @@ export default function ScreeningModelPage() {
       {base && pr && (
         <div className="flex-1 grid grid-cols-12 gap-2.5 min-h-0">
           <div className="col-span-3 min-h-0">
-            <Panel title="Factors: the profile and what you change" pad={false}
+            <Panel title="Factors" pad={false}
               right={<div className="flex items-center gap-1"><button className="sim-chip" onClick={reset} disabled={!changed}>Reset</button>
                 {(base.presets || []).map((p) => <button key={p.id} className="sim-chip" title={p.description} onClick={() => applyPreset(p.id)}>{p.label}</button>)}</div>}>
               <div className="h-full min-h-0 overflow-y-auto px-3.5 pb-3">
@@ -188,7 +186,7 @@ export default function ScreeningModelPage() {
           </div>
 
           <div className="col-span-3 min-h-0">
-            <Panel title="Model estimate, and the one rule it feeds" right={busy && <span className="text-[9.5px] font-bold" style={{ color: 'var(--text-faint)' }}>re-scoring…</span>}>
+            <Panel title="Model estimate" right={busy && <span className="text-[9.5px] font-bold" style={{ color: 'var(--text-faint)' }}>re-scoring…</span>}>
               <div className="h-full min-h-0 flex flex-col overflow-y-auto">
                 <Gauge base={b0} sim={sim} changed={changed} />
                 <div className="grid grid-cols-2 gap-1.5 mt-1">
@@ -211,7 +209,7 @@ export default function ScreeningModelPage() {
                 )}
                 {metrics && (
                   <div className="mt-2 text-[10px] leading-relaxed" style={{ color: 'var(--text-dim)' }}>
-                    <div className="text-[9.5px] font-bold uppercase tracking-[0.14em] mb-1" style={{ color: 'var(--text-faint)' }}>Model card · {card.card.name.replace(' (Example 2)', '')} v{card.card.version}</div>
+                    <div className="text-[9.5px] font-bold uppercase tracking-[0.14em] mb-1" style={{ color: 'var(--text-faint)' }}>Model card · {card.card.name.replace(' (Cancer screening)', '')} v{card.card.version}</div>
                     <div className="grid grid-cols-3 gap-1.5">
                       <Stat label="AUC, held out" value={metrics.auc} sub={`naive rule ${metrics.naive_rule_auc}`} />
                       <Stat label="Event rate" value={pct(metrics.event_rate)} sub="not completed in 90 d" />
@@ -236,10 +234,10 @@ export default function ScreeningModelPage() {
           </div>
 
           <div className="col-span-6 min-h-0 grid grid-rows-2 gap-2.5">
-            <Panel title="What moved the estimate: model attribution (probability points)">
+            <Panel title="What moved the estimate (probability points)">
               {changed && attribution.length ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={attribution} layout="vertical" margin={{ top: 4, right: 44, bottom: 0, left: 4 }} barCategoryGap={5}>
+                  <BarChart data={attribution} layout="vertical" margin={{ top: 4, right: 104, bottom: 0, left: 4 }} barCategoryGap={6}>
                     <XAxis type="number" tick={{ fontSize: 9.5, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v > 0 ? '+' : ''}${v}`}
                       domain={[(min) => Math.min(Math.floor(min * 1.35), -1), (max) => Math.max(Math.ceil(max * 1.35), 1)]} />
                     <YAxis type="category" dataKey="label" width={170} tick={<AttrTick />} axisLine={false} tickLine={false} interval={0} />
@@ -247,7 +245,11 @@ export default function ScreeningModelPage() {
                     <Tooltip cursor={{ fill: 'rgba(15,23,42,0.03)' }} formatter={(v) => [`${v > 0 ? '+' : ''}${v} pts`, 'contribution to the change']} contentStyle={{ fontSize: 11, borderRadius: 10, border: '1px solid rgba(15,23,42,0.08)' }} />
                     <Bar dataKey="pts" radius={[4, 4, 4, 4]} isAnimationActive animationDuration={350}>
                       {attribution.map((a) => <Cell key={a.feature} fill={a.pts > 0 ? UP : DOWN} fillOpacity={0.85} />)}
-                      <LabelList dataKey="pts" position="right" style={{ fontSize: 10, fontWeight: 700, fill: '#475569' }} formatter={(v) => `${v > 0 ? '+' : ''}${v}`} />
+                      <LabelList dataKey="pts" content={({ x, y, width, height, value, index }) => (
+                        <text x={(x || 0) + Math.max(width || 0, 0) + 6} y={(y || 0) + (height || 0) / 2} dy="3.5" fontSize="10" fontWeight="700" fill="#475569">
+                          {attrLabel(value, index)}
+                        </text>
+                      )} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>

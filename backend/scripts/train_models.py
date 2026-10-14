@@ -218,7 +218,7 @@ SCREENING = HERE / "data" / "screening"
 
 
 def train_screening_uptake() -> dict:
-    """Example 2: P(an invitation is NOT completed within 90 days), on the programme's own
+    """Cancer screening: P(an invitation is NOT completed within 90 days), on the programme's own
     invitations. Features are what is known before anyone is contacted; the channel and the
     reminders are deliberately left out, they are what the programme chooses afterwards."""
     import sys
@@ -314,7 +314,7 @@ def main():
          "intended_use": "Capacity planning and the executive demand narrative.",
          "limitations": "Univariate; no exogenous drivers (campaigns, epidemics).",
          "phase2": "SAS Visual Forecasting (or PROC ESM through the SAS Viya MCP server) over the monthly encounter series."},
-        {"model_id": "screening_uptake", "name": "Screening Non-completion Risk (Example 2)",
+        {"model_id": "screening_uptake", "name": "Screening Non-completion Risk",
          "version": "1.0.0", "trained": today, "framework": "XGBoost (gradient-boosted trees, monotonic constraints)",
          "task": "Binary classification, P(a colorectal-screening invitation is not followed by a completed test within 90 days)",
          "training_data": f"{uptake_metrics['train_rows']} invited people (held-out test: {uptake_metrics['test_rows']}), synthetic screening programme",

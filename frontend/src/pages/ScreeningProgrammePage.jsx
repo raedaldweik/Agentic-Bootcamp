@@ -4,8 +4,8 @@ import DynamicChart from '../components/DynamicChart';
 import MapCard from '../components/MapCard';
 import { KpiStrip, Panel, Spinner } from '../components/ui';
 
-/* Example 2, the programme: the screening population at programme level, the same shape as
-   Example 1's registry overview. Every number is the same query the agent runs. */
+/* Cancer screening, the programme: the screening population at programme level, the same shape as
+   the population-health story's registry overview. Every number is the same query the agent runs. */
 
 const KPI_META = [
   { icon: 'users', tone: 'sand' }, { icon: 'check', tone: 'green' }, { icon: 'alert', tone: 'red' },
@@ -63,8 +63,8 @@ export default function ScreeningProgrammePage({ onOpenAgent }) {
 
   return (
     <div className="h-full p-3 overflow-hidden flex flex-col gap-2.5" style={{ opacity: busy ? 0.75 : 1, transition: 'opacity 0.2s' }}>
-      <div className="flex items-end justify-between gap-4 shrink-0 px-1">
-        <div>
+      <div className="flex items-end justify-between gap-x-4 gap-y-2 shrink-0 px-1 flex-wrap">
+        <div className="min-w-0" style={{ flex: '1 1 420px' }}>
           <h1 className="text-[17px] font-extrabold tracking-tight leading-none" style={{ color: 'var(--text)' }}>
             Programme overview: colorectal cancer screening
           </h1>
@@ -118,9 +118,9 @@ export default function ScreeningProgrammePage({ onOpenAgent }) {
         <div className="col-span-4 row-span-2">
           <Panel title="Facility map" pad={false}
             right={
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap justify-end">
                 <div className="seg-track" style={{ padding: 2 }}>
-                  {[['emirates', 'Northern Emirates'], ['sharjah', 'Sharjah']].map(([k, label]) => (
+                  {[['emirates', 'Emirates'], ['sharjah', 'Sharjah']].map(([k, label]) => (
                     <button key={k} onClick={() => setView(k)} className={`seg-pill ${view === k ? 'active' : ''}`} style={{ fontSize: 10, padding: '4px 9px' }}>{label}</button>
                   ))}
                 </div>

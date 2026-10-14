@@ -9,7 +9,7 @@ such an agent is built and run on SAS Viya.
 
 | Path | What it is |
 |---|---|
-| `backend/`, `frontend/`, `Dockerfile` | **The app**: the two examples and the SAS RAM page. Details below. |
+| `backend/`, `frontend/`, `Dockerfile` | **The app**: the two stories and the SAS RAM page. Details below. |
 | `kit/` | **The agent kit** for building the population-health agent on SAS RAM: the agent prompts, the CAS-ready registry CSVs with a data dictionary, the guideline PDFs for the RAM collection, the SAS Viya MCP tool selection, and the Viya scripts. |
 | `scoped_mcp/` | **The scoped MCP server**: a pip-installable, containerised MCP server built on the SAS Viya MCP server, with eight tools scoped by `ALLOWED_TABLES` / `ALLOWED_MODELS`, so an agent sees only its own table and model. Registered in RAM once per agent. |
 | `decks/How_an_AI_Agent_Works/` | Session deck: *How an AI agent works and makes decisions*. Speaker notes and the build script included. |
@@ -20,24 +20,24 @@ such an agent is built and run on SAS Viya.
 
 ## The app
 
-Four places to be: **Home**, **Example 1**, **Example 2** and **SAS RAM**. Each example opens a second row
+Four places to be: **Home**, **Population health**, **Cancer screening** and **SAS RAM**. Each example opens a second row
 of pills with the same shape: the dashboards, the data, the documents, the model, and a finished agent.
 
 | Tab | What it shows |
 |---|---|
-| Home | What the app is, the SAS RAM and SAS Viya buttons (from `RAM_URL`, `VIYA_URL`, `MATERIALS_URL`; greyed out until set) and the live registry summary |
-| **Example 1 · Population health** | **Registry**: the diabetes population (KPIs, HbA1c trend, demand forecast, facility benchmark, risk tiers, complications), with a cross-filter on every panel. **Geography**: the 18 facilities on a map of the Northern Emirates. **Simulator**: the factors that change a patient's deterioration risk, on anonymous profiles, re-scored live by the deployed model. **Data**: the 8 HIE tables. **Documents**: the guideline corpus. **Example agent**: Basira, a supervisor and five specialists on a function-calling model, grounded retrieval with page citations, drafts queued for human approval, audit trail. |
-| **Example 2 · Colorectal cancer screening** | **Programme**: the screening population at programme level (eligible, up to date, due, invitations, 90-day completion, FIT positivity), trends, facility benchmark, the model's outreach bands, equity, the funnel from invitation to finding, and the facility map, with a cross-filter. **Screening check**: one person enters a few facts and gets a risk tier (the published APCS score), the pathway under the national programme, and the nearest facilities on a map; an assistant answers questions with policy citations. **Model**: the non-completion model on anonymous profiles, re-scored live, with attribution, a narrated explanation and the model card. **Rules**: the 13-rule policy catalogue and a live trace of which rule decided for a chosen person. **Data**: the programme's five tables. **Documents**: the screening pathway and recall policy. **Example agent**: the composite agent, with the navigator worklist, the approval queue and the audit trail beside it. |
+| Home | The composite-AI story: how a decision is made here (predict, validate, reason, act, approve), the two stories with live numbers and their chapters, and the SAS RAM and SAS Viya buttons (from `RAM_URL`, `VIYA_URL`; greyed out until set) |
+| **Population health** | **Registry**: the diabetes population (KPIs, HbA1c trend, demand forecast, facility benchmark, risk tiers, complications), with a cross-filter on every panel. **Geography**: the 18 facilities on a map of the Northern Emirates. **Simulator**: the factors that change a patient's deterioration risk, on anonymous profiles, re-scored live by the deployed model. **Data**: the 8 HIE tables. **Documents**: the guideline corpus. **Example agent**: Basira, a supervisor and five specialists on a function-calling model, grounded retrieval with page citations, drafts queued for human approval, audit trail. |
+| **Cancer screening** | **Programme**: the screening population at programme level (eligible, up to date, due, invitations, 90-day completion, FIT positivity), trends, facility benchmark, the model's outreach bands, equity, the funnel from invitation to finding, and the facility map, with a cross-filter. **Screening check**: one person enters a few facts and gets a risk tier (the published APCS score), the pathway under the national programme, and the nearest facilities on a map; an assistant answers questions with policy citations. **Model**: the non-completion model on anonymous profiles, re-scored live, with attribution, a narrated explanation and the model card. **Rules**: the 13-rule policy catalogue and a live trace of which rule decided for a chosen person. **Data**: the programme's five tables. **Documents**: the screening pathway and recall policy. **Example agent**: the composite agent, with the navigator worklist, the approval queue and the audit trail beside it. |
 | **SAS RAM** | Sign in to a RAM environment, pick an agent published there, and test it: every tool, LLM and retrieval call is shown. Sign-in flows for standalone RAM (Keycloak device code) and full Viya (SASLogon code). `RAM_MOCK=true` runs it against a mock without a RAM. |
 
-All data is synthetic. Example 1: 4,000 people living with diabetes across 18 hospitals and primary
+All data is synthetic. Population health: 4,000 people living with diabetes across 18 hospitals and primary
 healthcare centres in Sharjah, Ajman, Umm Al Quwain, Ras Al Khaimah and Fujairah, 36 months of coded
-records. Example 2: 12,000 residents aged 36 to 85 of the same emirates, 36 months of invitations, FIT
+records. Cancer screening: 12,000 residents aged 36 to 85 of the same emirates, 36 months of invitations, FIT
 tests and colonoscopies. The guideline corpus is a synthetic "National Health Authority" set (NHA-CG-01
 diabetes, NHA-CG-02 lipids, NHA-CG-03 hypertension, NHA-PP-01 screening and recall, NHA-CS-01 colorectal
 screening pathway). Not for clinical use.
 
-### Example 2, composite AI end to end
+### Cancer screening, composite AI end to end
 
 Each kind of intelligence does the one job it is good at, and the app shows the seams:
 
@@ -79,28 +79,29 @@ live data; only free-form chat and the narrated explanations need model credenti
 runs against an in-memory mock until `RAM_API_URL` is set (`RAM_MOCK=true`).
 
 Regenerate the synthetic data from scratch (deterministic, seeded): `python -m scripts.generate_hie_data`
-(Example 1) and `python -m scripts.generate_screening_data` (Example 2). `python -m scripts.make_crc_guideline`
+(Population health) and `python -m scripts.generate_screening_data` (Cancer screening). `python -m scripts.make_crc_guideline`
 rewrites the NHA-CS-01 PDF.
 
 ### Configuration (Railway Variables tab, or `backend/.env`)
 
 | Variable | Purpose |
 |---|---|
-| `ANTHROPIC_API_KEY` | The language model behind the agents (`MODEL` pins an id). Free-form chat in Example 2 needs an Anthropic key specifically |
-| `VIYA_URL`, `RAM_URL`, `MATERIALS_URL` | The buttons on the home page (materials defaults to this repository) |
+| `ANTHROPIC_API_KEY` | The language model behind the agents (`MODEL` pins an id). Free-form chat in Cancer screening needs an Anthropic key specifically |
+| `VIYA_URL`, `RAM_URL` | The two environment buttons on the home page. `ENV1_VIYA_URL` / `ENV1_RAM_URL` stand in when these are empty |
 | `LOGO_URL` | Optional absolute URL to a hosted logo, used top left instead of the bundled SAS logo (`frontend/src/assets/sas-logo.png`) |
 | `RAM_API_URL` (+ auth) | SAS Retrieval Agent Manager for the SAS RAM page; see `backend/.env.example` for the sign-in options |
 | `RAM_MOCK` | `true` = SAS RAM page on an in-memory mock (default in `.env.example`) |
 | `RAM_HIDE_HISTORY`, `RAM_SESSION_FILE`, `RAM_BROWSER_RESTORE` | Shared-login and session-persistence options for the RAM page, as before |
-| `ENV1_VIYA_URL`, `ENV1_RAM_URL`, `TEAM_PASSWORD`, … | Optional: several environments with a team sign-in (see below); unset, there is one environment and no sign-in |
+| `TEAMS_ENABLED`, `TEAM_PASSWORD`, `ENV2_…` | Optional workshop mode: several environments with a team sign-in (see below). Off by default |
 | `GEMINI_API_KEY` | Optional: builds the semantic guideline index; otherwise retrieval is BM25 |
 
 ### Teams and environments (optional)
 
-For a workshop with several SAS environments, number them as plain variables (`ENV1_VIYA_URL`,
-`ENV1_RAM_URL`, `ENV2_…`, `TEAM_PASSWORD`). As soon as `ENV1_` exists the app opens with a team sign-in
-(`team3` / `TEAM_PASSWORD`; `TEAM_COUNT`, `TEAM3_PASSWORD`, `TEAM3_ENV` adjust it), teams are spread over
-the environments in order, and the SAS RAM tab talks to that team's RAM. Without `ENV1_` nothing changes.
+The app runs one environment with no sign-in: `VIYA_URL` and `RAM_URL`, or `ENV1_VIYA_URL` and
+`ENV1_RAM_URL`, which stand in for them. For a workshop with several SAS environments, set
+`TEAMS_ENABLED=true`, number the environments (`ENV1_…`, `ENV2_…`) and set `TEAM_PASSWORD`: the app then
+opens with a team sign-in (`team3` / `TEAM_PASSWORD`; `TEAM_COUNT`, `TEAM3_PASSWORD`, `TEAM3_ENV` adjust it),
+teams are spread over the environments in order, and the SAS RAM tab talks to that team's RAM.
 
 ### Branding
 
@@ -121,17 +122,17 @@ frontend, installs the backend, trains the models at image build time, and serve
 backend/
   main.py                FastAPI app (serves API + built frontend)
   routers/               chat · dashboards · queue/audit/docs/data · simulate · evals · links · ram · teams
-                         screening (Example 2: check, rules, programme, model, agent, queue and audit views)
+                         screening (Cancer screening: check, rules, programme, model, agent, queue and audit views)
   services/
-    hie.py               the registry query engine (Example 1)
+    hie.py               the registry query engine (Population health)
     ml.py                model scoring, SHAP drivers, similarity, segments, counterfactual simulator
     rag.py               hybrid retrieval over the guideline PDFs (BM25 + optional embedding cache)
-    agent.py             Example 1's supervisor + specialists (ADK) with NDJSON event streaming
-    scenarios.py         Example 1's direct tool runner for the chips
-    crc.py               Example 2's deterministic rules: APCS score, pathway, rule trace, the screening assistant
-    crc_ml.py            Example 2's non-completion model: features, scoring, profiles, what-if, explanation
-    crc_agent.py         Example 2's composite agent: scenario chips, validator, templates, the tool loop
-    screening.py         Example 2's programme data: dashboard, map, worklists, one person, tables
+    agent.py             the population-health story's supervisor + specialists (ADK) with NDJSON event streaming
+    scenarios.py         the population-health story's direct tool runner for the chips
+    crc.py               the cancer-screening story's deterministic rules: APCS score, pathway, rule trace, the screening assistant
+    crc_ml.py            the cancer-screening story's non-completion model: features, scoring, profiles, what-if, explanation
+    crc_agent.py         the cancer-screening story's composite agent: scenario chips, validator, templates, the tool loop
+    screening.py         the cancer-screening story's programme data: dashboard, map, worklists, one person, tables
     ram_client.py        SAS RAM REST client: auth flows, async query + poll, traces, mock mode
     queue_service.py · audit.py · evals.py · geo.py · whatif.py · teams.py
   pophealth_mcp/         the population-health MCP server (FastMCP, stdio)
@@ -141,8 +142,8 @@ backend/
   data/guidelines/       the NHA documents (RAG corpus)
   data/evals/            golden agent evalset (10 cases)
 frontend/                React + Vite + Tailwind + Recharts + MapLibre glass UI
-  src/pages/             landing · Example 1 (dashboards, simulator, data, documents, assistant)
-                         Example 2 (ScreeningProgrammePage, ScreeningPage, ScreeningModelPage, ScreeningRulesPage, ScreeningAgentPage)
+  src/pages/             landing · Population health (dashboards, simulator, data, documents, assistant)
+                         Cancer screening (ScreeningProgrammePage, ScreeningPage, ScreeningModelPage, ScreeningRulesPage, ScreeningAgentPage)
   src/ram/               the SAS RAM page (RAM chat, sign-in, traces, charts)
 ```
 

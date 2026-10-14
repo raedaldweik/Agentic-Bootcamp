@@ -1,4 +1,4 @@
-"""Writes NHA-CS-01, the synthetic colorectal-cancer screening pathway document that Example 2's
+"""Writes NHA-CS-01, the synthetic colorectal-cancer screening pathway document that the cancer-screening story's
 rules cite (section numbers match services/crc.RULES). Same look as the other NHA documents.
 
 Run from backend/:  python -m scripts.make_crc_guideline

@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { getCrcDocuments, getDocuments } from '../services/api';
 import { Spinner } from '../components/ui';
 
-/** The RAG corpus: the documents the agent grounds every claim in. Example 1: the clinical
- *  guidelines. Example 2 (source="screening"): the screening pathway and recall policy. */
+/** The RAG corpus: the documents the agent grounds every claim in. Population health: the clinical
+ *  guidelines. Cancer screening (source="screening"): the screening pathway and recall policy. */
 const COPY = {
   hie: { title: 'Guideline corpus',
          lede: 'The example agent never answers clinical questions from memory. It looks these documents up at question time and cites document and page. In RAM this layer is a document collection the agent retrieves from with the same citations.' },
   screening: { title: 'Policy corpus',
-               lede: 'The rules in Example 2 implement NHA-CS-01 section by section (the rule trace cites them), and the agent and the screening assistant retrieve passages from these documents at question time, with page citations. In RAM this is a document collection.' },
+               lede: 'The rules in Cancer screening implement NHA-CS-01 section by section (the rule trace cites them), and the agent and the screening assistant retrieve passages from these documents at question time, with page citations. In RAM this is a document collection.' },
 };
 export default function DocumentsPage({ source = 'hie' }) {
   const copy = COPY[source] || COPY.hie;

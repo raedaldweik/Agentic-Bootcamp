@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getCrcDataRows, getCrcDataTables, getDataRows, getDataTables } from '../services/api';
 import { Spinner } from '../components/ui';
 
-/** Table browser. Example 1: the HIE, 8 relational tables. Example 2 (source="screening"): the
+/** Table browser. Population health: the HIE, 8 relational tables. Cancer screening (source="screening"): the
  *  programme's five tables, the same browser. */
 const SOURCES = {
   hie: { tables: getDataTables, rows: getDataRows, first: 'patient_summary', title: 'HIE tables',

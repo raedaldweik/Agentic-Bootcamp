@@ -1,5 +1,5 @@
 """
-Example 2, the screening programme's data layer.
+Cancer screening, the screening programme's data layer.
 
 Loads the synthetic programme tables once (scripts/generate_screening_data.py) and serves the
 population-level views: the programme dashboard with its cross-filter, the facility map, the

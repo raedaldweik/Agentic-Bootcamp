@@ -6,7 +6,7 @@ import DetailsPopup from '../components/DetailsPopup';
 import { AgentChip } from '../components/ui';
 
 /*
- * Example 2, the composite agent. Left: the navigator worklists the agent works from and the
+ * Cancer screening, the composite agent. Left: the navigator worklists the agent works from and the
  * roster of roles. Centre: the conversation, with the live trace while the agents work and the
  * answer card (reasoning, charts, citations, drafted actions, full trace). Right: the human
  * checkpoints, the approval queue and the audit trail. Nothing the agent drafts is sent until a

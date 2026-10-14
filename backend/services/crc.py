@@ -1,4 +1,4 @@
-"""Example 2: colorectal cancer screening check.
+"""Cancer screening: colorectal cancer screening check.
 
 A person enters a few facts about themselves and gets three things back: a risk
 tier, the screening pathway that fits them under the UAE national programme, and
@@ -599,7 +599,7 @@ EXAMPLES = [
 
 
 # ── Chat: questions about the result ──────────────────────────────────────────
-CHAT_SYSTEM = """You are the screening assistant inside Example 2 of the SAS Composite AI demonstration app,
+CHAT_SYSTEM = """You are the screening assistant inside the cancer-screening story of the SAS Composite AI demonstration app,
 an educational prototype about bowel (colorectal) cancer screening in the UAE.
 
 You are given the person's form and the assessment the app computed from it. Answer their questions
@@ -680,7 +680,7 @@ SCREENING_DOCS = ("NHA_CS01", "NHA_PP01")
 
 
 def retrieve(query: str, k: int = 3) -> list[dict]:
-    """Passages from the screening documents only (the diabetes guidelines are Example 1's)."""
+    """Passages from the screening documents only (the diabetes guidelines are the population-health story's)."""
     try:
         from services import rag
         hits = [h for h in rag.search(query, 8) if h["file"].startswith(SCREENING_DOCS)]

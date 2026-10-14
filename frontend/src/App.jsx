@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AppProvider, useApp } from './context/AppContext';
-import TeamGate from './components/TeamGate';
+import { AppProvider } from './context/AppContext';
 import { getHealth, getLinks } from './services/api';
 import LandingPage from './pages/LandingPage';
 import AssistantPage from './pages/AssistantPage';
@@ -37,38 +36,38 @@ function Bokeh() {
 // Four places to be: the home page, the two composite-AI examples, and the agent built on SAS RAM.
 export const TABS = [
   { id: 'landing', label: 'Home' },
-  { id: 'example', label: 'Example 1' },
-  { id: 'example2', label: 'Example 2' },
+  { id: 'example', label: 'Population health' },
+  { id: 'example2', label: 'Cancer screening' },
   { id: 'ram', label: 'SAS RAM' },
 ];
 
-// Everything inside Example 1: a second row of pills appears while one of them is open.
+// Everything inside Population health: a second row of pills appears while one of them is open.
 export const EXAMPLE_TABS = [
   { id: 'overview', label: 'Registry' },
   { id: 'geography', label: 'Geography' },
   { id: 'simulator', label: 'Simulator' },
   { id: 'data', label: 'Data' },
   { id: 'documents', label: 'Documents' },
-  { id: 'assistant', label: 'Example agent' },
+  { id: 'assistant', label: 'Agent' },
 ];
 const EXAMPLE_IDS = EXAMPLE_TABS.map((t) => t.id);
 const EXAMPLE_HOME = 'overview';
 
-// Everything inside Example 2, the colorectal screening programme: the same shape as Example 1.
+// Everything inside Cancer screening, told in order: the programme, the policy, the prediction,
+// one person through both, the data and documents behind it, and the agent that brings it together.
 export const EXAMPLE2_TABS = [
   { id: 'crc_programme', label: 'Programme' },
-  { id: 'screening', label: 'Screening check' },
-  { id: 'crc_model', label: 'Model' },
   { id: 'crc_rules', label: 'Rules' },
+  { id: 'crc_model', label: 'Model' },
+  { id: 'screening', label: 'Screening check' },
   { id: 'crc_data', label: 'Data' },
   { id: 'crc_documents', label: 'Documents' },
-  { id: 'crc_agent', label: 'Example agent' },
+  { id: 'crc_agent', label: 'Agent' },
 ];
 const EXAMPLE2_IDS = EXAMPLE2_TABS.map((t) => t.id);
 const EXAMPLE2_HOME = 'crc_programme';
 
 function Header({ tab, setTab }) {
-  const { team, teamsEnabled, signOutTeam } = useApp();
   const [health, setHealth] = useState(null);
   const [brandLogo, setBrandLogo] = useState(sasLogoUrl);
   useEffect(() => {
@@ -136,12 +135,6 @@ function Header({ tab, setTab }) {
       </div>
 
       <div className="flex items-center gap-4">
-        {teamsEnabled && team && (
-          <button className="team-chip" onClick={() => { signOutTeam(); setTab('landing'); }}
-            title="Signed in as this team: its Viya and RAM. Click to switch team.">
-            {team.name} <span className="team-chip-sub">switch</span>
-          </button>
-        )}
         {(health == null || !ok || warming || keyBad) && (
           <div className="status-pill">
             <span className={`w-2 h-2 rounded-full ${ok && !warming && !keyBad ? '' : 'animate-pulse'}`}
@@ -162,10 +155,9 @@ function Header({ tab, setTab }) {
 
 function Layout() {
   const [tab, setTab] = useState('landing');
-  const { team } = useApp();
   const page = () => {
     switch (tab) {
-      case 'landing': return <LandingPage />;
+      case 'landing': return <LandingPage onNavigate={setTab} />;
       case 'overview': return <DashboardOverview />;
       case 'geography': return <DashboardMap />;
       case 'simulator': return <SimulatorPage />;
@@ -179,15 +171,14 @@ function Layout() {
       case 'crc_data': return <DataPage source="screening" />;
       case 'crc_documents': return <DocumentsPage source="screening" />;
       case 'crc_agent': return <ScreeningAgentPage />;
-      case 'ram': return <RamCopilotPage key={team?.id || 'one'} />;  // a new team means a new RAM: start the page over
-      default: return <LandingPage />;
+      case 'ram': return <RamCopilotPage />;
+      default: return <LandingPage onNavigate={setTab} />;
     }
   };
 
   return (
     <div className="app-shell">
       <Bokeh />
-      <TeamGate />
       <Header tab={tab} setTab={setTab} />
       <main className="flex-1 min-h-0 relative z-[1]">
         {page()}

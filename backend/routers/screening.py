@@ -1,4 +1,4 @@
-"""Example 2: colorectal cancer screening, the composite AI example.
+"""Cancer screening: colorectal cancer screening, the composite AI example.
 
   /api/screening/crc/options · assess · chat          the screening check (services/crc.py)
   /api/screening/crc/rules                             the policy catalogue the rules implement

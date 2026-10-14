@@ -271,7 +271,7 @@ async def keepalive_loop() -> None:
     """Refresh every signed-in session before its access token expires, which
     also keeps the identity provider's idle timer from signing it out.
     Started by the app's lifespan; harmless when nothing is signed in."""
-    if MOCK or os.getenv("RAM_TOKEN") or not (RAM_API_URL or _teams.enabled()):
+    if MOCK or os.getenv("RAM_TOKEN") or not (_api_url() or _teams.enabled()):
         return
     while True:
         await asyncio.sleep(KEEPALIVE_INTERVAL)

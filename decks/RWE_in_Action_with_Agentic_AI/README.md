@@ -11,12 +11,12 @@
 | Executive summary | 3 | 2 | Agentic AI has left the pilot stage; the value is in real-world data you already hold |
 | Why now, what it is | 5 | 3 – 5 | The real-world-evidence loop and where the hours go; analytical vs generative vs agentic AI; what surrounds the model |
 | The evidence | 7 | 6 – 8 | Six production deployments with measured results; where agentic AI can go to work across the care pathway (six places, two use cases each); why most pilots fail and what the successes share |
-| Example 1 · Population health | 5 + 10 live | 9 – 13 | Problem, the solution overview (data, agent, MCP server, tools, CAS table), the four demo questions, the anatomy of one answer (backup) |
-| Example 2 · Cancer early warning | 5 + 7 live | 14 – 18 | Problem, the solution overview in the same diagram (inputs, screening agent, MCP server, tools, facilities table), the four demo personas, the programme-scale view with the published evidence |
+| Population health · Population health | 5 + 10 live | 9 – 13 | Problem, the solution overview (data, agent, MCP server, tools, CAS table), the four demo questions, the anatomy of one answer (backup) |
+| Cancer screening · Cancer early warning | 5 + 7 live | 14 – 18 | Problem, the solution overview in the same diagram (inputs, screening agent, MCP server, tools, facilities table), the four demo personas, the programme-scale view with the published evidence |
 | What it means | 3 | 19 – 20 | The blueprint both examples share; five tests for an agentic use case worth building |
 | Sources, close | | 21 – 22 | Fifteen numbered sources; thank you |
 
-Both live examples run in the demo app in this repo: Example 1 is the Assistant tab (Basira, `backend/services/agent.py`, scenario chips C1–C4 in `backend/services/scenarios.py`); Example 2 is the screening check (`backend/services/crc.py`, personas Fatima, Khalid, Mariam, Youssef).
+Both live examples run in the demo app in this repo: Population health is the Assistant tab (Basira, `backend/services/agent.py`, scenario chips C1–C4 in `backend/services/scenarios.py`); Cancer screening is the screening check (`backend/services/crc.py`, personas Fatima, Khalid, Mariam, Youssef).
 
 ## Evidence cited on the slides
 
@@ -24,7 +24,7 @@ Every number on an evidence slide has a source line on the slide and an entry on
 
 ## Before the session
 
-Open the app on the second screen: Example 1 warmed up on the morning briefing with the trace panel visible, Example 2 loaded with Fatima's profile. Timing and fallbacks are in the speaker notes of slide 1; slides 13 and 18 are the backups if a live environment misbehaves.
+Open the app on the second screen: Population health warmed up on the morning briefing with the trace panel visible, Cancer screening loaded with Fatima's profile. Timing and fallbacks are in the speaker notes of slide 1; slides 13 and 18 are the backups if a live environment misbehaves.
 
 ## Rebuilding the deck
 

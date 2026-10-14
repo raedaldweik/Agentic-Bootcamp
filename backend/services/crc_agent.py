@@ -1,5 +1,5 @@
 """
-Example 2, the composite agent for the screening programme.
+Cancer screening, the composite agent for the screening programme.
 
 Four kinds of intelligence, each doing the only job it is good at:
 
@@ -13,7 +13,7 @@ Four kinds of intelligence, each doing the only job it is good at:
     draft passes a deterministic validator (§9.2) and lands in the human approval queue (§9.3);
     a draft that fails the validator twice is replaced by the programme template.
 
-Two ways to run it, same event stream as Example 1's agent:
+Two ways to run it, same event stream as the population-health story's agent:
 
   * the scenario chips: deterministic executors that call the same services and stream the
     same step/final events, so the demo works with no model credentials and the numbers are
@@ -639,7 +639,7 @@ async def stream_chat(message: str, session_id: str = "default") -> AsyncGenerat
            "usage": {"total_tokens": tin + tout, "prompt_tokens": tin, "completion_tokens": tout, "llm_calls": calls, "wall_ms": int((time.time() - t0) * 1000)}}
 
 
-# ─────────────────────────── queue and audit views for Example 2 ───────────────────────────
+# ─────────────────────────── queue and audit views for Cancer screening ───────────────────────────
 SCREENING_TYPES = {"screening_invite", "screening_batch", "urgent_referral", "colonoscopy_referral"}
 
 

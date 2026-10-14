@@ -37,7 +37,7 @@ export const AGENT_COLORS = {
   risk_agent: { bg: 'rgba(235,104,52,0.12)', fg: '#9a3b12', label: 'risk · ML' },
   pophealth_agent: { bg: 'rgba(74,58,167,0.12)', fg: '#4a3aa7', label: 'pop-health MCP' },
   action_agent: { bg: 'rgba(180,83,9,0.12)', fg: '#b45309', label: 'actions' },
-  // Example 2, the composite screening agent
+  // Cancer screening, the composite screening agent
   screening_supervisor: { bg: 'rgba(43,83,120,0.10)', fg: '#1B3650', label: 'supervisor' },
   rules_agent: { bg: 'rgba(27,54,80,0.12)', fg: '#1B3650', label: 'rules · deterministic' },
   guardrail_agent: { bg: 'rgba(185,28,44,0.10)', fg: '#8a1420', label: 'guardrail' },

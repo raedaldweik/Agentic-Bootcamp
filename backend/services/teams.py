@@ -47,6 +47,12 @@ def _env(name: str) -> str:
     return (os.getenv(name) or "").strip()
 
 
+# This edition runs one environment with no sign-in. The team sign-in (team1, team2, ...
+# with TEAM_PASSWORD) comes back with TEAMS_ENABLED=true; without it, environment 1
+# (ENV1_VIYA_URL, ENV1_RAM_URL) simply stands in for VIYA_URL / RAM_URL / RAM_API_URL.
+TEAMS_ENABLED = _env("TEAMS_ENABLED").lower() in ("1", "true", "yes")
+
+
 def environments() -> list[dict]:
     """ENV1_, ENV2_, ... in order; the list ends at the first number with neither URL."""
     out: list[dict] = []
@@ -78,7 +84,7 @@ def teams() -> list[dict]:
 
 
 def enabled() -> bool:
-    return bool(teams())
+    return TEAMS_ENABLED and bool(teams())
 
 
 def get(team_id: str | None) -> dict | None:
@@ -90,6 +96,8 @@ def get(team_id: str | None) -> dict | None:
 def authenticate(username: str, password: str) -> dict | None:
     """The team for a username/password pair, or None. Same-length comparison for
     both fields so a wrong guess takes as long as a right one."""
+    if not enabled():
+        return None
     u = (username or "").strip().lower()
     match = None
     for t in teams():
@@ -106,7 +114,7 @@ def set_current(team_id: str | None) -> None:
 
 
 def current() -> dict | None:
-    return get(_current.get())
+    return get(_current.get()) if enabled() else None
 
 
 def current_id() -> str | None:
@@ -121,7 +129,12 @@ def setting(env_name: str, default: str = "") -> str:
     field = _ENV_TO_FIELD.get(env_name)
     if t and field and t["env"].get(field):
         return t["env"][field]
-    return _env(env_name) or default
+    v = _env(env_name)
+    if not v and field:
+        envs = environments()          # no team: environment 1 stands in for the plain variables
+        if envs and envs[0].get(field):
+            return envs[0][field]
+    return v or default
 
 
 def shared_with(t: dict) -> list[str]:
