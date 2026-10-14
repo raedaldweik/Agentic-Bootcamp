@@ -11,8 +11,12 @@ import DocumentsPage from './pages/DocumentsPage';
 import DataPage from './pages/DataPage';
 import RamCopilotPage from './ram/RamCopilotPage';
 import ScreeningPage from './pages/ScreeningPage';
+import ScreeningProgrammePage from './pages/ScreeningProgrammePage';
+import ScreeningModelPage from './pages/ScreeningModelPage';
+import ScreeningRulesPage from './pages/ScreeningRulesPage';
+import ScreeningAgentPage from './pages/ScreeningAgentPage';
 // Imported (not served from /public) so Vite gives it a hashed URL under /assets: a browser or edge
-// cache can never show a stale copy of the partner mark after the file changes.
+// cache can never show a stale copy of the logo after the file changes.
 import sasLogoUrl from './assets/sas-logo.png';
 
 function Bokeh() {
@@ -30,12 +34,12 @@ function Bokeh() {
   );
 }
 
-// Four places to be: the home page, two finished examples to learn from, and the agent you build.
+// Four places to be: the home page, the two composite-AI examples, and the agent built on SAS RAM.
 export const TABS = [
   { id: 'landing', label: 'Home' },
   { id: 'example', label: 'Example 1' },
-  { id: 'screening', label: 'Example 2' },
-  { id: 'ram', label: 'Hackathon Agent' },
+  { id: 'example2', label: 'Example 2' },
+  { id: 'ram', label: 'SAS RAM' },
 ];
 
 // Everything inside Example 1: a second row of pills appears while one of them is open.
@@ -50,11 +54,23 @@ export const EXAMPLE_TABS = [
 const EXAMPLE_IDS = EXAMPLE_TABS.map((t) => t.id);
 const EXAMPLE_HOME = 'overview';
 
+// Everything inside Example 2, the colorectal screening programme: the same shape as Example 1.
+export const EXAMPLE2_TABS = [
+  { id: 'crc_programme', label: 'Programme' },
+  { id: 'screening', label: 'Screening check' },
+  { id: 'crc_model', label: 'Model' },
+  { id: 'crc_rules', label: 'Rules' },
+  { id: 'crc_data', label: 'Data' },
+  { id: 'crc_documents', label: 'Documents' },
+  { id: 'crc_agent', label: 'Example agent' },
+];
+const EXAMPLE2_IDS = EXAMPLE2_TABS.map((t) => t.id);
+const EXAMPLE2_HOME = 'crc_programme';
+
 function Header({ tab, setTab }) {
   const { team, teamsEnabled, signOutTeam } = useApp();
   const [health, setHealth] = useState(null);
-  const [ehsLogo, setEhsLogo] = useState('/ehs-logo.png');
-  const [sasLogo, setSasLogo] = useState(sasLogoUrl);
+  const [brandLogo, setBrandLogo] = useState(sasLogoUrl);
   useEffect(() => {
     let timer;
     const tick = () => getHealth().then((h) => {
@@ -63,10 +79,9 @@ function Header({ tab, setTab }) {
       if (h?.mode === 'multi-agent' && !h.warmup?.ready) timer = setTimeout(tick, 3000);
     }).catch(() => setHealth({ status: 'down' }));
     tick();
-    // A hosted logo can be plugged in through EHS_LOGO_URL without a rebuild.
+    // A hosted logo can be plugged in through LOGO_URL without a rebuild.
     getLinks().then((r) => {
-      if (r?.branding?.ehs_logo_url) setEhsLogo(r.branding.ehs_logo_url);
-      if (r?.branding?.sas_logo_url) setSasLogo(r.branding.sas_logo_url);
+      if (r?.branding?.logo_url) setBrandLogo(r.branding.logo_url);
     }).catch(() => {});
     return () => clearTimeout(timer);
   }, []);
@@ -75,21 +90,23 @@ function Header({ tab, setTab }) {
   const warming = ok && health.mode === 'multi-agent' && !health.warmup?.ready;
   const keyBad = ok && health.mode === 'multi-agent' && selfTest && !selfTest.ok;
   const isExample = EXAMPLE_IDS.includes(tab);
-  const activeTop = isExample ? 'example' : tab;
-  const goTop = (id) => setTab(id === 'example' ? EXAMPLE_HOME : id);
+  const isExample2 = EXAMPLE2_IDS.includes(tab);
+  const activeTop = isExample ? 'example' : isExample2 ? 'example2' : tab;
+  const goTop = (id) => setTab(id === 'example' ? EXAMPLE_HOME : id === 'example2' ? EXAMPLE2_HOME : id);
+  const subTabs = isExample ? EXAMPLE_TABS : isExample2 ? EXAMPLE2_TABS : null;
 
   return (
     <header className="app-header">
       <button onClick={() => setTab('landing')} title="Home">
-        <img className="brand-logo" src={ehsLogo} alt="Emirates Health Services"
-          onError={(e) => { if (e.target.src.indexOf('/ehs-logo.png') === -1) e.target.src = '/ehs-logo.png'; }} />
+        <img className="brand-logo" src={brandLogo} alt="SAS"
+          onError={(e) => { if (e.target.src !== sasLogoUrl) e.target.src = sasLogoUrl; }} />
       </button>
 
       <div className="title-block">
-        <div className="header-eyebrow">Emirates Health Services × SAS</div>
+        <div className="header-eyebrow">SAS · Composite AI</div>
         <div className="title-row">
           <h1 className="app-title">
-            <b>Agentic AI Hackathon</b>
+            <b>Composite AI in Health Care</b>
           </h1>
           <div className="accent-line" />
         </div>
@@ -102,11 +119,11 @@ function Header({ tab, setTab }) {
               </button>
             ))}
           </div>
-          {isExample && (
+          {subTabs && (
             <>
               <span className="nav-divider" />
               <div className="seg-track">
-                {EXAMPLE_TABS.map((t) => (
+                {subTabs.map((t) => (
                   <button key={t.id} onClick={() => setTab(t.id)}
                     className={`seg-pill ${tab === t.id ? 'active' : ''}`}>
                     {t.label}
@@ -138,8 +155,6 @@ function Header({ tab, setTab }) {
             </span>
           </div>
         )}
-        <img className="partner-logo" src={sasLogo} alt="SAS"
-          onError={(e) => { if (e.target.src !== sasLogoUrl) e.target.src = sasLogoUrl; }} />
       </div>
     </header>
   );
@@ -158,6 +173,12 @@ function Layout() {
       case 'documents': return <DocumentsPage />;
       case 'assistant': return <AssistantPage />;
       case 'screening': return <ScreeningPage />;
+      case 'crc_programme': return <ScreeningProgrammePage onOpenAgent={() => setTab('crc_agent')} />;
+      case 'crc_model': return <ScreeningModelPage />;
+      case 'crc_rules': return <ScreeningRulesPage />;
+      case 'crc_data': return <DataPage source="screening" />;
+      case 'crc_documents': return <DocumentsPage source="screening" />;
+      case 'crc_agent': return <ScreeningAgentPage />;
       case 'ram': return <RamCopilotPage key={team?.id || 'one'} />;  // a new team means a new RAM: start the page over
       default: return <LandingPage />;
     }

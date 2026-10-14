@@ -1,25 +1,34 @@
 import { useEffect, useState } from 'react';
-import { getDataRows, getDataTables } from '../services/api';
+import { getCrcDataRows, getCrcDataTables, getDataRows, getDataTables } from '../services/api';
 import { Spinner } from '../components/ui';
 
-/** HIE browser, the relational exchange itself: 8 tables, longitudinal and coded. */
-export default function DataPage() {
+/** Table browser. Example 1: the HIE, 8 relational tables. Example 2 (source="screening"): the
+ *  programme's five tables, the same browser. */
+const SOURCES = {
+  hie: { tables: getDataTables, rows: getDataRows, first: 'patient_summary', title: 'HIE tables',
+         sub: 'A real exchange shape: coded, longitudinal, relational.' },
+  screening: { tables: getCrcDataTables, rows: getCrcDataRows, first: 'population', title: 'Programme tables',
+               sub: 'The population, every invitation, every FIT and colonoscopy: what the rules, the model and the agent read.' },
+};
+
+export default function DataPage({ source = 'hie' }) {
+  const src = SOURCES[source] || SOURCES.hie;
   const [tables, setTables] = useState(null);
-  const [active, setActive] = useState('patient_summary');
+  const [active, setActive] = useState(src.first);
   const [rows, setRows] = useState(null);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
   const [search, setSearch] = useState('');
   const limit = 40;
 
-  const [source, setSource] = useState(null);
-  useEffect(() => { getDataTables().then((r) => { setTables(r.tables); setSource(r.source || null); }).catch(() => setTables([])); }, []);
+  const [loadedFrom, setLoadedFrom] = useState(null);
+  useEffect(() => { src.tables().then((r) => { setTables(r.tables); setLoadedFrom(r.source || null); }).catch(() => setTables([])); }, [source]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     setRows(null);
-    getDataRows(active, offset, limit, search)
+    src.rows(active, offset, limit, search)
       .then((r) => { setRows(r.rows); setTotal(r.total); })
       .catch(() => setRows([]));
-  }, [active, offset, search]);
+  }, [active, offset, search, source]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!tables) return <Spinner />;
   const activeMeta = tables.find((t) => t.name === active);
@@ -29,16 +38,16 @@ export default function DataPage() {
     <div className="h-full flex gap-4 p-4">
       <div className="w-[250px] shrink-0 glass-card flex flex-col min-h-0">
         <div className="p-4 border-b border-[rgba(15,23,42,0.07)]">
-          <p className="panel-title">HIE tables</p>
+          <p className="panel-title">{src.title}</p>
           <p className="text-[10px] mt-1.5 leading-snug" style={{ color: 'var(--text-dim)' }}>
-            A real exchange shape: coded, longitudinal, relational.
+            {src.sub}
           </p>
-          {source && (
-            <p className="text-[9.5px] mt-1.5 font-bold" style={{ color: source.loaded_from === 'bigquery' ? 'var(--green)' : 'var(--text-dim)' }}>
-              {source.loaded_from === 'bigquery'
-                ? `● BigQuery · ${source.project}.${source.dataset} · ${source.location}${source.load_ms ? ` · loaded in ${(source.load_ms / 1000).toFixed(1)} s` : ''}`
-                : source.provisioning ? `◐ provisioning BigQuery ${source.dataset}…`
-                : source.backend === 'bigquery' ? `○ local files (BigQuery: ${source.error || 'pending'})`
+          {loadedFrom && src === SOURCES.hie && (
+            <p className="text-[9.5px] mt-1.5 font-bold" style={{ color: loadedFrom.loaded_from === 'bigquery' ? 'var(--green)' : 'var(--text-dim)' }}>
+              {loadedFrom.loaded_from === 'bigquery'
+                ? `● BigQuery · ${loadedFrom.project}.${loadedFrom.dataset} · ${loadedFrom.location}${loadedFrom.load_ms ? ` · loaded in ${(loadedFrom.load_ms / 1000).toFixed(1)} s` : ''}`
+                : loadedFrom.provisioning ? `◐ provisioning BigQuery ${loadedFrom.dataset}…`
+                : loadedFrom.backend === 'bigquery' ? `○ local files (BigQuery: ${loadedFrom.error || 'pending'})`
                 : '○ local csv.gz files · on Viya: CAS in-memory tables loaded from the exchange export'}
             </p>
           )}

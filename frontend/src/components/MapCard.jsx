@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 /*
- * MapCard, a colour-coded map of the EHS facilities across the Northern Emirates (MapLibre GL).
+ * MapCard, a colour-coded map of the network facilities across the Northern Emirates (MapLibre GL).
  *  - key-free light basemap (CARTO Positron raster), matching the pearl glass
  *  - facility circles sized by patients, coloured sand → maroon by the metric
  *  - glass popups on hover, optional gold rings for highlighted facilities
@@ -51,7 +51,7 @@ function rampColor(t) {
 const fmtVal = (v, metric) => {
   if (v == null) return 'n/a';
   if (metric === 'mean_cost') return `AED ${Math.round(v).toLocaleString()}`;
-  if (metric === 'pct_controlled' || metric === 'mean_risk_pct') return `${v}%`;
+  if (metric === 'pct_controlled' || metric === 'mean_risk_pct' || /_pct$|^pct_/.test(metric)) return `${v}%`;
   return typeof v === 'number' ? v.toLocaleString(undefined, { maximumFractionDigits: 1 }) : v;
 };
 
@@ -99,12 +99,17 @@ export default function MapCard({ spec, height = 340, onSelect, selectedId, comp
     map.on('mousemove', 'fac-dot', (e) => {
       const p = e.features[0].properties;
       map.getCanvas().style.cursor = 'pointer';
+      // A spec may carry its own popup rows ([label, key, suffix]); the diabetes rows are the default.
+      let rows = p.popup_rows ? JSON.parse(p.popup_rows) : null;
+      const body = rows
+        ? rows.map(([label, key, suffix]) => `<div class="mc-pop-row"><span class="mc-k">${label}</span>${p[key] ?? 'n/a'}${suffix || ''}</div>`).join('')
+        : `<div class="mc-pop-row"><span class="mc-k">Patients</span>${p.patients}</div>
+        <div class="mc-pop-row"><span class="mc-k">Controlled</span>${p.pct_controlled}% · <span class="mc-k">Gaps/100</span>${p.gaps_per_100}</div>
+        <div class="mc-pop-row"><span class="mc-k">HbA1c overdue</span>${p.hba1c_overdue} · <span class="mc-k">Mean risk</span>${p.mean_risk_pct}%</div>`;
       popup.setLngLat(e.lngLat).setHTML(`
         <div class="mc-pop-title">${p.name}</div>
         <div class="mc-pop-row"><span class="mc-k">${p.metric_label}</span><b>${p.value_fmt}</b></div>
-        <div class="mc-pop-row"><span class="mc-k">Patients</span>${p.patients}</div>
-        <div class="mc-pop-row"><span class="mc-k">Controlled</span>${p.pct_controlled}% · <span class="mc-k">Gaps/100</span>${p.gaps_per_100}</div>
-        <div class="mc-pop-row"><span class="mc-k">HbA1c overdue</span>${p.hba1c_overdue} · <span class="mc-k">Mean risk</span>${p.mean_risk_pct}%</div>
+        ${body}
         <div class="mc-pop-row"><span class="mc-k">${p.type}</span>${p.region}</div>`).addTo(map);
     });
     map.on('mouseleave', 'fac-dot', () => { map.getCanvas().style.cursor = ''; popup.remove(); });
@@ -145,6 +150,7 @@ export default function MapCard({ spec, height = 340, onSelect, selectedId, comp
             type: 'Feature', geometry: { type: 'Point', coordinates: [f.lon, f.lat] },
             properties: {
               ...f, metric_label: spec.metric_label, value_fmt: fmtVal(f.value, metric),
+              popup_rows: spec.popup ? JSON.stringify(spec.popup) : undefined,
               color: rampColor(t), r: 7 + 13 * Math.sqrt((f.patients || 1) / maxP),
               hl: highlight.has(f.name) ? 1 : 0, sel: f.facility_id === selectedId ? 1 : 0,
             },

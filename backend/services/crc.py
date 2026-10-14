@@ -2,7 +2,7 @@
 
 A person enters a few facts about themselves and gets three things back: a risk
 tier, the screening pathway that fits them under the UAE national programme, and
-the nearest EHS facilities that can do the test, with distances.
+the nearest network facilities that can do the test, with distances.
 
 What is real here, and what is not:
 
@@ -16,7 +16,7 @@ What is real here, and what is not:
   (average-risk screening from 40 to 75, yearly FIT or colonoscopy every ten years)
   and the usual family-history and high-risk surveillance rules. They are a teaching
   simplification, not a clinical protocol.
-* The facilities are the 18 EHS hospitals and health centres the rest of the app
+* The facilities are the 18 network hospitals and health centres the rest of the app
   uses, with the same approximate coordinates. Which service each offers is assumed from its
   type: hospitals have endoscopy units, health centres do FIT and GP referral.
 
@@ -27,7 +27,7 @@ from __future__ import annotations
 import math
 from typing import Any
 
-# The 18 EHS facilities the rest of the app uses (bootcamp/data/ehs_facilities.csv), with the
+# The 18 network facilities the rest of the app uses (kit/data/facilities.csv), with the
 # same approximate coordinates as services/geo.py. Listed here so this module needs nothing
 # heavier than the standard library.
 FACILITIES: list[tuple[str, str, str, str, float, float]] = [
@@ -52,7 +52,7 @@ FACILITIES: list[tuple[str, str, str, str, float, float]] = [
 ]
 
 # ── Places in the UAE a participant can pick, with coordinates (lat, lon) ─────
-# Northern Emirates first (the EHS footprint), then Dubai, Abu Dhabi and Al Ain.
+# Northern Emirates first (the network footprint), then Dubai, Abu Dhabi and Al Ain.
 AREAS: list[dict] = [
     {"emirate": "Sharjah", "area": "Al Nahda", "lat": 25.3005, "lon": 55.3745},
     {"emirate": "Sharjah", "area": "Al Majaz", "lat": 25.3230, "lon": 55.3840},
@@ -92,12 +92,70 @@ AREAS: list[dict] = [
     {"emirate": "Abu Dhabi", "area": "Mussafah", "lat": 24.3500, "lon": 54.5000},
     {"emirate": "Abu Dhabi", "area": "Al Ain", "lat": 24.2100, "lon": 55.7400},
 ]
-EHS_EMIRATES = {"Sharjah", "Ajman", "Umm Al Quwain", "Ras Al Khaimah", "Fujairah"}
+NETWORK_EMIRATES = {"Sharjah", "Ajman", "Umm Al Quwain", "Ras Al Khaimah", "Fujairah"}
 
 SERVICES = {
     "Hospital": ["Colonoscopy (endoscopy unit)", "Gastroenterology clinic", "FIT kit"],
     "Primary Care": ["FIT kit and result review", "GP assessment", "Referral to endoscopy"],
 }
+
+# ── The deterministic policy, as a catalogue the UI can show and the trace can cite ──────
+# Evaluated in this order; the first pathway rule that fires decides, the modifiers annotate.
+GUIDE = "NHA-CS-01"
+RULES: list[dict] = [
+    {"id": "R1", "name": "Red-flag symptoms override everything", "kind": "pathway", "priority": 1,
+     "when": "Any of: bleeding, bowel habit changed > 4 weeks, unexplained weight loss, iron-deficiency anaemia, persistent pain or a lump",
+     "then": "Urgent: clinical assessment within 14 days and colonoscopy by referral. No FIT. The predictive model is not consulted.",
+     "source": {"doc": GUIDE, "section": "§6.1"}},
+    {"id": "R2", "name": "Known high-risk history", "kind": "pathway", "priority": 2,
+     "when": "Polyps removed before, previous colorectal cancer, colitis for 8+ years, or a hereditary syndrome",
+     "then": "Specialist surveillance by colonoscopy on the gastroenterologist's interval. A FIT is not a substitute.",
+     "source": {"doc": GUIDE, "section": "§5"}},
+    {"id": "R3", "name": "Strong family history", "kind": "pathway", "priority": 3,
+     "when": "One first-degree relative diagnosed before 60, or two or more at any age",
+     "then": "Colonoscopy every 5 years from 40, or from 10 years before the youngest relative's diagnosis, whichever is earlier.",
+     "source": {"doc": GUIDE, "section": "§4.2"}},
+    {"id": "R4", "name": "Under the screening age", "kind": "pathway", "priority": 4,
+     "when": "Age under 40 and none of R1 to R3", "then": "No screening yet; it starts at 40.",
+     "source": {"doc": GUIDE, "section": "§3.4"}},
+    {"id": "R5", "name": "Over 85", "kind": "pathway", "priority": 5,
+     "when": "Age over 85", "then": "Routine screening is no longer offered; new symptoms are still assessed.",
+     "source": {"doc": GUIDE, "section": "§3.3"}},
+    {"id": "R6", "name": "Ages 76 to 85", "kind": "pathway", "priority": 6,
+     "when": "Age 76 to 85", "then": "An individual decision with the person's doctor.",
+     "source": {"doc": GUIDE, "section": "§3.2"}},
+    {"id": "R7", "name": "Up to date", "kind": "pathway", "priority": 7,
+     "when": "FIT within 12 months, or a normal colonoscopy within 10 years",
+     "then": "Nothing due; the next test at the end of the interval.",
+     "source": {"doc": GUIDE, "section": "§3.1"}},
+    {"id": "R8", "name": "Due for screening", "kind": "pathway", "priority": 8,
+     "when": "Age 40 to 75, average risk, not up to date",
+     "then": "A yearly FIT or a colonoscopy every 10 years. Moderate and higher APCS tiers may be offered colonoscopy directly.",
+     "source": {"doc": GUIDE, "section": "§3.1, §4.1"}},
+    {"id": "R9", "name": "One relative diagnosed at 60 or older", "kind": "modifier", "priority": 9,
+     "when": "Exactly one first-degree relative, diagnosed at 60+", "then": "Same tests as average risk; screening starts at 40 at the latest.",
+     "source": {"doc": GUIDE, "section": "§4.2"}},
+    {"id": "R10", "name": "Where the test is done", "kind": "routing", "priority": 10,
+     "when": "Every pathway", "then": "Colonoscopy pathways go to the nearest hospital with an endoscopy unit; FIT pathways to the nearest health centre; residents outside the footprint to their own authority.",
+     "source": {"doc": GUIDE, "section": "§7"}},
+    {"id": "R11", "name": "Outreach intensity follows predicted non-completion", "kind": "programme", "priority": 11,
+     "when": "A person found due by R3 or R8 (the only place the predictive model is used)",
+     "then": "Low: app notification. Moderate: SMS with reminders. High: navigator call. Very high: call plus booking help and transport note.",
+     "source": {"doc": GUIDE, "section": "§8.3"}},
+    {"id": "R12", "name": "Positive FIT safety net", "kind": "programme", "priority": 12,
+     "when": "A positive FIT with no colonoscopy within 8 weeks (56 days)",
+     "then": "Navigator contact within 5 working days and a notified referral to the endoscopy unit; a repeat FIT is not acceptable.",
+     "source": {"doc": GUIDE, "section": "§6.2, §6.3"}},
+    {"id": "R13", "name": "Guardrails on generated messages", "kind": "guardrail", "priority": 13,
+     "when": "Any message or referral drafted by a language model",
+     "then": "Built from the decided pathway; names the test and the facility; no dates, prices, waiting times, phone numbers or cancer-likelihood statements; human approval before sending; everything on the audit trail.",
+     "source": {"doc": GUIDE, "section": "§9.2, §9.3"}},
+]
+
+
+def rules_catalogue() -> list[dict]:
+    return RULES
+
 
 # Average-risk screening window under the UAE national programme.
 SCREEN_START, SCREEN_END, SCREEN_SHARED_DECISION_END = 40, 75, 85
@@ -300,7 +358,7 @@ def assess(p: dict) -> dict:
             "test": "Colonoscopy, on a schedule set by a gastroenterologist", "interval": interval, "where": "endoscopy",
             "why": why + " A stool test (FIT) is not enough for you.",
             "next_steps": [
-                "Ask your GP for a referral to the gastroenterology clinic at the nearest EHS hospital, or go to the one you already attend.",
+                "Ask your GP for a referral to the gastroenterology clinic at the nearest network hospital, or go to the one you already attend.",
                 "Take your previous colonoscopy or pathology report with you if you have it.",
                 "If you are overdue by more than a year, say so when booking.",
             ],
@@ -374,10 +432,10 @@ def assess(p: dict) -> dict:
                 "interval": "FIT every year, or colonoscopy every 10 years",
                 "where": "primary" if score["tier"] == "average" else "either",
                 "why": ("You are in the 40 to 75 window and " + ("have never been screened" if last == "never" else "your last test is out of date")
-                        + ". FIT takes five minutes at home and is free at EHS health centres; a positive result leads to a colonoscopy. "
+                        + ". FIT takes five minutes at home and is free at network health centres; a positive result leads to a colonoscopy. "
                         + ("Your risk tier is above average, so some people in your position choose colonoscopy directly." if score["tier"] != "average" else "")),
                 "next_steps": [
-                    "Collect a FIT kit from the nearest EHS health centre or ask for one at any EHS visit. No preparation, no fasting.",
+                    "Collect a FIT kit from the nearest health centre or ask for one at any clinic visit. No preparation, no fasting.",
                     "Return it within a day or two; the result comes in about a week.",
                     "If it is positive you will be called for a colonoscopy. Nine out of ten positive tests are not cancer, but all need checking.",
                 ],
@@ -388,7 +446,7 @@ def assess(p: dict) -> dict:
     # ── Lifestyle advice, from what was entered ───────────────────────────────
     advice = []
     if smoking == "current":
-        advice.append({"title": "Stop smoking", "text": "Smoking is one of the APCS points you can remove. EHS runs free quit-smoking clinics; ask at any health centre."})
+        advice.append({"title": "Stop smoking", "text": "Smoking is one of the APCS points you can remove. The health network runs free quit-smoking clinics; ask at any health centre."})
     if bmi is not None and bmi >= 25:
         advice.append({"title": "Weight", "text": f"A BMI of {bmi} adds a point. Losing 5% of body weight measurably lowers bowel-cancer risk and helps blood sugar too."})
     if activity == "low":
@@ -450,7 +508,45 @@ def assess(p: dict) -> dict:
         outside = min(x["km"] for x in nearby) > 35 if nearby else False
         if loc.get("area"):
             em = next((x["emirate"] for x in AREAS if x["area"] == loc["area"]), "")
-            outside = outside or (em and em not in EHS_EMIRATES)
+            outside = outside or (em and em not in NETWORK_EMIRATES)
+
+    # ── Rule trace: every rule in evaluation order, which fired and why ──────────
+    decided = {"symptomatic": "R1", "surveillance": "R2", "family_high": "R3", "not_yet": "R4", "stop": "R5",
+               "shared": "R6", "up_to_date": "R7", "screen_now": "R8"}[pathway["id"]]
+    def _fires(rid: str) -> tuple[bool, str]:
+        if rid == "R1":
+            return (bool(flagged), ("Reported: " + ", ".join(flagged)) if flagged else "No red-flag symptom reported")
+        if rid == "R2":
+            return (bool(hist), ("History: " + ", ".join(hist)) if hist else "No high-risk personal history")
+        if rid == "R3":
+            return (family in ("one_under60", "two_plus"),
+                    "Relative diagnosed before 60" if family == "one_under60" else "Two or more relatives" if family == "two_plus" else "No strong family history")
+        if rid == "R4":
+            return (age < SCREEN_START, f"Age {age}")
+        if rid == "R5":
+            return (age > SCREEN_SHARED_DECISION_END, f"Age {age}")
+        if rid == "R6":
+            return (SCREEN_END < age <= SCREEN_SHARED_DECISION_END, f"Age {age}")
+        if rid == "R7":
+            return (last in ("fit_1y", "colo_10y"), {"fit_1y": "FIT within 12 months", "colo_10y": "Colonoscopy within 10 years"}.get(last, "Not up to date" if last != "never" else "Never screened"))
+        if rid == "R8":
+            return (SCREEN_START <= age <= SCREEN_END and last not in ("fit_1y", "colo_10y"), f"Age {age}, {'never screened' if last == 'never' else 'last test out of date'}, APCS tier {score['tier']}")
+        if rid == "R9":
+            return (family == "one_60plus", "One relative diagnosed at 60 or older" if family == "one_60plus" else "Does not apply")
+        if rid == "R10":
+            return (True, {"endoscopy": "Colonoscopy pathway: hospital with an endoscopy unit", "primary": "FIT pathway: nearest health centre",
+                           "either": "Either: health centre for FIT, hospital for colonoscopy"}[pathway["where"]])
+        return (False, "")
+    rule_trace = []
+    for rule in RULES:
+        if rule["kind"] not in ("pathway", "modifier", "routing"):
+            continue
+        fired, note = _fires(rule["id"])
+        if rule["kind"] == "pathway":
+            status = "decided" if rule["id"] == decided else ("overridden" if fired else "not fired")
+        else:
+            status = "applied" if fired else "not applied"
+        rule_trace.append({"id": rule["id"], "name": rule["name"], "status": status, "note": note, "source": rule["source"]})
 
     tier_label = {"average": "Average risk", "moderate": "Moderately raised risk", "high": "Higher risk"}[score["tier"]]
     summary = (f"{tier_label} on the APCS score ({score['points']} of {score['max_points']} points). "
@@ -462,8 +558,10 @@ def assess(p: dict) -> dict:
         "note_hints": note_hints(p),
         "score": {**score, "tier_label": tier_label},
         "pathway": pathway,
+        "rule_trace": rule_trace,
+        "decided_by": decided,
         "advice": advice,
-        "location": {"lat": lat, "lon": lon, "label": place, "outside_ehs_footprint": bool(outside)},
+        "location": {"lat": lat, "lon": lon, "label": place, "outside_network_footprint": bool(outside)},
         "facilities": nearby,
         "summary": summary,
         "sources": [
@@ -471,7 +569,7 @@ def assess(p: dict) -> dict:
             "UAE National Cancer Screening recommendations: colorectal screening from 40 to 75, yearly FIT or colonoscopy every 10 years",
             "Family-history and surveillance intervals: US Multi-Society Task Force 2017 and BSG 2020, simplified",
         ],
-        "disclaimer": ("Educational prototype for the hackathon. The rules are simplified, the facility services are assumed "
+        "disclaimer": ("Educational prototype for the session. The rules are simplified, the facility services are assumed "
                        "from facility type, and nothing here is a diagnosis or a substitute for a doctor's advice."),
     }
 
@@ -501,13 +599,13 @@ EXAMPLES = [
 
 
 # ── Chat: questions about the result ──────────────────────────────────────────
-CHAT_SYSTEM = """You are the screening assistant inside Example 2 of the EHS x SAS Agentic AI Hackathon app,
+CHAT_SYSTEM = """You are the screening assistant inside Example 2 of the SAS Composite AI demonstration app,
 an educational prototype about bowel (colorectal) cancer screening in the UAE.
 
 You are given the person's form and the assessment the app computed from it. Answer their questions
 about that result, about the tests (FIT stool test, colonoscopy, preparation, sedation, what results
 mean), about the UAE screening programme (average-risk screening from 40 to 75, yearly FIT or
-colonoscopy every 10 years, family-history and surveillance rules), and about the EHS facilities listed.
+colonoscopy every 10 years, family-history and surveillance rules), and about the network facilities listed.
 
 Rules:
 - Plain language, short answers, for someone who is not medical. Two to five sentences, or a short list.
@@ -520,7 +618,7 @@ Rules:
   topics say it is outside what this assistant covers and suggest their GP.
 - If asked how reliable this is: the risk tier is a published score (APCS), the rules are a simplified
   teaching version of the national programme, and nothing here replaces a doctor.
-- Do not invent phone numbers, prices, opening hours or waiting times. Booking is through the EHS app
+- Do not invent phone numbers, prices, opening hours or waiting times. Booking is through the health authority's app
   or call centre, with an Emirates ID.
 - Match the person's language (English or Arabic).
 """
@@ -548,8 +646,8 @@ FAQ = [
      "Blood in the stool, a change in bowel habit lasting more than four weeks, unexplained weight loss, anaemia, or persistent pain or a lump all need a doctor within two weeks, whatever your age or tier. "
      "Most turn out to be something minor, but they are checked with a colonoscopy, not a stool test. Book a GP appointment this week and say what you have noticed."),
     (r"\b(where|book\w*|appointment|hospital|centre|center|clinic|near\w*|how do i|go)\b",
-     "Your result lists the nearest EHS places and what each does: health centres hand out FIT kits and see you as a GP, hospitals have the endoscopy units for colonoscopy. "
-     "Book through the EHS app or the EHS call centre and bring your Emirates ID. If you have symptoms, say so when booking so you are seen sooner."),
+     "Your result lists the nearest network facilities and what each does: health centres hand out FIT kits and see you as a GP, hospitals have the endoscopy units for colonoscopy. "
+     "Book through the health authority's app or call centre and bring your Emirates ID. If you have symptoms, say so when booking so you are seen sooner."),
     (r"\b(cost|price|free|pay|insurance|fee)\b",
      "Under the national screening programme the stool test and the follow-up colonoscopy are provided through the public system; for insured residents the screening benefit is usually covered. "
      "I cannot quote prices; the facility or your insurer can confirm."),
@@ -562,7 +660,7 @@ FAQ = [
      "The things that measurably lower bowel-cancer risk: not smoking, keeping a healthy weight, 150 minutes a week of brisk activity, more fibre from whole grains, fruit, vegetables and pulses, less processed and red meat, and little or no alcohol. "
      "None of them replaces screening on time; they work alongside it."),
     (r"\b(reliable|accurate|trust|real|ai|doctor|sure|prototype|demo)\b",
-     "This is an educational prototype built for the hackathon. The risk tier is a published, validated score and the pathway follows the national programme in simplified form, but it does not replace a doctor. "
+     "This is an educational prototype built for the session. The risk tier is a published, validated score and the pathway follows the national programme in simplified form, but it does not replace a doctor. "
      "Use it to understand what applies to you and to know what to ask for; the decision is made with your GP."),
 ]
 FAQ_DEFAULT = ("I can help with what your result means, the tests (the FIT stool test and colonoscopy), when screening starts in the UAE, "
@@ -576,6 +674,19 @@ def faq_answer(question: str, assessment: dict) -> str:
     if assessment.get("inputs", {}).get("symptoms") and "two weeks" not in answer:
         answer += " Because you ticked warning symptoms, the first step for you is a doctor within two weeks."
     return answer
+
+
+SCREENING_DOCS = ("NHA_CS01", "NHA_PP01")
+
+
+def retrieve(query: str, k: int = 3) -> list[dict]:
+    """Passages from the screening documents only (the diabetes guidelines are Example 1's)."""
+    try:
+        from services import rag
+        hits = [h for h in rag.search(query, 8) if h["file"].startswith(SCREENING_DOCS)]
+        return hits[:k]
+    except Exception:
+        return []
 
 
 def chat_context(person: dict, assessment: dict) -> str:
@@ -610,7 +721,10 @@ async def chat(person: dict, messages: list[dict]):
         yield {"type": "final", "text": text, "mode": "deterministic", "model": None}
         return
     from services import agent   # the agent graph's model choice; heavy, so only when a model is configured
-    system = CHAT_SYSTEM + "\n\nCONTEXT\n" + chat_context(person, assessment)
+    citations = retrieve(f"{question} {assessment['pathway']['title']} colorectal screening", 3)
+    passages = "\n".join(f"[{c['doc']} p.{c['page']}] {c['snippet'][:500]}" for c in citations)
+    system = (CHAT_SYSTEM + "\n\nCONTEXT\n" + chat_context(person, assessment)
+              + ("\n\nPOLICY PASSAGES (cite the document when you use one)\n" + passages if passages else ""))
 
     async def run(model: str):
         if model.startswith("claude"):
@@ -651,4 +765,5 @@ async def chat(person: dict, messages: list[dict]):
                 yield {"type": "token", "text": chunk + " "}
             yield {"type": "final", "text": text, "mode": "deterministic", "model": None}
             return
-    yield {"type": "final", "text": text, "mode": "live", "model": label}
+    yield {"type": "final", "text": text, "mode": "live", "model": label,
+           "citations": [{"doc": c["doc"], "page": c["page"], "file": c["file"], "snippet": c["snippet"]} for c in citations]}

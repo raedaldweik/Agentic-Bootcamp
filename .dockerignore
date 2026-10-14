@@ -8,5 +8,5 @@ backend/data/runtime/agent_eval_results.json
 backend/.env
 **/__pycache__
 docs
-Day1
+decks
 templates

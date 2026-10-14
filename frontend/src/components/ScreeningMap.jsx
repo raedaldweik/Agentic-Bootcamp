@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { STYLE, FALLBACK_STYLE } from './MapCard';
 
-/* Where to go: the person's location (gold) and the recommended EHS facilities (blue, the
+/* Where to go: the person's location (gold) and the recommended network facilities (blue, the
    first one larger). Same key-free basemap as the Geography map, same offline fallback. */
 export default function ScreeningMap({ user, facilities = [], height = 220 }) {
   const elRef = useRef(null);

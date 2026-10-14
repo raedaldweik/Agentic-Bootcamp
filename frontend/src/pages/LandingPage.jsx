@@ -40,7 +40,7 @@ const ECG_D = (() => {
 const FALLBACK_LINKS = [
   { id: 'ram', label: 'RAM', sub: 'Where you build and test your agent', url: '' },
   { id: 'viya', label: 'Viya', sub: 'Data, models and dashboards', url: '' },
-  { id: 'materials', label: 'Hackathon materials', url: 'https://github.com/raedaldweik/Agentic-Bootcamp' },
+  { id: 'materials', label: 'Materials', url: 'https://github.com/raedaldweik/Agentic-Bootcamp' },
 ];
 // RAM is the door participants use all day, so it comes first and biggest.
 const LINK_ORDER = ['ram', 'viya', 'materials'];
@@ -98,16 +98,17 @@ export default function LandingPage() {
     <div className="landing">
       <div className="landing-inner">
         <section className="hero">
-          <img src="/ehs-mark.png" alt="" className="hero-g" />
+          <img src="/sas-logo.png" alt="" className="hero-g" />
           <div className="relative z-[1]">
-            <div className="section-eyebrow reveal d1">Emirates Health Services × SAS</div>
+            <div className="section-eyebrow reveal d1">SAS · Composite AI</div>
             <h1 className="hero-title reveal d2">
-              Build a population-health <span className="hero-grad">agent.</span>
+              Composite AI, in <span className="hero-grad">health care.</span>
             </h1>
             <p className="hero-lede mt-5 reveal d3">
-              Two days, three places. <b>Example 1</b> is a finished agent to learn from, with its data and
-              guidelines. <b>Example 2</b> is a screening check: your risk, the right test, the nearest place.{' '}
-              <b>RAM</b> is where you build and test your own.
+              Predictive models, deterministic rules and generative agents, working as one, under human oversight.{' '}
+              <b>Example 1</b> is population health: a diabetes registry, its models, guidelines and a finished agent.{' '}
+              <b>Example 2</b> is colorectal cancer screening: the programme, the rules, the model and an agent that
+              drafts, is checked, and waits for approval. <b>SAS RAM</b> is where such an agent is built and run.
             </p>
             {team && (
               <div className="team-line reveal d4">

@@ -1,13 +1,22 @@
 import { useEffect, useState } from 'react';
-import { getDocuments } from '../services/api';
+import { getCrcDocuments, getDocuments } from '../services/api';
 import { Spinner } from '../components/ui';
 
-/** The RAG corpus: national clinical guidelines the agent grounds every claim in. */
-export default function DocumentsPage() {
+/** The RAG corpus: the documents the agent grounds every claim in. Example 1: the clinical
+ *  guidelines. Example 2 (source="screening"): the screening pathway and recall policy. */
+const COPY = {
+  hie: { title: 'Guideline corpus',
+         lede: 'The example agent never answers clinical questions from memory. It looks these documents up at question time and cites document and page. In RAM this layer is a document collection the agent retrieves from with the same citations.' },
+  screening: { title: 'Policy corpus',
+               lede: 'The rules in Example 2 implement NHA-CS-01 section by section (the rule trace cites them), and the agent and the screening assistant retrieve passages from these documents at question time, with page citations. In RAM this is a document collection.' },
+};
+export default function DocumentsPage({ source = 'hie' }) {
+  const copy = COPY[source] || COPY.hie;
   const [d, setD] = useState(null);
   useEffect(() => {
-    getDocuments().then(setD).catch(() => setD({ documents: [], status: {} }));
-  }, []);
+    setD(null);
+    (source === 'screening' ? getCrcDocuments() : getDocuments()).then(setD).catch(() => setD({ documents: [], status: {} }));
+  }, [source]);
   if (!d) return <Spinner />;
 
   return (
@@ -15,17 +24,13 @@ export default function DocumentsPage() {
       <div className="max-w-[980px] mx-auto">
         <div className="flex items-end justify-between mb-1">
           <h1 className="text-[17px] font-extrabold tracking-tight" style={{ color: 'var(--text)' }}>
-            Guideline corpus
+            {copy.title}
           </h1>
           <span className="text-[10.5px] font-bold" style={{ color: 'var(--text-faint)' }}>
             {d.documents.length} documents{d.status.chunks ? ` · ${d.status.chunks} passages` : ''}
           </span>
         </div>
-        <p className="text-[11px] mb-5" style={{ color: 'var(--text-dim)' }}>
-          The example agent never answers clinical questions from memory. It looks these documents up at
-          question time and cites document and page. In RAM this layer is a document collection the agent
-          retrieves from with the same citations.
-        </p>
+        <p className="text-[11px] mb-5" style={{ color: 'var(--text-dim)' }}>{copy.lede}</p>
 
         <div className="grid grid-cols-2 gap-3">
           {d.documents.map((doc) => (

@@ -358,7 +358,7 @@ def llm_selection() -> dict:
              "why": "Previous generation, still served. The resolver drops to it only if Sonnet 5 is unavailable to the key."},
             {"model": "claude-haiku-4-5", "role": "Not used (candidate for routing/classification)", "chosen": False,
              **PRICES["claude-haiku-4-5"], "context": "200K", "latency": "fastest",
-             "why": "Too weak for multi-step tool planning; would fit a front-door intent classifier if traffic grows. Not worth a second model to operate at bootcamp scale."},
+             "why": "Too weak for multi-step tool planning; would fit a front-door intent classifier if traffic grows. Not worth a second model to operate at workshop scale."},
             {"model": "gemini-embedding-001", "role": "Optional RAG embeddings (hybrid with BM25)", "chosen": False,
              **PRICES["gemini-embedding-001"], "context": "2k/chunk", "latency": "n/a",
              "why": "Only if a Gemini key is present: the corpus is embedded once and cached, near-zero recurring cost. Without it retrieval is BM25, which is what SAS RAM collections replace in production."},

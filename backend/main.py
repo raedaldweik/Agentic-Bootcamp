@@ -2,7 +2,7 @@
 Basira (بصيرة), National Population Health Intelligence.
 
 FastAPI backend: multi-agent chat (ADK supervisor, provider-agnostic model), dashboards, HITL queue,
-audit trail, guideline documents, HIE data browser, the bootcamp environment links and the
+audit trail, guideline documents, HIE data browser, the environment links and the
 SAS RAM page (a proxy to SAS Retrieval Agent Manager). Serves the built React
 frontend from frontend/dist in production (single container, Railway-ready).
 """
@@ -137,7 +137,7 @@ async def lifespan(app: FastAPI):
         keepalive.cancel()
 
 
-app = FastAPI(title="Basira: EHS Population Health Intelligence (SAS Agentic AI Hackathon)", lifespan=lifespan)
+app = FastAPI(title="Basira: Population Health Intelligence (SAS Composite AI demonstration)", lifespan=lifespan)
 
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                    allow_headers=["*"])
@@ -156,7 +156,7 @@ app.include_router(screening.router)
 @app.get("/api/health")
 def health():
     live = agent.llm_enabled()
-    return {"status": "ok", "app": "basira", "edition": "sas-ehs-hackathon",
+    return {"status": "ok", "app": "basira", "edition": "sas-composite-ai",
             "build": os.getenv("RAILWAY_GIT_COMMIT_SHA", "")[:7] or "local",
             "mode": "multi-agent" if live else "direct-tools",
             "model": (agent.display_model(agent.active_model()) if WARM["ready"] else "warming") if live else None,

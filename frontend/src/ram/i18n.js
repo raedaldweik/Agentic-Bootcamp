@@ -4,7 +4,7 @@
 // language per query for compatibility; RAM agents answer as configured.
 
 const STR = {
-  appTitle: { en: 'Hackathon Agent · RAM', ar: 'وكيل الهاكاثون · RAM' },
+  appTitle: { en: 'SAS RAM agent', ar: 'وكيل SAS RAM' },
   connecting: { en: 'Connecting…', ar: 'جارٍ الاتصال…' },
   connected: { en: 'Connected', ar: 'متصل' },
   mockMode: { en: 'Mock mode', ar: 'وضع المحاكاة' },
@@ -44,8 +44,8 @@ const STR = {
   delete: { en: 'Delete', ar: 'حذف' },
 
   welcome: {
-    en: 'Welcome to the EHS Agentic AI Hackathon agent on RAM. Pick an agent published in RAM from the dropdown above and ask about the diabetes population, care gaps, guidelines or a policy simulation. Every answer shows its tool calls, retrieval and sources.',
-    ar: 'مرحباً بك في وكيل هاكاثون EHS للذكاء الاصطناعي الوكيل على RAM. اختر وكيلاً منشوراً في RAM من القائمة أعلاه واسأل عن مرضى السكري، أو فجوات الرعاية، أو الإرشادات السريرية، أو محاكاة سياسة. كل إجابة تعرض استدعاءات أدواتها وعمليات الاسترجاع ومصادرها.',
+    en: 'Welcome to the SAS RAM agent. Pick an agent published in RAM from the dropdown above and ask about the diabetes population, care gaps, guidelines or a policy simulation. Every answer shows its tool calls, retrieval and sources.',
+    ar: 'مرحباً بك في وكيل SAS RAM. اختر وكيلاً منشوراً في RAM من القائمة أعلاه واسأل عن مرضى السكري، أو فجوات الرعاية، أو الإرشادات السريرية، أو محاكاة سياسة. كل إجابة تعرض استدعاءات أدواتها وعمليات الاسترجاع ومصادرها.',
   },
 
   selectAgent: { en: 'Select an agent', ar: 'اختر وكيلاً' },

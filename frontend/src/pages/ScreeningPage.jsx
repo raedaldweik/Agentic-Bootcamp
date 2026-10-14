@@ -5,7 +5,7 @@ import ScreeningMap from '../components/ScreeningMap';
 import ScreeningChat from '../components/ScreeningChat';
 
 /* Example 2: bowel (colorectal) cancer screening check. A few facts in, three things out:
-   a risk tier, the right test and when, and the nearest EHS place to do it. */
+   a risk tier, the right test and when, and the nearest network facility to do it. */
 
 const TIER = {
   average: { label: 'Average risk', color: 'var(--green)', bg: 'var(--green-bg)' },
@@ -129,7 +129,7 @@ export default function ScreeningPage() {
             Example 2: bowel cancer screening check
           </h1>
           <p className="text-[10.5px] mt-1" style={{ color: 'var(--text-dim)' }}>
-            Fill in what you know, add notes in your own words, and it tells you your risk tier, the right test and when, and the nearest EHS place to do it. The answer updates as you type; the assistant at the bottom right answers questions about it.
+            Fill in what you know, add notes in your own words, and it tells you your risk tier, the right test and when, and the nearest network facility to do it. The answer updates as you type; the assistant at the bottom right answers questions about it.
           </p>
         </div>
       </div>
@@ -323,8 +323,8 @@ export default function ScreeningPage() {
                   <div className="text-[9.5px] font-bold uppercase tracking-[0.14em] mb-1" style={{ color: 'var(--text-faint)' }}>
                     Where to go{result.location.label ? ` · from ${result.location.label}` : ''}
                   </div>
-                  {result.location.outside_ehs_footprint && (
-                    <div className="scr-note">You are outside the Northern Emirates, where EHS facilities are. These are the nearest EHS places; the health authority where you live (DHA in Dubai, SEHA in Abu Dhabi) offers the same screening closer to home.</div>
+                  {result.location.outside_network_footprint && (
+                    <div className="scr-note">You are outside the Northern Emirates, where network facilities are. These are the nearest network facilities; the health authority where you live (DHA in Dubai, SEHA in Abu Dhabi) offers the same screening closer to home.</div>
                   )}
                   {result.facilities.length ? (
                     <>
@@ -348,7 +348,7 @@ export default function ScreeningPage() {
                         ))}
                       </div>
                       <ScreeningMap user={result.location} facilities={result.facilities} height={210} />
-                      <div className="text-[9.5px] mt-1" style={{ color: 'var(--text-faint)' }}>Book through the EHS app or call centre, and bring your Emirates ID. Hospitals are shown as squares, health centres as circles.</div>
+                      <div className="text-[9.5px] mt-1" style={{ color: 'var(--text-faint)' }}>Book through the health authority's app or call centre, and bring your Emirates ID. Hospitals are shown as squares, health centres as circles.</div>
                     </>
                   ) : (
                     <div className="scr-note">Pick your area on the left, or use your location, to see the nearest places.</div>

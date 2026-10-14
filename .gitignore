@@ -1,6 +1,6 @@
-# ── Decks (Day1/, templates/) ──
+# ── Decks (decks/, templates/) ──
 # LibreOffice / render artefacts
-Day1/**/*.pdf
+decks/**/*.pdf
 templates/**/*.pdf
 render/
 ~$*.pptx
@@ -37,5 +37,5 @@ frontend/dist/
 # Misc
 *.log
 
-# per-team OAuth client secrets written by bootcamp/viya/create_team_clients.py
-bootcamp/viya/clients*.csv
+# per-team OAuth client secrets written by kit/viya/create_team_clients.py
+kit/viya/clients*.csv

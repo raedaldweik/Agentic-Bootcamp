@@ -1,6 +1,6 @@
 # population-health-mcp
 
-**A population-health MCP server for the SAS × EHS Agentic AI Bootcamp.**
+**A population-health MCP server for the SAS Composite AI demonstration.**
 
 Healthcare MCP servers read patient records (single-patient lookups, FHIR resources) and call
 model scoring (the SAS Viya MCP server scores a published model, runs SAS code, loads data).

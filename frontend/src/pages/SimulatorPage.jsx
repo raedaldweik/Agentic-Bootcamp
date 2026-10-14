@@ -93,7 +93,7 @@ function Gauge({ base, sim, changed }) {
 }
 
 /* ── One lever row ── */
-function Lever({ l, value, recordValue, onChange }) {
+export function Lever({ l, value, recordValue, onChange }) {
   const changed = recordValue != null ? (l.kind === 'toggle' ? !!value !== !!recordValue : Math.abs(+value - +recordValue) > 1e-9)
     : value != null;
   const dirTxt = l.direction > 0 ? 'higher → more risk' : l.direction < 0 ? 'higher → less risk' : 'unconstrained';
@@ -416,7 +416,7 @@ export default function SimulatorPage() {
   );
 }
 
-function Stat({ label, value, sub, tone, color }) {
+export function Stat({ label, value, sub, tone, color }) {
   const c = color || (tone === 'good' ? DOWN : tone === 'bad' ? UP : 'var(--text)');
   return (
     <div className="rounded-xl px-2.5 py-2" style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(15,23,42,0.06)' }}>

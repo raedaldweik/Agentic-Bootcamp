@@ -4,14 +4,14 @@ import { setSessionScope } from '../ram/api';
 
 export const PERSONAS = {
   executive: {
-    id: 'executive', name: 'Population Health Executive', sub: 'Emirates Health Services',
+    id: 'executive', name: 'Population Health Executive', sub: 'Regional health network',
     avatar: 'You', color: 'bg-[#2B5378]',
     welcome: "Welcome. Ask about registry outcomes, care gaps, cost, equity or demand, or run one of the scenarios below. Every figure is computed from the registry and every clinical statement is cited to a guideline page.",
   },
 };
 
 const NEW_TITLE = 'New conversation';
-const STORE_KEY = 'bootcamp_chats_v1';
+const STORE_KEY = 'composite_chats_v1';
 const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 const welcomeMsg = (persona) => ({ role: 'assistant', welcome: true, content: PERSONAS[persona].welcome });

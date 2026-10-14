@@ -1,6 +1,6 @@
 """Teams and environments: which SAS Viya and SAS RAM a browser talks to.
 
-The hackathon has a handful of SAS environments (one Viya + one RAM each) and ten
+The session has a handful of SAS environments (one Viya + one RAM each) and ten
 teams. Teams are spread over the environments in order: team 1 on environment 1,
 team 2 on 2, and when the environments run out it wraps, so with four
 environments team 5 is back on 1 and two teams share it.
@@ -30,7 +30,7 @@ import hmac
 import os
 from contextvars import ContextVar
 
-COOKIE = "hackathon_team"
+COOKIE = "team_session"
 COOKIE_MAX_AGE = 400 * 24 * 3600
 RAM_API_SUFFIX = "/SASRetrievalAgentManager/api/v1"
 MAX_ENVIRONMENTS = 50
@@ -40,7 +40,7 @@ FIELDS = {"viya_url": "VIYA_URL", "ram_url": "RAM_URL", "ram_api_url": "RAM_API_
           "ram_realm": "RAM_REALM", "ram_client_id": "RAM_CLIENT_ID"}
 _ENV_TO_FIELD = {v: k for k, v in FIELDS.items()}
 
-_current: ContextVar[str | None] = ContextVar("hackathon_team", default=None)
+_current: ContextVar[str | None] = ContextVar("team_session", default=None)
 
 
 def _env(name: str) -> str:

@@ -34,7 +34,7 @@ const AttachIcon = ({ size = 12 }) => (
 const AssistantAvatar = () => (
   <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center p-1.5"
     style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(15,23,42,0.10)', boxShadow: '0 1px 3px rgba(15,23,42,0.08)' }}>
-    <img src="/ehs-mark.png" alt="EHS" className="w-full h-full object-contain" onError={hideOnError} />
+    <img src="/sas-logo.png" alt="SAS" className="w-full h-full object-contain" onError={hideOnError} />
   </div>
 );
 
@@ -335,7 +335,7 @@ function ChatBody() {
 
       {/* Main chat area */}
       <div className="flex-1 min-w-0 glass-card flex flex-col relative" style={{ boxShadow: 'var(--glass-shadow-lg)' }}>
-        <img src="/ehs-logo.png" alt="" className="chat-watermark" onError={hideOnError} />
+        <img src="/sas-logo.png" alt="" className="chat-watermark" onError={hideOnError} />
 
         {/* Header: conversation title + agent dropdown */}
         <div className="flex items-center justify-between gap-3 px-6 py-3 border-b border-[rgba(15,23,42,0.07)] relative z-[5]">

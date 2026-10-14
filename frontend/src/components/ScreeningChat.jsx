@@ -40,7 +40,7 @@ export default function ScreeningChat({ person }) {
       await streamCrcChat({ person, messages: history }, (ev) => {
         if (ev.type === 'meta') setMode(ev.mode);
         if (ev.type === 'token') { acc += ev.text; setMessages((m) => m.map((x, i) => i === m.length - 1 ? { ...x, content: acc } : x)); }
-        if (ev.type === 'final') setMessages((m) => m.map((x, i) => i === m.length - 1 ? { role: 'assistant', content: ev.text || acc } : x));
+        if (ev.type === 'final') setMessages((m) => m.map((x, i) => i === m.length - 1 ? { role: 'assistant', content: ev.text || acc, citations: ev.citations || [] } : x));
       }, ctl.signal);
     } catch (e) {
       if (e.name !== 'AbortError') setMessages((m) => m.map((x, i) => i === m.length - 1 ? { role: 'assistant', content: 'I could not answer just now. Try again in a moment.', error: true } : x));
@@ -71,6 +71,14 @@ export default function ScreeningChat({ person }) {
                 {m.role === 'assistant'
                   ? (m.content ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown> : <span className="scr-typing"><i /><i /><i /></span>)
                   : m.content}
+                {m.citations?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {[...new Map(m.citations.map((c) => [`${c.doc}|${c.page}`, c])).values()].map((c) => (
+                      <a key={`${c.doc}|${c.page}`} href={`/api/documents/file/${c.file}#page=${c.page}`} target="_blank" rel="noreferrer"
+                        className="badge badge-blue" style={{ textDecoration: 'none' }} title={c.snippet}>{c.doc.replace(/ .*/, '')} {c.doc.split(' ')[1]} · p.{c.page}</a>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
             <div ref={endRef} />

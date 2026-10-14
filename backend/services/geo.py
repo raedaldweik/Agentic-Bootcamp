@@ -13,7 +13,7 @@ import numpy as np
 
 from services import hie, ml
 
-# Approximate real-world coordinates (lat, lon) for the EHS network in the Northern Emirates.
+# Approximate real-world coordinates (lat, lon) for the health network in the Northern Emirates.
 FACILITY_COORDS = {
     "F001": (25.3327, 55.4021), "F002": (25.3603, 55.3892), "F003": (25.7880, 55.9517),
     "F004": (25.1276, 56.3370), "F005": (25.5498, 55.5657), "F006": (25.3440, 55.4460),

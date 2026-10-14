@@ -302,7 +302,7 @@ Mean HbA1c is **{kpi['mean_hba1c']}%** ({'down' if yoy<0 else 'up'} {abs(yoy):.2
 
 **Complication burden:** {kpi['pct_retinopathy']}% of patients have retinopathy, {kpi['pct_neuropathy']}% neuropathy and {kpi['pct_ckd']}% chronic kidney disease; {kpi['pct_on_sglt2_glp1']}% are on an SGLT2 inhibitor or GLP-1 receptor agonist.
 
-**Geography:** the map shows where control is won and lost across the EHS network. The flagged facilities cluster on the East Coast and in the far north of the Northern Emirates, where distance from the tertiary hospitals and the access gradient follow the same line.
+**Geography:** the map shows where control is won and lost across the health network. The flagged facilities cluster on the East Coast and in the far north of the Northern Emirates, where distance from the tertiary hospitals and the access gradient follow the same line.
 """
     yield {"type": "final", "answer": answer, "trace": _trace(ev),
            "charts": [

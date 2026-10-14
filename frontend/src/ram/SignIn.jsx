@@ -95,7 +95,7 @@ export default function SignIn({ health }) {
           <div className="glass-card w-full max-w-[440px] p-7 animate-slide-up"
             style={{ background: 'rgba(255,255,255,0.95)' }}>
             <div className="flex items-center gap-3 mb-5">
-              <img src="/ehs-mark.png" alt="" className="w-10 h-10 rounded-lg object-contain"
+              <img src="/sas-logo.png" alt="" className="w-10 h-10 rounded-lg object-contain"
                 onError={e => { e.target.style.display = 'none'; }} />
               <div>
                 <p className="text-sm font-bold" style={{ color: 'var(--text)' }}>{t('signInTitle')}</p>

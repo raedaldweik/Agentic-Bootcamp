@@ -214,6 +214,56 @@ def train_forecast() -> dict:
             "yoy_growth_pct": growth, "method": "linear trend + month-of-year seasonality (Ridge)"}
 
 
+SCREENING = HERE / "data" / "screening"
+
+
+def train_screening_uptake() -> dict:
+    """Example 2: P(an invitation is NOT completed within 90 days), on the programme's own
+    invitations. Features are what is known before anyone is contacted; the channel and the
+    reminders are deliberately left out, they are what the programme chooses afterwards."""
+    import sys
+    sys.path.insert(0, str(HERE))
+    from services import crc_ml
+    pop = pd.read_csv(SCREENING / "population.csv.gz")
+    d = pop[pop["completed_90d"].notna() & (pop["consent_status"] != "restricted")].copy()
+    X = crc_ml.features(d)
+    y = (1 - d["completed_90d"].astype(int)).astype(int)
+    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.25, random_state=11, stratify=y)
+    model = XGBClassifier(
+        n_estimators=500, max_depth=3, learning_rate=0.04, subsample=0.85, colsample_bytree=0.85,
+        min_child_weight=8, eval_metric="auc", random_state=11, n_jobs=2,
+        monotone_constraints=tuple(crc_ml.MONOTONE.get(f, 0) for f in crc_ml.FEATURES))
+    model.fit(X_tr, y_tr)
+    p_te = model.predict_proba(X_te)[:, 1]
+    auc = roc_auc_score(y_te, p_te); ap = average_precision_score(y_te, p_te)
+    dec = pd.DataFrame({"p": p_te, "y": y_te.values})
+    dec["decile"] = pd.qcut(dec["p"], 10, labels=False, duplicates="drop") + 1
+    calib = (dec.groupby("decile").agg(mean_predicted=("p", "mean"), observed_rate=("y", "mean"), n=("y", "size"))
+             .reset_index().round(4).to_dict(orient="records"))
+    booster = model.get_booster()
+    gain = booster.get_score(importance_type="gain")
+    fmap = {f"f{i}": name for i, name in enumerate(crc_ml.FEATURES)}
+    importance = sorted([{"feature": fmap.get(k, k), "label": crc_ml.LABELS.get(fmap.get(k, k), k), "gain": round(v, 2)}
+                         for k, v in gain.items()], key=lambda r: -r["gain"])
+    # a naive comparison: "never screened before" alone, the rule a programme would otherwise use
+    naive_auc = roc_auc_score(y_te, X_te["never_screened"] * 2 + X_te["distance_km"] / 50)
+    ev = d.loc[X_te.index, ["person_id", "nationality_group", "language", "sex", "age", "emirate", "insurance", "nearest_facility_id"]].copy()
+    ev["y_true"] = y_te.values; ev["p"] = p_te
+    ev.to_csv(OUT / "screening_eval_predictions.csv.gz", index=False, compression="gzip")
+    booster.save_model(OUT / f"{crc_ml.MODEL_ID}.xgb.json")
+    (OUT / f"{crc_ml.MODEL_ID}.features.json").write_text(json.dumps({
+        "features": crc_ml.FEATURES, "monotone": {f: crc_ml.MONOTONE.get(f, 0) for f in crc_ml.FEATURES},
+        "version": crc_ml.MODEL_VERSION, "bands": crc_ml.BANDS}))
+    # band distribution on everyone currently due, for the model card
+    due = pop[(pop["consent_status"] != "restricted") & pop["due_status"].isin(["due", "overdue"])]
+    pd_ = booster.predict(__import__("xgboost").DMatrix(crc_ml.features(due)))
+    bands = {b: int(sum(1 for q in pd_ if crc_ml.band(float(q)) == b)) for b, _ in crc_ml.BANDS}
+    print(f"  screening_uptake: AUC {auc:.3f} (naive rule {naive_auc:.3f}), AP {ap:.3f}, bands among the due {bands}")
+    return {"auc": round(auc, 3), "average_precision": round(ap, 3), "naive_rule_auc": round(naive_auc, 3),
+            "train_rows": int(len(X_tr)), "test_rows": int(len(X_te)), "event_rate": round(float(y.mean()), 3),
+            "top_drivers": importance[:10], "calibration_deciles": calib, "due_band_distribution": bands}
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     s = load_features()
@@ -228,6 +278,7 @@ def main():
     seg_metrics = train_segments(s, risk_prob)
     sim_metrics = train_similarity(s)
     fc_metrics = train_forecast()
+    uptake_metrics = train_screening_uptake()
 
     today = date.today().isoformat()
     cards = [
@@ -263,6 +314,17 @@ def main():
          "intended_use": "Capacity planning and the executive demand narrative.",
          "limitations": "Univariate; no exogenous drivers (campaigns, epidemics).",
          "phase2": "SAS Visual Forecasting (or PROC ESM through the SAS Viya MCP server) over the monthly encounter series."},
+        {"model_id": "screening_uptake", "name": "Screening Non-completion Risk (Example 2)",
+         "version": "1.0.0", "trained": today, "framework": "XGBoost (gradient-boosted trees, monotonic constraints)",
+         "task": "Binary classification, P(a colorectal-screening invitation is not followed by a completed test within 90 days)",
+         "training_data": f"{uptake_metrics['train_rows']} invited people (held-out test: {uptake_metrics['test_rows']}), synthetic screening programme",
+         "features": ["age", "is_male", "bmi", "distance_km", "hospital_distance_km", "missed_appointments_12m", "gp_visits_12m",
+                      "language_barrier", "uninsured", "shift_work", "smoker_current", "diabetes", "never_screened", "family_history_any", "apcs_points"],
+         "metrics": uptake_metrics,
+         "intended_use": "Decides outreach intensity for people the rules have already found due (NHA-CS-01 §8.3): app, SMS, navigator call, or call plus booking help. Never eligibility, never the test, never a clinical decision.",
+         "constraints": "Monotonic constraints: the estimate cannot fall as distance, missed appointments, shift work, a language barrier, being uninsured or never having been screened rise, and cannot rise as GP contact or a family history (which motivates) rise. Channel and reminders are excluded from the features because the programme chooses them after the score.",
+         "limitations": "Trained on synthetic data. Would need calibration on real invitation outcomes and a fairness review by language and nationality group before any production use. An association, not a causal effect of any lever.",
+         "phase2": "Gradient boosting in SAS Model Studio, registered in SAS Model Manager, published to MAS and scored through the SAS Viya MCP server from the RAM agent."},
     ]
     (OUT / "model_cards.json").write_text(json.dumps(cards, indent=2))
     print(f"\n✓ artifacts + model_cards.json written to {OUT}")

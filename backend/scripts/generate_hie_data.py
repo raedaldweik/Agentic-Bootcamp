@@ -1,10 +1,10 @@
 """
-Basira, synthetic Health Information Exchange (HIE) generator: the EHS diabetes registry.
+Basira, synthetic Health Information Exchange (HIE) generator: the regional diabetes registry.
 
 Produces a relational, longitudinal, FHIR-shaped synthetic dataset for a UAE-flavoured diabetes population
-(Emirates Health Services network, Northern Emirates) (type 2 and type 1), the way a diabetes programme sees it:
+(the regional health network, Northern Emirates) (type 2 and type 1), the way a diabetes programme sees it:
 
-    facilities.csv.gz        18 EHS facilities (hospitals + primary healthcare centres)
+    facilities.csv.gz        18 network facilities (hospitals + primary healthcare centres)
     patients.csv.gz          4,000 people living with diabetes: demographics + consent
     conditions.csv.gz        problem list (ICD-10 + SNOMED CT codes, onset dates)
     observations.csv.gz      ~190k longitudinal labs & vitals (LOINC-coded, 36 months)
@@ -47,7 +47,7 @@ FHIR_OUT = HERE / "data" / "fhir_sample"
 
 FACILITIES = [
     # (id, name, type, region, quality_factor)  quality<1 → better control, >1 → worse
-    # The EHS network across the Northern Emirates: hospitals and primary healthcare centres.
+    # The health network across the Northern Emirates: hospitals and primary healthcare centres.
     ("F001", "Al Qassimi Hospital",              "Hospital",       "Sharjah",         1.00),
     ("F002", "Kuwait Hospital Sharjah",          "Hospital",       "Sharjah",         0.90),
     ("F003", "Saqr Hospital",                    "Hospital",       "Ras Al Khaimah",  1.03),
@@ -211,7 +211,7 @@ def build_patients() -> pd.DataFrame:
 
     rows = []
     for i in range(N_PATIENTS):
-        pid = f"EHS-{100001 + i}"
+        pid = f"PT-{100001 + i}"
         nat = str(RNG.choice(nats, p=nat_w))
         gender = "male" if RNG.random() < (0.68 if nat in
                     ("Indian", "Bangladeshi", "Nepali", "Pakistani", "Sri Lankan") else 0.52) else "female"
@@ -649,7 +649,7 @@ def export_fhir_sample(pat, cond, obs, meds, enc, n_patients=25):
     prows = pat[pat["patient_id"].isin(idset)]
     nd("Patient", [{
         "resourceType": "Patient", "id": p.patient_id,
-        "identifier": [{"system": "https://ehs.gov.ae/synthetic-registry/mrn", "value": p.patient_id}],
+        "identifier": [{"system": "https://basira.demo/synthetic-registry/mrn", "value": p.patient_id}],
         "name": [{"text": p.full_name}], "gender": p.gender, "birthDate": p.birth_date,
         "extension": [{"url": "https://basira.demo/fhir/nationality", "valueString": p.nationality}],
     } for p in prows.itertuples()])

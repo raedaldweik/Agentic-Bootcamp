@@ -1,0 +1,7 @@
+{
+  "facilities": "The 18 hospitals and health centres of the network: coordinates, whether there is an endoscopy unit, colonoscopy slots per week and FIT kits per month (synthetic capacity).",
+  "population": "12,000 residents aged 36 to 85: demographics, language, insurance, employment, where they live and the distance to the nearest facility, risk factors (smoking, BMI, diabetes, family history, own history, symptoms), the APCS points and tier, the pathway the rules give them (pathway_id, due_status), screening history, engagement (GP visits, missed appointments), the latest invitation and its 90-day outcome (completed_90d: the uptake model's label), latest FIT and colonoscopy.",
+  "invitations": "Every programme invitation over 36 months: date, channel (sms/app/call/letter), reminders, the facility it came from, the person's pathway, whether a test was completed within 90 days, days to completion and the outcome.",
+  "fit_tests": "FIT stool tests: date, facility, result, faecal haemoglobin (ug/g) and whether it was a programme or an opportunistic test.",
+  "colonoscopies": "Colonoscopies: indication (fit_positive, family_history, surveillance, symptoms, primary_screening), wait in days, bowel preparation adequacy, finding (normal, polyp, advanced_adenoma, cancer) and polyps removed."
+}

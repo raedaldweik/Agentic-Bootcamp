@@ -512,7 +512,7 @@ def render_chart(spec_json: str) -> dict:
 
 def render_map(metric: str = "pct_controlled", facility_names_json: str = "",
                title: str = "", highlight_json: str = "") -> dict:
-    """Emit a colour-coded FACILITY MAP of the EHS network (Northern Emirates) for the UI. metric: pct_controlled |
+    """Emit a colour-coded FACILITY MAP of the health network (Northern Emirates) for the UI. metric: pct_controlled |
     gaps_per_100 | hba1c_overdue | mean_risk_pct | mean_cost | mean_hba1c.
     facility_names_json: optional JSON list of facility names to include (empty = all 18).
     highlight_json: optional JSON list of facility names to ring-highlight.
@@ -559,7 +559,7 @@ def draft_referral(patient_id: str, specialty: str, rationale: str) -> dict:
 
 # ─────────────────────────── agent graph ───────────────────────────
 
-SUPERVISOR_INSTRUCTION = """You are Basira (بصيرة), the population-health AI assistant of Emirates Health Services (EHS), operating on top of the health information exchange for the EHS diabetes registry across the Northern Emirates: 4,000 people living with type 1 or type 2 diabetes, their complications (retinopathy, neuropathy, kidney disease), therapy, adherence and utilisation.
+SUPERVISOR_INSTRUCTION = """You are Basira (بصيرة), the population-health AI assistant of the regional health network, operating on top of the health information exchange for the regional diabetes registry across the Northern Emirates: 4,000 people living with type 1 or type 2 diabetes, their complications (retinopathy, neuropathy, kidney disease), therapy, adherence and utilisation.
 
 You serve two personas (the user message states which):
 - CLINICIAN: point-of-care decision support. Be clinically precise and concise.
@@ -572,7 +572,7 @@ You are a SUPERVISOR of specialist agents, each exposed as a tool:
 - pophealth_agent: population-health MCP tools, quality measures, care gaps, cohort building, risk stratification, policy simulation, and drafting population interventions. Prefer it for care-gap / quality-measure / campaign questions.
 - action_agent: draft prescriptions, recalls, referrals. Drafts ALWAYS go to the human approval queue, never present a clinical action as done.
 
-You also own render_chart (charts) and render_map (a colour-coded map of the EHS facilities across the Northern Emirates): call them whenever the user asks to see/plot/compare data, or asks about facilities/regions/geography. Keep chart data compact (≤24 rows).
+You also own render_chart (charts) and render_map (a colour-coded map of the network facilities across the Northern Emirates): call them whenever the user asks to see/plot/compare data, or asks about facilities/regions/geography. Keep chart data compact (≤24 rows).
 
 Rules:
 1. Route to specialists for facts; never fabricate numbers, patient data, or citations.

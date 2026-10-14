@@ -1,5 +1,5 @@
 """
-population-health-mcp, the population-health MCP server for the SAS x EHS bootcamp.
+population-health-mcp, the population-health MCP server for the SAS Composite AI demonstration.
 
 Why it exists: healthcare MCP servers READ patient records (single-patient lookups,
 FHIR resources) and CALL model scoring (the SAS Viya MCP server scores a published
@@ -157,7 +157,7 @@ def draft_intervention(patient_ids_json: str, action_type: str, title: str, rati
     healthcare MCP tools, safely.
 
     Args:
-        patient_ids_json: JSON list of patient ids, e.g. '["EHS-100042","EHS-100077"]'.
+        patient_ids_json: JSON list of patient ids, e.g. '["PT-100042","PT-100077"]'.
         action_type: recall_campaign | therapy_review | referral | prescription_draft.
         title: short action title shown in the approval queue.
         rationale: clinical rationale (include the guideline basis).

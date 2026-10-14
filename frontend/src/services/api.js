@@ -126,7 +126,7 @@ export async function streamExplain({ patientId, profileId, overrides, actor }, 
   if (buf.trim()) { try { onEvent(JSON.parse(buf)); } catch { /* ignore */ } }
 }
 
-// ── Bootcamp environment links (SAS Viya, SAS RAM, materials) from the server's env ──
+// ── Environment links (SAS Viya, SAS RAM, materials) from the server's env ──
 export const getLinks = () => fetch('/api/links').then(json);
 
 // ── Teams: one SAS Viya + SAS RAM pair per team; the team signs in once per browser (a cookie) ──
@@ -138,7 +138,64 @@ export const loginTeam = async (username, password) => {
 };
 export const logoutTeam = () => fetch('/api/teams/logout', { method: 'POST' }).then(json);
 
-// ── Example 2: colorectal screening check ──
+// ── Example 2: colorectal screening, the composite AI example ──
+const CRC = '/api/screening/crc';
+export const getCrcRules = () => fetch(`${CRC}/rules`).then(json);
+export const getCrcDashboard = (filters) => {
+  const q = filters && Object.keys(filters).length ? `?filters=${encodeURIComponent(JSON.stringify(filters))}` : '';
+  return fetch(`${CRC}/dashboard${q}`).then(json);
+};
+export const getCrcMap = () => fetch(`${CRC}/map`).then(json);
+export const getCrcWorklist = (kind = 'due', limit = 25, uninvitedOnly = false) =>
+  fetch(`${CRC}/worklist?kind=${kind}&limit=${limit}&uninvited_only=${uninvitedOnly}`).then(json);
+export const getCrcPerson = (id) => fetch(`${CRC}/person/${encodeURIComponent(id)}`).then(json);
+export const getCrcDataTables = () => fetch(`${CRC}/data/tables`).then(json);
+export const getCrcDataRows = (table, offset = 0, limit = 50, search = '') =>
+  fetch(`${CRC}/data/${table}?offset=${offset}&limit=${limit}&search=${encodeURIComponent(search)}`).then(json);
+export const getCrcDocuments = () => fetch(`${CRC}/documents`).then(json);
+export const getCrcModel = () => fetch(`${CRC}/model`).then(json);
+export const getCrcProfiles = () => fetch(`${CRC}/model/profiles`).then(json);
+export const getCrcProfile = (id) => fetch(`${CRC}/model/profile/${encodeURIComponent(id)}`).then(json);
+export const getCrcProfilePreset = (id, preset) => fetch(`${CRC}/model/profile/${encodeURIComponent(id)}/preset/${preset}`).then(json);
+export const postCrcSimulate = (profileId, overrides, signal) =>
+  fetch(`${CRC}/model/simulate`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ profile_id: profileId, overrides }), signal }).then(json);
+export const getCrcScenarios = () => fetch(`${CRC}/agent/scenarios`).then(json);
+export const getCrcQueue = () => fetch(`${CRC}/agent/queue`).then(json);
+export const getCrcAudit = () => fetch(`${CRC}/agent/audit`).then(json);
+
+/** NDJSON reader shared by the Example 2 streams: {type: meta|token|final} or {type: step|final}. */
+async function readNdjson(res, onEvent) {
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop();
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try { onEvent(JSON.parse(line)); } catch { /* partial line */ }
+    }
+  }
+  if (buf.trim()) { try { onEvent(JSON.parse(buf)); } catch { /* ignore */ } }
+}
+export async function streamCrcExplain({ profileId, overrides }, onEvent, signal) {
+  const res = await fetch(`${CRC}/model/explain`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ profile_id: profileId, overrides }), signal });
+  if (!res.ok || !res.body) throw new Error(`explain failed: ${res.status}`);
+  await readNdjson(res, onEvent);
+}
+export async function streamCrcAgent({ message, sessionId, scenarioId }, onEvent, signal) {
+  const res = await fetch(`${CRC}/agent/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, session_id: sessionId, scenario_id: scenarioId || null }), signal });
+  if (!res.ok || !res.body) throw new Error(`agent failed: ${res.status}`);
+  await readNdjson(res, onEvent);
+}
+
+// ── Example 2: the screening check ──
 export const getCrcOptions = () => fetch('/api/screening/crc/options').then(json);
 export const assessCrc = (body) =>
   fetch('/api/screening/crc/assess', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(json);

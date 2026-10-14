@@ -607,7 +607,7 @@ async def list_collections() -> list[dict]:
 
 async def list_sessions() -> list[dict]:
     # In a shared-identity deployment (one RAM token/login for several users —
-    # e.g. a bootcamp) every user queries RAM as the same identity, so RAM's
+    # e.g. a workshop) every user queries RAM as the same identity, so RAM's
     # session history is shared: each person would see everyone else's
     # conversations in "Recent conversations". Set RAM_HIDE_HISTORY=true to
     # suppress the shared list — each browser then keeps only its own live
@@ -939,10 +939,10 @@ async def status_async() -> dict:
 
 # ─── In-memory mock (RAM_MOCK=true) ──────────────────────────────────
 # Lets the UI run end-to-end without a reachable RAM / Viya environment.
-# Flavoured for the SAS × EHS Agentic AI Bootcamp: a diabetes population-health
+# Flavoured for the SAS Composite AI demonstration: a diabetes population-health
 # registry, the NHA clinical guideline collection and a SAS Viya copilot.
 _MOCK_AGENTS = [
-    {"id": "a1000000-0000-0000-0000-000000000001", "name": "EHS Population Health Agent",
+    {"id": "a1000000-0000-0000-0000-000000000001", "name": "Population Health Agent",
      "description": "Diabetes registry questions, care gaps, facility benchmarks, policy simulation"},
     {"id": "a1000000-0000-0000-0000-000000000002", "name": "Clinical Guidelines Agent",
      "description": "Cites the NHA clinical guideline collection: NHA-CG-01 diabetes, NHA-CG-02 lipids, "
@@ -973,7 +973,7 @@ _MOCK_CONTEXT = [{
 
 
 def _mock_chart_spec() -> dict:
-    """A sample `render_chart` spec (glycaemic control by EHS facility) so the
+    """A sample `render_chart` spec (glycaemic control by network facility) so the
     interactive ChartCard renders in mock mode. Mirrors the MCP tool output."""
     return {
         "kind": "chart",
@@ -1043,7 +1043,7 @@ async def _mock_request(method: str, path: str, *, params: dict | None = None, j
             chart_spec = _mock_chart_spec()
             answer = (
                 f"**[Mock response from {target_name}]**\n\n"
-                "Across the six EHS facilities in the registry, **48.6%** of active type 2 diabetes "
+                "Across the six network facilities in the registry, **48.6%** of active type 2 diabetes "
                 "patients are well-controlled (HbA1c < 7%). **Al Qassimi Hospital** leads at 52.1% while "
                 "**Al Dhaid Hospital** trails at 41.9% — a 10-point spread that tracks closely with the "
                 "share of patients overdue for an HbA1c test.\n\n"
@@ -1056,7 +1056,7 @@ async def _mock_request(method: str, path: str, *, params: dict | None = None, j
             tool_calls = [
                 {"toolName": "query_registry",
                  "input": {"metric": "pct_controlled", "group_by": "facility", "year": 2026},
-                 "output": {"rows": len(chart_spec["data"]), "source": "ehs_diabetes_registry"}},
+                 "output": {"rows": len(chart_spec["data"]), "source": "diabetes_registry"}},
                 {"toolName": "render_chart",
                  "input": {"title": chart_spec["title"], "type": "bar"},
                  "output": chart_spec},
@@ -1064,7 +1064,7 @@ async def _mock_request(method: str, path: str, *, params: dict | None = None, j
         else:
             answer = (
                 f"**[Mock response from {target_name}]**\n\nYou asked: _{json['content']}_\n\n"
-                "The EHS diabetes registry currently tracks **48,120** active type 2 diabetes patients "
+                "The regional diabetes registry currently tracks **48,120** active type 2 diabetes patients "
                 "across six facilities. **22%** have an HbA1c above 9%, **12,340** are overdue for an "
                 "HbA1c test and **8,910** have no retinal screening on record in the last 12 months.\n\n"
                 "NHA-CG-01 §4.2 (p. 7) advises adding a second glucose-lowering agent — preferably a "
