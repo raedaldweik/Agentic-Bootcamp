@@ -523,6 +523,45 @@ def render_map(metric: str = "pct_controlled", facility_names_json: str = "",
     return {"ok": True, "chart": geo.map_spec(names, metric, title or None, hl)}
 
 
+def list_outreach_rules() -> dict:
+    """The outreach rule set (eligibility, exclusions, priority thresholds) as readable
+    rules, the way they would appear in SAS Intelligent Decisioning."""
+    from services import rules
+    return rules.RULE_SET
+
+
+def apply_outreach_rules(filters_json: str = "", patient_ids_json: str = "", top_n: int = 25) -> dict:
+    """Run the outreach rule set over a cohort: score each patient with the deterioration
+    model, then apply eligibility, exclusions and thresholds. Returns the staged plan
+    (priority, channel, reason per patient, ordered) and the counts. Nothing is sent.
+    filters_json: list of {"column","op","value"} (op: ==, !=, >, >=, <, <=, in, contains);
+    patient_ids_json: a JSON list of patient ids instead of filters; top_n: plan rows to return."""
+    from services import rules
+    s = hie.summary()
+    if patient_ids_json:
+        ids = json.loads(patient_ids_json)
+        s = s[s["patient_id"].isin(ids)]
+    for f in (json.loads(filters_json) if filters_json else []):
+        col, op, val = f.get("column"), f.get("op", "=="), f.get("value")
+        if col not in s.columns:
+            continue
+        if op == "in":
+            s = s[s[col].isin(val if isinstance(val, list) else [val])]
+        elif op == "contains":
+            s = s[s[col].astype(str).str.contains(str(val), na=False)]
+        else:
+            s = s.query(f"`{col}` {op} @val")
+    if s.empty:
+        return {"error": "no patients matched", "evaluated": 0}
+    probs = ml._score(ml._feature_frame(s))
+    rows = s.to_dict("records")
+    out = rules.apply(rows, [float(x) for x in probs], top_n=top_n)
+    audit.log("RULES·APPLY", "rules_agent",
+              f"Outreach rules {out['rule_set']} over {out['evaluated']} patients: {out['eligible']} eligible, "
+              f"{out['excluded']} excluded", severity="info")
+    return out
+
+
 def draft_prescription(patient_id: str, drug: str, dose: str, rationale: str,
                        citation: str = "") -> dict:
     """Draft a prescription for HUMAN clinician approval. It is queued, never submitted."""
@@ -570,7 +609,10 @@ You are a SUPERVISOR of specialist agents, each exposed as a tool:
 - guideline_agent: national clinical guideline retrieval. MANDATORY before any clinical recommendation; cite document + page.
 - risk_agent: the deployed ML models, patient risk scoring with explanations, cohort stratification, similar patients, demand forecast, counterfactual policy simulation, model cards.
 - pophealth_agent: population-health MCP tools, quality measures, care gaps, cohort building, risk stratification, policy simulation, and drafting population interventions. Prefer it for care-gap / quality-measure / campaign questions.
+- rules_agent: the business rules (SAS Intelligent Decisioning style): eligibility, exclusions and HbA1c / risk thresholds that turn a ranked cohort into a staged outreach plan with a priority, a channel and a reason per patient. The model ranks; the rules decide.
 - action_agent: draft prescriptions, recalls, referrals. Drafts ALWAYS go to the human approval queue, never present a clinical action as done.
+
+The outreach workflow, in this order, whenever the user asks who to contact, recall, reach out to, or prioritise: (1) cohort_agent or risk_agent for the cohort and its risk ranking; (2) rules_agent to apply the rule set and produce the staged plan; (3) guideline_agent for the citation behind the clinical threshold; (4) action_agent to draft the recall for the plan's Urgent and High patients, which goes to the human checkpoint. Report the counts by priority and by exclusion reason, name the rule set, and say that nothing has been sent until a human approves it.
 
 You also own render_chart (charts) and render_map (a colour-coded map of the EHS facilities across the Northern Emirates): call them whenever the user asks to see/plot/compare data, or asks about facilities/regions/geography. Keep chart data compact (≤24 rows).
 
@@ -673,6 +715,17 @@ def _build_tools_map(model_name: str | None = None):
                      "to the human approval queue." + COMPACT),
         tools=[pophealth_tools])
 
+    rules_agent = LlmAgent(
+        name="rules_agent", model=fast, generate_content_config=gen_cfg,
+        description=("Business rules: runs the outreach rule set (eligibility, exclusions, HbA1c and "
+                     "risk thresholds) over a cohort and returns the staged outreach plan with priority, "
+                     "channel and reason per patient. Deterministic; nothing is sent."),
+        instruction=("You are the business-rules specialist. Apply the rule set with apply_outreach_rules "
+                     "and report the counts: evaluated, eligible, excluded by reason, and the priority "
+                     "breakdown, then the first rows of the plan (patient id, priority, channel, reason). "
+                     "Name the rule ids that fired. Never change a decision the rules made." + COMPACT),
+        tools=[apply_outreach_rules, list_outreach_rules])
+
     action_agent = LlmAgent(
         name="action_agent", model=fast, generate_content_config=gen_cfg,
         description="Drafts prescriptions, recall campaigns and referrals for human approval.",
@@ -686,7 +739,8 @@ def _build_tools_map(model_name: str | None = None):
         description="Basira population-health supervisor",
         instruction=SUPERVISOR_INSTRUCTION,
         tools=[AgentTool(cohort_agent), AgentTool(guideline_agent), AgentTool(risk_agent),
-               AgentTool(pophealth_agent), AgentTool(action_agent), render_chart, render_map])
+               AgentTool(pophealth_agent), AgentTool(rules_agent), AgentTool(action_agent),
+               render_chart, render_map])
     return supervisor
 
 

@@ -31,12 +31,13 @@ export function Panel({ title, right, children, className = '', pad = true }) {
 }
 
 export const AGENT_COLORS = {
-  basira_supervisor: { bg: 'rgba(7,102,209,0.10)', fg: '#0A3D7A', label: 'supervisor' },
-  cohort_agent: { bg: 'rgba(138,106,78,0.14)', fg: '#5c3f2a', label: 'cohort' },
-  guideline_agent: { bg: 'rgba(0,131,0,0.10)', fg: '#006300', label: 'guidelines' },
-  risk_agent: { bg: 'rgba(235,104,52,0.12)', fg: '#9a3b12', label: 'risk · ML' },
-  pophealth_agent: { bg: 'rgba(74,58,167,0.12)', fg: '#4a3aa7', label: 'pop-health MCP' },
-  action_agent: { bg: 'rgba(180,83,9,0.12)', fg: '#b45309', label: 'actions' },
+  basira_supervisor: { bg: 'rgba(7,102,209,0.10)', fg: '#0A3D7A', label: '1 · AI agent' },
+  cohort_agent: { bg: 'rgba(14,95,179,0.12)', fg: '#0E5FB3', label: '2 · data' },
+  risk_agent: { bg: 'rgba(14,95,179,0.12)', fg: '#0E5FB3', label: '2 · predictive ML' },
+  pophealth_agent: { bg: 'rgba(14,95,179,0.12)', fg: '#0E5FB3', label: '2 · pop-health MCP' },
+  rules_agent: { bg: 'rgba(10,155,216,0.14)', fg: '#06648f', label: '3 · business rules' },
+  guideline_agent: { bg: 'rgba(0,131,0,0.10)', fg: '#006300', label: '4 · knowledge store' },
+  action_agent: { bg: 'rgba(180,83,9,0.12)', fg: '#b45309', label: '5 · outreach plan' },
   system: { bg: 'rgba(100,116,139,0.12)', fg: '#475569', label: 'system' },
 };
 

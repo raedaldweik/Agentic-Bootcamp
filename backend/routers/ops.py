@@ -20,17 +20,18 @@ def get_queue(status: str | None = None):
 
 class Decision(BaseModel):
     decided_by: str = "clinician"
+    reason_code: str = ""
 
 
 @router.post("/api/queue/{item_id}/{decision}")
 def decide(item_id: str, decision: str, body: Decision):
     if decision not in ("approved", "rejected"):
         raise HTTPException(400, "decision must be approved|rejected")
-    item = queue_service.resolve(item_id, decision, body.decided_by)
+    item = queue_service.resolve(item_id, decision, body.decided_by, body.reason_code)
     if not item:
         raise HTTPException(404, "draft not found")
     audit_svc.log(f"HITL·{decision.upper()}", body.decided_by,
-                  f"{item['type']} '{item['title']}' {decision}",
+                  f"{item['type']} '{item['title']}' {decision}" + (f" · reason {body.reason_code}" if body.reason_code else ""),
                   item.get("patient_id", ""), "action")
     return {"ok": True, "item": item}
 

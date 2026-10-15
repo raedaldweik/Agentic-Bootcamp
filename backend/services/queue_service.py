@@ -53,7 +53,7 @@ def list_items(status: str | None = None) -> list[dict]:
     return [i for i in items if status is None or i["status"] == status]
 
 
-def resolve(item_id: str, decision: str, decided_by: str = "clinician") -> dict | None:
+def resolve(item_id: str, decision: str, decided_by: str = "clinician", reason_code: str = "") -> dict | None:
     assert decision in ("approved", "rejected")
     with _lock:
         items = _load()
@@ -61,6 +61,7 @@ def resolve(item_id: str, decision: str, decided_by: str = "clinician") -> dict 
             if i["id"] == item_id:
                 i["status"] = decision
                 i["decided_by"] = decided_by
+                i["reason_code"] = reason_code
                 i["decided_at"] = datetime.now(timezone.utc).isoformat()
                 _save(items)
                 return i
