@@ -55,6 +55,7 @@ tab. That is the full loop, built in a quarter of an hour.
 | A table or project already exists from an earlier run | Intended. The agent reuses it; say "we built this earlier today, so it reuses it." |
 | The agent starts dropping or recreating things | Type `stop, reuse what exists`. |
 | RAM says not signed in | The tool server's client token; re-instantiate the tool server. The Viya artefacts are untouched. |
+| Viya or RAM is down, or the room has no network to them | Open the **Design Thinking** tab of the hackathon app. It is the same conversation, scripted: the same five messages, the same artefact names, the same tool calls on screen, with the data generated and the model fitted inside the app and the narration written by the model. Say so: "this is the rehearsal copy of the agent; the live one does the same on Viya." Set `DESIGN_PACE=0.5` on Railway beforehand if the waits feel long. |
 
 ## Tear-down
 
