@@ -222,3 +222,16 @@ export async function streamCrcChat({ person, messages }, onEvent, signal) {
   }
   if (buf.trim()) { try { onEvent(JSON.parse(buf)); } catch { /* ignore */ } }
 }
+
+// ── The Design Thinking Agent (the scripted Population Health Builder) ──
+export async function streamDesignChat({ sessionId, message }, onEvent, signal) {
+  const res = await fetch('/api/design/chat', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: sessionId, message }), signal,
+  });
+  if (!res.ok || !res.body) throw new Error(`design chat failed: ${res.status}`);
+  await readNdjson(res, onEvent);
+}
+export const getDesignState = (sessionId) => fetch(`/api/design/state?session_id=${encodeURIComponent(sessionId)}`).then(json);
+export const resetDesign = (sessionId) =>
+  fetch('/api/design/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_id: sessionId }) }).then(json);

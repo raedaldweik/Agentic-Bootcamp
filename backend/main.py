@@ -23,6 +23,7 @@ from fastapi.staticfiles import StaticFiles
 from routers import chat, dashboards, evals, links, ops, ram, simulate
 from routers import teams as teams_router
 from routers import screening
+from routers import design
 from services import agent, audit, hie, rag
 from services import llm_client as LC
 from services import platform as P
@@ -151,6 +152,7 @@ app.include_router(links.router)
 app.include_router(ram.router)
 app.include_router(teams_router.router)
 app.include_router(screening.router)
+app.include_router(design.router)
 
 
 @app.get("/api/health")

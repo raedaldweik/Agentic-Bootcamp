@@ -14,6 +14,7 @@ import ScreeningProgrammePage from './pages/ScreeningProgrammePage';
 import ScreeningModelPage from './pages/ScreeningModelPage';
 import ScreeningRulesPage from './pages/ScreeningRulesPage';
 import ScreeningAgentPage from './pages/ScreeningAgentPage';
+import DesignThinkingPage from './pages/DesignThinkingPage';
 // Imported (not served from /public) so Vite gives it a hashed URL under /assets: a browser or edge
 // cache can never show a stale copy of the logo after the file changes.
 import sasLogoUrl from './assets/sas-logo.png';
@@ -33,11 +34,13 @@ function Bokeh() {
   );
 }
 
-// Four places to be: the home page, the two composite-AI examples, and the agent built on SAS RAM.
+// Five places to be: the home page, the two composite-AI examples, the agent that builds one live in
+// front of you (Design Thinking), and the agent built on SAS RAM.
 export const TABS = [
   { id: 'landing', label: 'Home' },
   { id: 'example', label: 'Population health' },
   { id: 'example2', label: 'Cancer screening' },
+  { id: 'design', label: 'Design Thinking' },
   { id: 'ram', label: 'SAS RAM' },
 ];
 
@@ -173,6 +176,7 @@ function Layout() {
       case 'crc_data': return <DataPage source="screening" />;
       case 'crc_documents': return <DocumentsPage source="screening" />;
       case 'crc_agent': return <ScreeningAgentPage />;
+      case 'design': return <DesignThinkingPage />;
       case 'ram': return <RamCopilotPage />;
       default: return <LandingPage onNavigate={setTab} />;
     }
