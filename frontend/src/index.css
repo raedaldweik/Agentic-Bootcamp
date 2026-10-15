@@ -1116,3 +1116,122 @@ a.btn-primary, a.btn-secondary { text-decoration: none; }
 .cp-btn { padding: 8px 16px; font-size: 12px; border-radius: 10px; }
 .cp-reason { width: auto; padding: 7px 10px; font-size: 11.5px; }
 .cp-done { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 10px; font-size: 11.5px; color: var(--text-md); background: rgba(255,255,255,0.6); border: 1px solid rgba(15,23,42,0.07); }
+
+/* ═══ Design Thinking Agent ═══ */
+.ds-thread { scroll-behavior: smooth; }
+.ds-hero { max-width: 620px; margin: 40px auto 24px; padding: 22px 26px; border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.45)); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); }
+.ds-hero-kicker { font-size: 9.5px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--brand); }
+.ds-hero-title { font-size: 22px; font-weight: 900; color: var(--text); margin: 4px 0 6px; letter-spacing: -0.01em; }
+.ds-hero-sub { font-size: 12.5px; line-height: 1.6; color: var(--text-dim); } .ds-hero-sub b { color: var(--brand-lo); font-weight: 800; }
+.suggestion-chip.primary { background: var(--brand-grad); color: #fff; border-color: transparent; } .suggestion-chip.primary .chip-tag { color: rgba(255,255,255,0.85); }
+.ds-mode { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; color: var(--text-dim); padding: 4px 10px; border-radius: 999px; background: var(--glass-strong); border: 1px solid var(--hairline); white-space: nowrap; }
+.ds-mode i { width: 6px; height: 6px; border-radius: 999px; background: var(--text-faint); } .ds-mode i.live { background: var(--green); box-shadow: 0 0 0 3px rgba(4,120,87,0.15); }
+.ds-ghost { font-size: 11px; font-weight: 700; color: var(--brand-lo); padding: 5px 11px; border-radius: 999px; border: 1px solid rgba(43,83,120,0.25); background: rgba(255,255,255,0.6); cursor: pointer; }
+.ds-ghost:hover { background: rgba(43,83,120,0.08); }
+.ds-input { display: flex; gap: 8px; padding: 10px 14px 12px; border-top: 1px solid rgba(15,23,42,0.07); background: linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0.55)); }
+.ds-input input { flex: 1; padding: 11px 14px; border-radius: 12px; font-size: 13px; outline: none; background: #fff; border: 1px solid rgba(43,83,120,0.25); color: var(--text); font-family: inherit; }
+.ds-input input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(43,83,120,0.12); }
+.ds-input button { width: 42px; border-radius: 12px; display: grid; place-items: center; color: #fff; background: var(--brand-grad); cursor: pointer; }
+.ds-input button:disabled { opacity: .45; cursor: default; }
+.ds-spin { width: 13px; height: 13px; border-radius: 999px; border: 2px solid rgba(43,83,120,0.25); border-top-color: var(--brand); animation: ds-spin .8s linear infinite; display: inline-block; }
+.ds-spin.sm { width: 10px; height: 10px; border-width: 2px; }
+.ds-input .ds-spin { border-color: rgba(255,255,255,0.4); border-top-color: #fff; }
+@keyframes ds-spin { to { transform: rotate(360deg); } }
+.ds-narration p:first-child { margin-top: 2px; }
+
+/* the tool trace */
+.ds-steps { border-radius: 10px; border: 1px solid rgba(43,83,120,0.14); background: linear-gradient(180deg, rgba(43,83,120,0.035), rgba(43,83,120,0.015)); padding: 4px 0; }
+.ds-step { display: flex; align-items: flex-start; gap: 9px; padding: 5px 12px; font-size: 11.5px; }
+.ds-step + .ds-step { border-top: 1px dashed rgba(43,83,120,0.10); }
+.ds-step-ic { width: 16px; height: 16px; border-radius: 999px; display: grid; place-items: center; font-size: 9.5px; font-weight: 900; flex-shrink: 0; margin-top: 1px; color: #fff; background: var(--green); }
+.ds-step.running .ds-step-ic { background: transparent; color: var(--brand); }
+.ds-tool { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 10.5px; font-weight: 700; color: var(--teal); background: rgba(43,83,120,0.10); padding: 1px 7px; border-radius: 4px; white-space: nowrap; }
+.ds-args { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 10px; color: var(--text-dim); word-break: break-all; }
+.ds-ms { font-size: 9.5px; color: var(--text-faint); margin-left: auto; white-space: nowrap; }
+.ds-result { font-size: 11px; color: var(--text-md); margin-top: 2px; }
+.ds-result::before { content: '↳ '; color: var(--text-faint); }
+.ds-progress { display: flex; align-items: center; gap: 10px; margin-top: 5px; font-size: 10.5px; color: var(--text-dim); }
+.ds-progress-bar { flex: 1; height: 5px; border-radius: 999px; background: rgba(43,83,120,0.12); overflow: hidden; max-width: 260px; }
+.ds-progress-bar i { display: block; height: 100%; background: var(--brand-grad); border-radius: 999px; transition: width .6s ease; }
+.ds-loglink { font-size: 10px; font-weight: 700; color: var(--brand); background: none; border: none; cursor: pointer; padding: 0; margin-top: 2px; }
+.ds-loglink:hover { text-decoration: underline; }
+.ds-log, .ds-code { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 10.5px; line-height: 1.5; background: #0f1b2d; color: #d6e4f5; border-radius: 8px; padding: 10px 12px; margin: 6px 0 2px; overflow: auto; max-height: 220px; white-space: pre; }
+.ds-log { color: #b9d4a6; }
+
+/* result cards */
+.ds-card { border-radius: 12px; border: 1px solid rgba(15,23,42,0.08); background: rgba(255,255,255,0.78); box-shadow: 0 1px 2px rgba(15,23,42,0.04); overflow: hidden; }
+.ds-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 12px; font-size: 10.5px; font-weight: 800; color: var(--brand-lo); background: linear-gradient(180deg, rgba(43,83,120,0.07), rgba(43,83,120,0.03)); border-bottom: 1px solid rgba(43,83,120,0.10); font-family: 'JetBrains Mono', 'Courier New', monospace; }
+.ds-card-body { padding: 10px 12px; }
+.ds-faint { font-size: 10px; font-weight: 600; color: var(--text-faint); font-family: inherit; }
+.ds-scroll { overflow-x: auto; border-radius: 8px; border: 1px solid rgba(15,23,42,0.07); }
+.ds-table { border-collapse: collapse; font-size: 11px; width: 100%; }
+.ds-table th { text-align: left; padding: 6px 9px; background: rgba(43,83,120,0.07); color: var(--brand-lo); font-weight: 800; white-space: nowrap; border-bottom: 1px solid rgba(43,83,120,0.12); font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 10px; }
+.ds-table th em { display: block; font-style: normal; font-weight: 600; color: var(--text-faint); font-size: 9px; }
+.ds-table td { padding: 5px 9px; border-bottom: 1px solid rgba(15,23,42,0.05); color: var(--text-md); white-space: nowrap; }
+.ds-table td.num, .ds-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.ds-table.plain td { white-space: normal; }
+.ds-table tr.champion td { background: rgba(184,133,46,0.10); font-weight: 700; color: var(--text); }
+.ds-champ { font-size: 9.5px; font-weight: 800; color: var(--brand); white-space: nowrap; }
+.ds-cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 3px 14px; margin-top: 9px; }
+.ds-col { display: flex; gap: 6px; align-items: baseline; font-size: 10.5px; line-height: 1.4; min-width: 0; }
+.ds-col-name { font-family: 'JetBrains Mono', 'Courier New', monospace; font-weight: 700; color: var(--brand-lo); font-size: 10px; white-space: nowrap; }
+.ds-col-about { color: var(--text-dim); }
+.ds-col.target .ds-col-name { color: var(--red); }
+.ds-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px; margin-bottom: 10px; }
+.ds-kpi { padding: 8px 10px; border-radius: 9px; background: rgba(43,83,120,0.05); border: 1px solid rgba(43,83,120,0.10); }
+.ds-kpi b { display: block; font-size: 16px; font-weight: 900; color: var(--brand-lo); letter-spacing: -0.01em; }
+.ds-kpi span { font-size: 9.5px; color: var(--text-dim); }
+.ds-bars { display: flex; flex-direction: column; gap: 4px; }
+.ds-bar-row { display: grid; grid-template-columns: 170px 1fr 120px; align-items: center; gap: 8px; font-size: 10.5px; }
+.ds-bar-label { color: var(--text-md); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ds-bar { height: 8px; border-radius: 999px; background: rgba(43,83,120,0.10); overflow: hidden; }
+.ds-bar i { display: block; height: 100%; background: var(--brand-grad); border-radius: 999px; transition: width .5s ease; }
+.ds-bar i.up { background: linear-gradient(90deg, var(--amber), var(--red)); } .ds-bar i.down { background: linear-gradient(90deg, var(--brand), var(--green)); }
+.ds-bar-val { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-bar-val em { font-style: normal; font-weight: 600; color: var(--text-faint); font-size: 9.5px; }
+.ds-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; }
+.ds-patient { padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(15,23,42,0.08); background: rgba(255,255,255,0.7); }
+.ds-patient-name { font-size: 12px; font-weight: 800; color: var(--text); }
+.ds-patient-facts { font-size: 10.5px; color: var(--text-dim); margin-top: 2px; }
+.ds-risk { height: 9px; border-radius: 999px; background: rgba(15,23,42,0.07); overflow: hidden; margin: 8px 0 5px; } .ds-risk i { display: block; height: 100%; border-radius: 999px; transition: width .6s ease; }
+.ds-risk-val { font-size: 11px; color: var(--text-md); } .ds-risk-val b { font-size: 14px; color: var(--text); font-weight: 900; }
+.ds-decision-ch { font-size: 12px; font-weight: 700; color: var(--brand-lo); margin-top: 6px; }
+.ds-prio { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 10px; font-weight: 800; white-space: nowrap; }
+.ds-prio.red { background: var(--red-bg); color: var(--red); } .ds-prio.amber { background: var(--amber-bg); color: var(--amber); }
+.ds-prio.blue { background: rgba(43,83,120,0.10); color: var(--brand-lo); } .ds-prio.green { background: var(--green-bg); color: var(--green); }
+.ds-when { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--brand); }
+.ds-sig { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-bottom: 9px; }
+.ds-sig-l { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--text-faint); margin: 0 4px 0 2px; }
+.ds-term { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 10px; font-weight: 700; color: var(--brand-lo); background: rgba(43,83,120,0.08); padding: 2px 7px; border-radius: 5px; }
+.ds-term em { font-style: normal; font-weight: 600; color: var(--text-faint); } .ds-term.out { background: var(--green-bg); color: var(--green); }
+.ds-flow { display: flex; align-items: stretch; gap: 8px; }
+.ds-flow-col { display: flex; flex-direction: column; gap: 4px; min-width: 150px; }
+.ds-flow-l { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--text-faint); margin-bottom: 2px; }
+.ds-flow-term { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 10px; font-weight: 700; color: var(--brand-lo); background: rgba(43,83,120,0.07); border: 1px solid rgba(43,83,120,0.14); padding: 4px 8px; border-radius: 6px; }
+.ds-flow-term.out { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+.ds-flow-arrow { align-self: center; font-size: 18px; color: var(--brand); font-weight: 900; }
+.ds-flow-step { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 10px 14px; border-radius: 10px; background: var(--brand-grad); color: #fff; }
+.ds-flow-step .ds-flow-l { color: rgba(255,255,255,0.75); }
+.ds-flow-name { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 11.5px; font-weight: 800; }
+.ds-flow-note { font-size: 10px; color: rgba(255,255,255,0.8); margin-top: 3px; }
+.ds-sub { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--text-faint); margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+.ds-env { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 8px; background: #0f1b2d; margin-bottom: 4px; }
+.ds-env code { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 10.5px; color: #d6e4f5; word-break: break-all; } .ds-env .ds-loglink { color: #8fc1ff; }
+.ds-quote { font-size: 11px; line-height: 1.55; color: var(--text-md); padding: 8px 12px; border-left: 3px solid var(--brand); background: rgba(43,83,120,0.04); border-radius: 0 8px 8px 0; margin: 0; }
+.ds-pointer { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border-radius: 10px; background: linear-gradient(135deg, rgba(184,133,46,0.10), rgba(43,83,120,0.05)); border: 1px solid rgba(184,133,46,0.30); color: var(--brand-lo); }
+.ds-pointer svg { flex-shrink: 0; margin-top: 2px; color: var(--gold); }
+.ds-pointer-l { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--gold); }
+.ds-pointer-path { font-size: 12px; font-weight: 800; color: var(--brand-lo); margin-top: 1px; }
+.ds-pointer-note { font-size: 10.5px; color: var(--text-dim); margin-top: 1px; }
+.ds-open { align-self: center; font-size: 10.5px; font-weight: 800; color: #fff; background: var(--brand-grad); padding: 6px 11px; border-radius: 999px; white-space: nowrap; text-decoration: none; }
+
+/* On SAS Viya rail */
+.ds-artefacts { display: flex; flex-direction: column; gap: 5px; }
+.ds-artefact { padding: 7px 9px; border-radius: 9px; background: rgba(255,255,255,0.55); border: 1px solid rgba(15,23,42,0.07); animation: fadeUp .4s ease both; }
+.ds-art-kind { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--brand); }
+.ds-art-name { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 10.5px; font-weight: 800; color: var(--text); word-break: break-all; }
+.ds-art-row { display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
+.ds-status { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; padding: 1px 7px; border-radius: 999px; background: rgba(100,116,139,0.15); color: var(--text-dim); }
+.ds-status.ok { background: var(--green-bg); color: var(--green); }
+.ds-status.busy { background: var(--amber-bg); color: var(--amber); animation: blink 1.2s infinite; }
+.ds-art-detail { font-size: 9.5px; color: var(--text-dim); }
+.ds-art-where { font-size: 9px; color: var(--text-faint); margin-top: 2px; }
