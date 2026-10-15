@@ -37,6 +37,7 @@ script in step 3 tells you exactly which of these is still missing.
 | ReadInfo, Select, CreateTable, Promote, DropTable on `Public` | Data → caslib `Public` → Authorization | read the registry, create and replace team tables |
 | SAS Micro Analytic Service | Rules → `/microanalyticScore/**` → add the group (Read) | score the published model |
 | Model Studio, Route B teams only | Rules → `/analyticsGateway/**`, `/mlPipelineAutomation/**`, `/modelRepository/**`, `/modelPublish/**` | AutoML, register, publish |
+| Intelligent Decisioning, the live demo only | Rules → `/businessRules/**`, `/decisions/**`, `/modelPublish/**` | the outreach rule set and decision, published to MAS |
 
 A client identity is not a member of SASUSERS, so it inherits none of the defaults a person gets.
 That is why the parent group exists: grant once, every team has it.

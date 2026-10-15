@@ -4,6 +4,11 @@ How the two days work, and the material each step needs. The app in this repo is
 workbench (data, documents, a finished agent, and a SAS RAM tab that signs in to their environment);
 this folder is what goes into SAS Viya and SAS Retrieval Agent Manager (RAM).
 
+
+> **Live demo of the whole thing in 15 minutes:** `agents/population_health_builder_demo.md` is the
+> agent, `demo/DEMO_RUNBOOK.md` the presenter's script: data, model, Intelligent Decisioning
+> decision and the finished agent, built in one conversation with SAS Viya open beside it.
+
 ## The flow
 
 ```

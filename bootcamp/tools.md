@@ -73,6 +73,21 @@ Optional: `describe_report_objects`, `create_report`, `apply_report_operations`,
 (tier 3) if you want the copilot to build a Visual Analytics page; the rule set and decision flow
 tools (tier 7) if you want a recall decision flow.
 
+## Population Health Builder, the live demo (32 tools)
+
+The Design Thinking list above, plus `reset_compute_session` kept off and these 10 from tier 7,
+SAS Intelligent Decisioning (`MCP_TIERS=0,1,2,5,6,7`):
+
+| Tool | Why |
+|---|---|
+| `list_business_rulesets`, `create_business_ruleset`, `create_business_rule` | the outreach rule set and its four rules |
+| `lock_business_ruleset_revision` | a decision step references a locked revision |
+| `list_decision_flows`, `create_decision_flow`, `get_decision_flow` | the decision flow that runs the rule set |
+| `lock_decision_flow_revision`, `publish_decision_flow` | freeze it and publish it to MAS |
+| `get_mas_module_step_signature`, `score_data` | already in the list above: score the published decision |
+
+Prompt and story: `agents/population_health_builder_demo.md`; presenter script: `demo/DEMO_RUNBOOK.md`.
+
 ## Population Health Agent: the Bootcamp MCP (8 tools)
 
 Register `bootcamp_mcp` in RAM once per team (see `../bootcamp_mcp/README.md`) with, for team 3:

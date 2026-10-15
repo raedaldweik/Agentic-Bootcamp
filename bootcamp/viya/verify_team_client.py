@@ -19,6 +19,7 @@ exact calls the MCP servers make, in the order they fail on an under-authorised 
   8. cas drop       (--write) the table from step 5 is dropped again
   9. mas            published models are listed; (--model) the step signature is readable
  10. model studio   (--automl) the Analytics Gateway project list is readable
+ 11. decisioning    (--decisioning) rule sets, decision flows and publish destinations are readable
 
     export VIYA_URL=https://viya.example.com
     python verify_team_client.py --csv clients.csv --write --model deterioration_ehs
@@ -50,6 +51,7 @@ HINTS = {
     "cas drop": "grant the parent group Manage on Public, and drop the leftover ZZ_VERIFY_* table by hand in Data Explorer",
     "mas": "grant the parent group access to SAS Micro Analytic Service (/microanalyticScore/**)",
     "model studio": "grant the parent group access to Model Studio (/analyticsGateway/** and /mlPipelineAutomation/**)",
+    "decisioning": "grant the parent group Business Rules and Intelligent Decisioning (/businessRules/**, /decisions/**) and Model Publish (/modelPublish/**)",
 }
 
 
@@ -197,6 +199,18 @@ def verify(client_id: str, secret: str, a: argparse.Namespace) -> Check:
                         c.fail("mas", f"{a.model}: {r.status_code} {r.text[:200]}")
             else:
                 c.fail("mas", f"{r.status_code} {r.text[:200]}")
+            # 11. decisioning (the live demo builds a rule set and a decision and publishes it)
+            if a.decisioning:
+                bad = []
+                for path, what in (("/businessRules/ruleSets", "rule sets"), ("/decisions/flows", "decision flows"),
+                                   ("/modelPublish/destinations", "publish destinations")):
+                    r = v.get(f"{VIYA_URL}{path}", params={"limit": 1})
+                    if r.status_code != 200:
+                        bad.append(f"{what} {r.status_code}")
+                if bad:
+                    c.fail("decisioning", "; ".join(bad))
+                else:
+                    c.ok("decisioning", "rule sets, decision flows and publish destinations readable")
             # 10. model studio
             if a.automl:
                 r = v.get(f"{VIYA_URL}/mlPipelineAutomation/projects", params={"limit": 1})
@@ -219,6 +233,7 @@ def main() -> None:
     ap.add_argument("--write", action="store_true", help="also create and drop a table in the caslib")
     ap.add_argument("--model", default="", help="a published MAS module id to read the signature of")
     ap.add_argument("--automl", action="store_true", help="also check Model Studio access")
+    ap.add_argument("--decisioning", action="store_true", help="also check Business Rules, Intelligent Decisioning and Model Publish access (the live demo)")
     a = ap.parse_args()
     if not VIYA_URL:
         print("error: VIYA_URL is not set", file=sys.stderr); sys.exit(1)
