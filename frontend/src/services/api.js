@@ -10,10 +10,10 @@ export const getDashboard = (name, filters) => {
   return fetch(`/api/dashboards/${name}${q}`).then(json);
 };
 export const getQueue = () => fetch('/api/queue').then(json);
-export const decideQueue = (id, decision, decidedBy) =>
+export const decideQueue = (id, decision, decidedBy, reasonCode = '') =>
   fetch(`/api/queue/${id}/${decision}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ decided_by: decidedBy }),
+    body: JSON.stringify({ decided_by: decidedBy, reason_code: reasonCode }),
   }).then(json);
 export const getAudit = () => fetch('/api/audit').then(json);
 export const getDocuments = () => fetch('/api/documents').then(json);

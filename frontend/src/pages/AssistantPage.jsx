@@ -4,8 +4,9 @@ import { getScenarios, streamChat } from '../services/api';
 import ResponseCard from '../components/ResponseCard';
 import SourceViewer from '../components/SourceViewer';
 import DetailsPopup from '../components/DetailsPopup';
-import { VoiceInput, SpeakerToggle, useSpeaker } from '../components/VoiceControls';
+import { useSpeaker } from '../components/VoiceControls';
 import { AgentChip } from '../components/ui';
+import { TriadRail, CheckpointsPanel, useQueue } from '../components/Triad';
 
 export default function AssistantPage() {
   const {
@@ -22,13 +23,29 @@ export default function AssistantPage() {
   const [llmInfo, setLlmInfo] = useState(null);
   const [source, setSource] = useState(null);
   const [details, setDetails] = useState(null);
-  const [voiceLang, setVoiceLang] = useState('en');
   const [chatMenu, setChatMenu] = useState(null);
   const [renaming, setRenaming] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const speaker = useSpeaker();
   const inputRef = useRef(null);
   const endRef = useRef(null);
+  // The triad: which boxes are working now, which worked for the last answer, and the checkpoint queue.
+  const { items: queue, refresh: refreshQueue } = useQueue();
+  const [checkpointsOpen, setCheckpointsOpen] = useState(false);
+  useEffect(() => {
+    const open = () => setCheckpointsOpen(true);
+    window.addEventListener('basira:open-checkpoints', open);
+    return () => window.removeEventListener('basira:open-checkpoints', open);
+  }, []);
+  const activeAgents = new Set(liveSteps.filter((st) => st.status === 'call').map((st) => st.agent)
+    .filter((a) => !liveSteps.some((st) => st.status === 'done' && st.agent === a)));
+  const lastAnswer = [...messages].reverse().find((m) => m.role === 'assistant' && m.data);
+  const doneAgents = new Set([
+    ...liveSteps.filter((st) => st.status === 'done').map((st) => st.agent),
+    ...(loading ? [] : (lastAnswer?.data?.trace || []).map((t) => t.agent)),
+    ...(loading || !lastAnswer ? [] : ['basira_supervisor']),
+  ]);
+  if (loading) doneAgents.add('basira_supervisor');
 
   useEffect(() => {
     getScenarios(persona).then((r) => {
@@ -59,6 +76,7 @@ export default function AssistantPage() {
       if (finalData) {
         addMessage(chatId, { role: 'assistant', data: finalData, query: q });
         speaker.speak(finalData.answer);
+        if (finalData.actions?.length) refreshQueue();
       } else {
         addMessage(chatId, { role: 'assistant', error: 'The stream ended without an answer. Try again.' });
       }
@@ -151,24 +169,14 @@ export default function AssistantPage() {
           </div>
         </div>
 
-        {/* Compact agent roster */}
-        <div className="glass-card p-3.5 shrink-0">
-          <p className="panel-title mb-2.5">Agent system</p>
-          <div className="flex flex-wrap gap-1.5">
-            {['basira_supervisor', 'cohort_agent', 'guideline_agent', 'risk_agent', 'pophealth_agent', 'action_agent']
-              .map((a) => <AgentChip key={a} agent={a} />)}
-          </div>
-          <p className="text-[9.5px] mt-2 leading-snug" style={{ color: 'var(--text-faint)' }}>
-            {llmInfo?.enabled
-              ? <>Live multi-agent · <b style={{ color: 'var(--text-dim)' }}>function-calling supervisor</b> · MCP over stdio</>
-              : <>Direct tool runs on live data. Free-form chat needs the model credentials on the server</>}
-          </p>
-        </div>
+        <TriadRail activeAgents={activeAgents} doneAgents={doneAgents} queue={queue}
+          onOpenCheckpoints={() => setCheckpointsOpen(true)} />
       </div>
 
       {/* Main chat card */}
       <div className="flex-1 glass-card flex flex-col relative min-w-0" style={{ boxShadow: 'var(--glass-shadow-lg)' }}>
         <img src="/ehs-logo.png" alt="" className="chat-watermark" />
+        {checkpointsOpen && <CheckpointsPanel queue={queue} refresh={refreshQueue} onClose={() => setCheckpointsOpen(false)} />}
 
         <div className="flex items-center justify-between px-6 py-3 border-b border-[rgba(15,23,42,0.07)] relative z-[5]">
           <div className="flex items-center gap-2 min-w-0">
@@ -275,18 +283,10 @@ export default function AssistantPage() {
           )}
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl border border-[rgba(15,23,42,0.10)] transition-all focus-within:border-[var(--brand-hi)] focus-within:shadow-[0_0_0_3px_rgba(43,83,120,0.10)]"
             style={{ background: 'var(--glass-strong)', backdropFilter: 'blur(12px)' }}>
-            <VoiceInput onTranscript={(t) => send(t)} disabled={loading} lang={voiceLang} />
-            <button onClick={() => setVoiceLang(voiceLang === 'en' ? 'ar' : 'en')}
-              title="Toggle voice language (English / العربية)"
-              className="h-8 px-1.5 rounded-lg text-[10px] font-bold shrink-0 transition-all hover:bg-[rgba(43,83,120,0.08)]"
-              style={{ color: 'var(--text-dim)' }}>
-              {voiceLang === 'en' ? 'EN' : 'ع'}
-            </button>
-            <SpeakerToggle speaker={speaker} />
             <textarea ref={inputRef} rows="1" value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-              placeholder="Ask about the population: data, guidelines, risk, what-ifs"
+              placeholder="Ask about the population: who to contact, risk, guidelines, what-ifs"
               className="flex-1 bg-transparent border-none outline-none text-[13px] py-2 px-2 resize-none leading-relaxed"
               style={{ fontFamily: 'Manrope, sans-serif', color: 'var(--text)' }} />
             <button onClick={() => send()}

@@ -477,6 +477,63 @@ The measures furthest from target are {focus}. Each unmet measure is available a
            "citations": [], "actions": [], "usage": None, "model": "direct tool run · live data"}
 
 
+async def sc_outreach_plan(persona: str):
+    """The composite-AI triad end to end: the model ranks (box 2), the rules decide (box 3),
+    the guideline backs the threshold (box 4), the plan is staged (box 5) and waits at the
+    human checkpoint (box 6)."""
+    from services import rules
+    s_ = hie.summary()
+    probs = ml._score(ml._feature_frame(s_))
+    out = rules.apply(s_.to_dict("records"), [float(x) for x in probs], top_n=40)
+    hits = rag.search("HbA1c target individualised 7% older adults 8% intensify therapy", 2)
+    top = [d for d in out["plan"] if d["priority"] in ("Urgent", "High")]
+    pids = [d["patient_id"] for d in top]
+    item = queue_service.add_draft(
+        "recall_campaign", f"Outreach plan: {len(pids)} Urgent and High patients",
+        f"Staged by rule set {out['rule_set']}: {out['by_priority']['Urgent']} Urgent (phone call this week), "
+        f"{out['by_priority']['High']} High (phone call within two weeks). Medium, Low and Routine tiers "
+        f"follow by SMS, pharmacy reminder and letter once this list is approved.", patient_ids=pids,
+        citation=f"{hits[0]['doc']}, p.{hits[0]['page']}" if hits else "")
+    audit_svc.log("HITL·DRAFT", "action_agent", f"Outreach plan drafted for {len(pids)} patients", severity="action")
+    excl = ", ".join(f"{v} {k.lower().replace('_', ' ')}" for k, v in sorted(out["by_exclusion"].items(), key=lambda kv: -kv[1]))
+    ev = [
+        {"agent": "cohort_agent", "tool": "filter_cohort", "args_summary": "the whole registry",
+         "result_summary": f"{out['evaluated']} patients"},
+        {"agent": "risk_agent", "tool": "stratify_cohort_risk", "args_summary": "deterioration model, 12 months",
+         "result_summary": f"{out['evaluated']} patients scored"},
+        {"agent": "rules_agent", "tool": "apply_outreach_rules", "args_summary": out["rule_set"],
+         "result_summary": f"{out['eligible']} eligible, {out['excluded']} excluded, {out['by_priority']['Urgent']} urgent"},
+        {"agent": "guideline_agent", "tool": "search_guidelines", "args_summary": "HbA1c targets and intensification",
+         "result_summary": f"{len(hits)} passages"},
+        {"agent": "action_agent", "tool": "draft_recall", "args_summary": f"{len(pids)} Urgent and High patients",
+         "result_summary": f"draft {item['id']} → human checkpoint"},
+    ]
+    async for e in _steps(ev):
+        yield e
+    rows = "\n".join(f"| {d['patient_id']} | {d['priority']} | {d['risk']*100:.0f}% | {d['hba1c']} | {d['care_gaps']} | {d['rule_fired']}: {d['reason']} |"
+                      for d in out["plan"][:8])
+    bp = out["by_priority"]
+    answer = f"""**{out['eligible']} of {out['evaluated']} patients are eligible for outreach this month**; {out['excluded']} are excluded by rule ({excl}).
+
+**The model ranked, the rules decided** (rule set `{out['rule_set']}`): **{bp['Urgent']} Urgent** (phone call this week), **{bp['High']} High** (phone call within two weeks), {bp['Medium']} Medium (SMS with a booking link), {bp['Low']} Low (pharmacy adherence reminder), {bp['Routine']} Routine (annual review letter).
+
+| Patient | Priority | Model risk | HbA1c | Gaps | Rule |
+|---|---|---|---|---|---|
+{rows}
+
+The HbA1c thresholds follow the national guideline's individualised targets (see citation).
+
+**Staged, nothing sent:** the {len(pids)} Urgent and High patients are drafted as one outreach list (`{item['id']}`) and wait at the human checkpoint. Approve it, or override with a reason code, and only then does it go to the outreach channels.
+"""
+    yield {"type": "final", "answer": answer, "trace": _trace(ev),
+           "charts": [{"type": "bar", "title": "Staged outreach plan by priority",
+                       "data": [{"priority": k, "patients": v} for k, v in bp.items()], "xKey": "priority",
+                       "yKeys": [{"key": "patients", "label": "Patients"}]}],
+           "citations": [{"doc": h["doc"], "file": h["file"], "page": h["page"], "snippet": h["snippet"]} for h in hits],
+           "actions": [{"draft_id": item["id"], "tool": "draft_recall", "status": "pending_human_approval"}],
+           "usage": None, "model": "direct tool run · live data"}
+
+
 SCENARIOS = {
     "clinician": [
         {"id": "c_briefing", "tag": "C1", "label": "Morning panel briefing",
@@ -491,6 +548,9 @@ SCENARIOS = {
         {"id": "c_screening", "tag": "C4", "label": "Retinal screening recall",
          "question": "Which patients are overdue for retinal screening, where is the backlog, and draft the recall.",
          "runner": sc_screening_recall},
+        {"id": "c_outreach", "tag": "C5", "label": "Outreach plan: model, rules, checkpoint",
+         "question": "Who should we contact this month about their diabetes, in what order, and how? Apply the outreach rules and stage the plan.",
+         "runner": sc_outreach_plan},
     ],
     "executive": [
         {"id": "e_national", "tag": "E1", "label": "National glycaemic picture",
@@ -511,6 +571,9 @@ SCENARIOS = {
         {"id": "e_quality", "tag": "E6", "label": "Diabetes quality scorecard (MCP)",
          "question": "Compute the clinical quality scorecard against our targets.",
          "runner": sc_quality},
+        {"id": "e_outreach", "tag": "E7", "label": "Outreach plan: model, rules, checkpoint",
+         "question": "Who should we contact this month about their diabetes, in what order, and how? Apply the outreach rules and stage the plan.",
+         "runner": sc_outreach_plan},
     ],
 }
 

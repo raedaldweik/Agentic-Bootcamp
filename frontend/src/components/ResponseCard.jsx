@@ -77,7 +77,11 @@ export default function ResponseCard({ data, onOpenSource, onOpenDetails }) {
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               <span className="font-bold">Draft {a.draft_id}</span>
-              <span>queued for human approval. No EMR write has occurred.</span>
+              <span className="flex-1">staged at the human checkpoint. Nothing has been sent.</span>
+              <button type="button" className="checkpoint-link"
+                onClick={() => window.dispatchEvent(new CustomEvent('basira:open-checkpoints'))}>
+                Review
+              </button>
             </div>
           ))}
         </div>
