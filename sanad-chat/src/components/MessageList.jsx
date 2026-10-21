@@ -1,5 +1,5 @@
-import { useLanguage } from '../lib/LanguageContext';
-import { suggestions } from '../lib/i18n';
+import { useStrings } from '../lib/strings';
+import { SUGGESTIONS } from '../lib/strings';
 import ResponseCard from './ResponseCard';
 import { SanadMark, Turbine } from './Logo';
 
@@ -29,7 +29,7 @@ function traceSteps(trace, t) {
 }
 
 function Hero({ onSuggest, target }) {
-  const { t, lang } = useLanguage();
+  const { t } = useStrings();
   return (
     <div className="sn-hero">
       <div className="sn-turbine"><Turbine /></div>
@@ -38,7 +38,7 @@ function Hero({ onSuggest, target }) {
       <h1 className="sn-hero-title">{t('heroTitle')}</h1>
       <p className="sn-hero-sub">{t('heroSub')}</p>
       <div className="sn-suggest-grid">
-        {suggestions(lang).map((s, i) => (
+        {SUGGESTIONS.map((s, i) => (
           <button key={i} className="sn-suggest a-fade-up" style={{ animationDelay: `${0.08 * i + 0.1}s` }}
             onClick={() => onSuggest(s.prompt)} disabled={!target} title={s.prompt}>
             <span className="sn-suggest-ico">{SuggestIcon[s.icon]}</span>
@@ -57,7 +57,7 @@ function Hero({ onSuggest, target }) {
 }
 
 function LiveActivity({ liveTrace }) {
-  const { t } = useLanguage();
+  const { t } = useStrings();
   const steps = traceSteps(liveTrace, t);
   return (
     <div className="sn-row a-fade-up">
@@ -89,7 +89,7 @@ function LiveActivity({ liveTrace }) {
 
 /** The conversation: welcome hero when empty, otherwise the message stream + live activity. */
 export default function MessageList({ messages, loading, liveTrace, target, onSuggest, onOpenSource, onOpenDetails, endRef }) {
-  const { t } = useLanguage();
+  const { t } = useStrings();
   const visible = messages.filter(m => m.type !== 'welcome');
   const heroMode = visible.length === 0 && !loading;
 

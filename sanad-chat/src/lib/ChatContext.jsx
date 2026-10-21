@@ -3,7 +3,7 @@ import { getSessions, getSessionQueries, deleteSession } from './api';
 
 const ChatContext = createContext();
 
-// Rendered via the i18n layer (type 'welcome') so it follows the UI language
+// Rendered by the message list (type 'welcome'): the hero stands in for it
 const WELCOME = { role: 'assistant', type: 'welcome' };
 const id = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 

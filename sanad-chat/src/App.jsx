@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { LanguageProvider, useLanguage } from './lib/LanguageContext';
+import { useStrings } from './lib/strings';
 import { ChatProvider, useChat } from './lib/ChatContext';
 import {
   getHealth, getAgents, getCollections, submitQuery, getQueryStatus, getQueryTrace, extractAttachment,
@@ -43,7 +43,7 @@ function useHealth() {
 }
 
 function ConnectionCard({ health }) {
-  const { t } = useLanguage();
+  const { t } = useStrings();
   const ok = health?.status === 'ok';
   const needsSignin = health?.status === 'signin_required';
   const canSignOut = ok && health?.mode === 'live' && health?.auth === 'device';
@@ -76,7 +76,7 @@ function ConnectionCard({ health }) {
 
 /* ─── The chat ─────────────────────────────────────────────────────────── */
 function ChatView() {
-  const { t, lang, isRTL } = useLanguage();
+  const { t } = useStrings();
   const { chats, activeChat, activeChatId, setActiveChatId, addMessage, setChatSession, renameChat, deleteChat, createNewChat, NEW_TITLE } = useChat();
   const messages = activeChat?.messages || [];
   const health = useHealth();
@@ -166,7 +166,7 @@ function ChatView() {
     setLiveTrace(null);
     try {
       const sub = await submitQuery(q, target, activeChat?.sessionId || null,
-        attached ? [{ name: attached.name, text: attached.text }] : null, lang);
+        attached ? [{ name: attached.name, text: attached.text }] : null);
       if (sub.querySessionId) setChatSession(activeChatId, sub.querySessionId, target);
 
       let res = sub.result;
@@ -226,7 +226,7 @@ function ChatView() {
   const title = (activeChat?.title && activeChat.title !== NEW_TITLE) ? activeChat.title : t('newConversationTitle');
 
   return (
-    <div className="sn-app" dir={isRTL ? 'rtl' : 'ltr'} lang={lang}>
+    <div className="sn-app" lang="en">
       <Background />
       <div className="sn-layout">
         <Sidebar chats={visibleChats} activeChatId={activeChatId} setActiveChatId={setActiveChatId}
@@ -254,10 +254,8 @@ function ChatView() {
 /** Sanad AI — a standalone chat on SAS Retrieval Agent Manager (via /api/ram). */
 export default function App() {
   return (
-    <LanguageProvider>
-      <ChatProvider>
-        <ChatView />
-      </ChatProvider>
-    </LanguageProvider>
+    <ChatProvider>
+      <ChatView />
+    </ChatProvider>
   );
 }

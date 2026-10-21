@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useLanguage } from '../lib/LanguageContext';
+import { useStrings } from '../lib/strings';
 
 /** Live snapshot of a SAS Visual Analytics report; click to zoom, link opens the real report. */
 export default function ReportCard({ spec }) {
-  const { t } = useLanguage();
+  const { t } = useStrings();
   const [zoom, setZoom] = useState(false);
   const [failed, setFailed] = useState(false);
   if (!spec?.imageUrl || failed) return null;

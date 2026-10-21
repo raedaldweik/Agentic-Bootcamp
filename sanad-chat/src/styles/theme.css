@@ -40,7 +40,6 @@
   --font-display: 'Sora', 'Inter', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  --font-ar: 'IBM Plex Sans Arabic', 'Inter', sans-serif;
 
   --rail-w: 292px;
   --rail-w-min: 74px;
@@ -141,12 +140,6 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, input:focus-visib
 .sn-icon-btn:hover { background: rgba(143,211,255,0.10); color: var(--text); }
 .sn-icon-btn:disabled { opacity: .35; cursor: not-allowed; }
 .sn-icon-btn.listening { color: var(--red); background: rgba(255,107,122,0.12); }
-.sn-lang {
-  font-size: 11px; font-weight: 700; padding: 7px 12px; border-radius: 999px; line-height: 1;
-  color: var(--sky); background: rgba(59,139,255,0.10); border: 1px solid rgba(59,139,255,0.25);
-  transition: all .15s; white-space: nowrap;
-}
-.sn-lang:hover { background: var(--sanad); color: #fff; border-color: var(--sanad-hi); }
 .sn-pill {
   display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px;
   font-size: 10.5px; font-weight: 600; white-space: nowrap;
@@ -529,14 +522,6 @@ button:focus-visible, a:focus-visible, textarea:focus-visible, input:focus-visib
 .a-fade-up { animation: fadeUp .45s ease both; }
 .a-slide-up { animation: slideUp .35s cubic-bezier(.2,.8,.2,1) both; }
 .a-reveal { animation: reveal .6s cubic-bezier(.2,.8,.2,1) both; }
-
-/* ─── RTL (the dir attribute sits on .sn-app) ──────────────────────── */
-.sn-app[dir="rtl"], .sn-app[dir="rtl"] button, .sn-app[dir="rtl"] input, .sn-app[dir="rtl"] textarea { font-family: var(--font-ar); }
-.sn-app[dir="rtl"] .sn-hero-title, .sn-app[dir="rtl"] .sn-title, .sn-app[dir="rtl"] .cc-title, .sn-app[dir="rtl"] .sn-modal-title { font-family: var(--font-ar); letter-spacing: 0; }
-.sn-app[dir="rtl"] .sn-hero-eyebrow, .sn-app[dir="rtl"] .sn-rail-section, .sn-app[dir="rtl"] .sn-group-label, .sn-app[dir="rtl"] .sn-sources-label { letter-spacing: 0; }
-.sn-app[dir="rtl"] .sn-send svg { transform: scaleX(-1); }
-.sn-app[dir="rtl"] pre, .sn-app[dir="rtl"] code, .sn-app[dir="rtl"] .sn-mono, .sn-app[dir="rtl"] .sn-trace-io, .sn-app[dir="rtl"] .sn-wordmark { direction: ltr; text-align: left; }
-.sn-app[dir="rtl"] .sn-wordmark { font-family: var(--font-display); }
 
 /* ─── Small screens ────────────────────────────────────────────────── */
 @media (max-width: 900px) {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLanguage } from '../lib/LanguageContext';
+import { useStrings } from '../lib/strings';
 
 const AgentIcon = (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -14,7 +14,7 @@ const CollectionIcon = (
 
 /** Dropdown to pick which RAM agent (or collection) the chat talks to. */
 export default function TargetSelector({ agents, collections, target, onChange, loading, error }) {
-  const { t } = useLanguage();
+  const { t } = useStrings();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLanguage } from '../lib/LanguageContext';
+import { useStrings } from '../lib/strings';
 import { Lockup, SanadMark } from './Logo';
 
 const Icon = {
@@ -13,7 +13,7 @@ const Icon = {
 
 /** Conversations rail: brand lockup, new conversation, history, and the connection card. */
 export default function Sidebar({ chats, activeChatId, setActiveChatId, createNewChat, renameChat, deleteChat, collapsed, onToggle, footer }) {
-  const { t } = useLanguage();
+  const { t } = useStrings();
   const [menu, setMenu] = useState(null);
   const [renaming, setRenaming] = useState(null);
   const [value, setValue] = useState('');

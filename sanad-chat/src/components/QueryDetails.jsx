@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getQueryTrace } from '../lib/api';
-import { useLanguage } from '../lib/LanguageContext';
+import { useStrings } from '../lib/strings';
 
 const fmt = (v) => {
   if (v == null) return '';
@@ -39,7 +39,7 @@ function Mono({ label, value, max = 4000 }) {
  * passages and token usage, pulled from RAM's trace for this query.
  */
 export default function QueryDetails({ data, query, onClose, onOpenSource }) {
-  const { t } = useLanguage();
+  const { t } = useStrings();
   const [trace, setTrace] = useState(null);
   const [loading, setLoading] = useState(true);
 

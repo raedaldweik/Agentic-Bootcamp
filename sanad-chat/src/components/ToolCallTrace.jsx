@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLanguage } from '../lib/LanguageContext';
+import { useStrings } from '../lib/strings';
 
 const fmt = (v) => {
   if (v == null) return '';
@@ -9,7 +9,7 @@ const fmt = (v) => {
 
 /** Collapsible trace of the tool calls the agent made while answering. */
 export default function ToolCallTrace({ toolCalls }) {
-  const { t } = useLanguage();
+  const { t } = useStrings();
   const [open, setOpen] = useState(false);
   if (!toolCalls || toolCalls.length === 0) return null;
 

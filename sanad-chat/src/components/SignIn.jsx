@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { startDeviceAuth, pollDeviceAuth, submitViyaCode, saveSession } from '../lib/api';
-import { useLanguage } from '../lib/LanguageContext';
+import { useStrings } from '../lib/strings';
 import { SanadMark } from './Logo';
 
 /**
@@ -10,7 +10,7 @@ import { SanadMark } from './Logo';
  * (Viya SASLogon, paste the authorization code). On success the page reloads.
  */
 export default function SignIn({ health }) {
-  const { t } = useLanguage();
+  const { t } = useStrings();
   const [signin, setSignin] = useState(null);
   const [signinError, setSigninError] = useState(null);
   const [viyaCode, setViyaCode] = useState('');

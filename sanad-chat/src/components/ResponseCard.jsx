@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import ToolCallTrace from './ToolCallTrace';
 import ChartCard from './ChartCard';
 import ReportCard from './ReportCard';
-import { useLanguage } from '../lib/LanguageContext';
+import { useStrings } from '../lib/strings';
 import { extractChartSpecs } from '../lib/chartSpec';
 import { extractReportImages } from '../lib/reportSpec';
 
@@ -23,7 +23,7 @@ const md = {
 
 /** Renders one normalized agent response: answer, charts, sources, tool calls, usage. */
 export default function ResponseCard({ data, onOpenSource, onOpenDetails }) {
-  const { t } = useLanguage();
+  const { t } = useStrings();
   const [copied, setCopied] = useState(false);
   const chartSpecs = useMemo(() => extractChartSpecs(data), [data]);
   const reportSpecs = useMemo(() => extractReportImages(data), [data]);

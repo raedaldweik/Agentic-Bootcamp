@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { useLanguage } from '../lib/LanguageContext';
+import { useStrings } from '../lib/strings';
 
 /** Modal that shows the retrieved passage that grounded an answer. */
 export default function SourceViewer({ source, onClose }) {
-  const { t } = useLanguage();
+  const { t } = useStrings();
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);

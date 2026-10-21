@@ -1,19 +1,19 @@
-import { useId } from 'react';
-import { useLanguage } from '../lib/LanguageContext';
+import { useStrings } from '../lib/strings';
 
-/** The Sanad "S" — a sharp, structured geometric letterform in the brand blue gradient. */
-export function SanadMark({ size = 28, className = '', style }) {
-  const id = useId();
+/**
+ * The Sanad "S" — a geometric uppercase letterform built from two structured
+ * forms, upper and lower, that overlap through the middle band. The overlap
+ * is drawn in a lighter tone, the transparency effect of the identity.
+ */
+export function SanadMark({ size = 28, className = '', style, tone = 'brand' }) {
+  const c = tone === 'mono'
+    ? { a: 'currentColor', b: 'currentColor', o: 'currentColor' }
+    : { a: '#3B8BFF', b: '#0B5BD3', o: '#9FDCFF' };
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" className={className} style={style} aria-hidden="true">
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#2EE6FF" />
-          <stop offset="0.55" stopColor="#3B8BFF" />
-          <stop offset="1" stopColor="#0B5BD3" />
-        </linearGradient>
-      </defs>
-      <path d="M14 8 H58 L52 20 H26 V26 H54 V56 H6 L12 44 H42 V38 H14 Z" fill={`url(#${id})`} />
+      <path d="M60 4 H12 V39 H52 V29 H22 V14 H55 Z" fill={c.a} />
+      <path d="M4 60 H52 V25 H12 V35 H42 V50 H9 Z" fill={c.b} />
+      <path d="M12 25 H22 V29 H52 V39 H42 V35 H12 Z" fill={c.o} />
     </svg>
   );
 }
@@ -24,7 +24,7 @@ export function SanadMark({ size = 28, className = '', style }) {
  * artwork instead of the built-in mark + wordmark.
  */
 export function Lockup({ compact = false }) {
-  const { t } = useLanguage();
+  const { t } = useStrings();
   const url = import.meta.env.VITE_LOGO_URL;
   if (url && !compact) {
     return <img src={url} alt="Sanad" style={{ height: 36, width: 'auto', display: 'block' }} />;

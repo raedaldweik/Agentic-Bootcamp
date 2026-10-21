@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { useLanguage } from '../lib/LanguageContext';
+import { useStrings } from '../lib/strings';
 import VoiceInput from './VoiceInput';
 
 const AttachIcon = ({ size = 16 }) => (
@@ -18,7 +18,7 @@ export default function Composer({
   input, setInput, onSend, loading, target, inputRef,
   attachment, attaching, attachError, onPickFile, onClearAttachment, onClearError,
 }) {
-  const { t, lang } = useLanguage();
+  const { t } = useStrings();
   const fileRef = useRef(null);
 
   const grow = (el) => { if (!el) return; el.style.height = 'auto'; el.style.height = `${Math.min(el.scrollHeight, 180)}px`; };
@@ -57,7 +57,7 @@ export default function Composer({
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend(); } }}
           placeholder={target ? t('askAnything', { name: target.name }) : t('selectThenAsk')}
           aria-label={t('send')} />
-        <VoiceInput lang={lang} disabled={loading} title={t('speakTooltip')}
+        <VoiceInput disabled={loading} title={t('speakTooltip')}
           onTranscript={(text) => { setInput(prev => (prev ? `${prev} ${text}` : text)); inputRef.current?.focus(); }} />
         <button className="sn-send" onClick={() => onSend()} disabled={!canSend} title={t('send')} aria-label={t('send')}>
           {SendIcon}

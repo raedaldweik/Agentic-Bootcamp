@@ -6,8 +6,8 @@ const MicIcon = (
   </svg>
 );
 
-/** Browser speech recognition (where supported) — EN or AR by UI language. */
-export default function VoiceInput({ onTranscript, disabled, lang = 'en', title }) {
+/** Browser speech recognition, where the browser supports it. */
+export default function VoiceInput({ onTranscript, disabled, title }) {
   const [listening, setListening] = useState(false);
   const ref = useRef(null);
 
@@ -16,7 +16,7 @@ export default function VoiceInput({ onTranscript, disabled, lang = 'en', title 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { alert('Speech recognition is not supported in this browser'); return; }
     const rec = new SR();
-    rec.lang = lang === 'ar' ? 'ar-AE' : 'en-US';
+    rec.lang = 'en-US';
     rec.continuous = false;
     rec.interimResults = false;
     rec.onresult = (e) => { onTranscript?.(e.results[0][0].transcript); setListening(false); };
@@ -25,7 +25,7 @@ export default function VoiceInput({ onTranscript, disabled, lang = 'en', title 
     ref.current = rec;
     rec.start();
     setListening(true);
-  }, [listening, onTranscript, lang]);
+  }, [listening, onTranscript]);
 
   return (
     <button onClick={toggle} disabled={disabled} title={title} className={`sn-icon-btn ${listening ? 'listening' : ''}`} aria-pressed={listening}>

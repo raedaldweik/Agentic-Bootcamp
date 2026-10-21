@@ -1,9 +1,9 @@
-import { useLanguage } from '../lib/LanguageContext';
+import { useStrings } from '../lib/strings';
 import TargetSelector from './TargetSelector';
 
-/** Conversation title on the left; agent picker, showcase badge and language toggle on the right. */
+/** Conversation title on the left; showcase badge and agent picker on the right. */
 export default function TopBar({ title, demo, targetProps }) {
-  const { t, toggle } = useLanguage();
+  const { t } = useStrings();
   return (
     <div className="sn-topbar">
       <div className="sn-title">
@@ -13,7 +13,6 @@ export default function TopBar({ title, demo, targetProps }) {
       <div className="sn-topbar-right">
         {demo && <span className="sn-pill sand" title={t('demoHint')}>{t('demoMode')}</span>}
         <TargetSelector {...targetProps} />
-        <button className="sn-lang" onClick={toggle} title="English / عربي">{t('langButton')}</button>
       </div>
     </div>
   );
