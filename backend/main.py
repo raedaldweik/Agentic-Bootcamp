@@ -28,7 +28,9 @@ from services import agent, audit, hie, rag
 from services import llm_client as LC
 from services import platform as P
 
-FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+# The built frontend to serve. FRONTEND_DIST points the same backend at another build,
+# for example sanad-chat/dist (see Dockerfile.sanad).
+FRONTEND_DIST = Path(os.getenv("FRONTEND_DIST") or (Path(__file__).resolve().parent.parent / "frontend" / "dist"))
 
 
 # Warm-up state, the agent graph and model resolution happen in the background so the

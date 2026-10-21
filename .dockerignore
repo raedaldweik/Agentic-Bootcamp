@@ -10,3 +10,5 @@ backend/.env
 docs
 Day1
 templates
+sanad-chat/node_modules
+sanad-chat/dist
