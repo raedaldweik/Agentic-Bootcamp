@@ -4,58 +4,51 @@
 @tailwind utilities;
 
 :root {
-  /* ── Sanad brand — the official navy (#071D49), the deep indigo of the dark mark (#121037)
-        and the slate-violet / lavender greys of its facets, on the hackathon glass system ── */
-  --brand: #071D49;
-  --brand-hi: #2B3A75;
-  --brand-lo: #121037;
-  --brand-grad: linear-gradient(135deg, #2B3A75, #071D49, #121037);
-  --nav-grad: linear-gradient(135deg, #121037 0%, #071D49 45%, #071D49 80%, #2B3A75 100%);
-  --accent: #6C6A82;               /* slate violet */
-  --accent-md: #A3A1B2;            /* lavender grey */
-  --mist: #D9D9E3;                 /* the lightest facet */
-  /* The event livery (MRO Asia Pacific poster): petrol-navy frame, steel rim, sky and sea */
-  --frame: #051E2E;
+  /* ── Sanad, dark: the petrol navy of the event livery (#051E2E) with the sky of the
+        window view as the accent, and the lavender facets of the official mark ── */
+  --brand: #5F93C4;                /* sky — accents, active states, chips */
+  --brand-hi: #9DC5E0;             /* light sky — focus, highlights */
+  --brand-lo: #B6DEF2;             /* pale sky — accent text on tinted surfaces */
+  --brand-grad: linear-gradient(135deg, #7FB0DC, #3F74AA, #1E4C78);
+  --nav-grad: linear-gradient(135deg, #04192A 0%, #082436 45%, #0A2A3E 80%, #12384F 100%);
+  --accent: #B9B7CC;               /* lavender — the official mark's facets, lifted for dark */
+  --accent-md: #8E8CA8;
+  --mist: #D9D9E3;
+  --frame: #051E2E;                /* petrol navy (MRO Asia Pacific artwork) */
   --frame-hi: #0A2A3E;
   --rim: #AABBCF;
   --sky: #5F93C4;
   --sky-lt: #9DC5E0;
   --sea: #226984;
-  --ink-5: #A3A1B2;
+  --ink-5: #5E7690;
 
-  /* Ink ladder */
-  --text: #0B1433;
-  --text-md: #262B47;
-  --text-dim: #5A5772;
-  --text-faint: #A3A1B2;
+  /* Ink ladder (light on dark) */
+  --text: #F1F5FA;
+  --text-md: #CBD6E2;
+  --text-dim: #8FA4BA;
+  --text-faint: #5E7690;
 
   /* Status (reserved — never used as series colors) */
-  --green: #047857;
-  --green-bg: rgba(4,120,87,0.10);
-  --green-border: rgba(4,120,87,0.25);
-  --red: #b91c2c;
-  --red-bg: rgba(185,28,44,0.09);
-  --amber: #b45309;
-  --amber-bg: rgba(180,83,9,0.10);
-  --teal: #6C6A82;   /* trace panels in Sanad slate violet */
-
-  /* Validated categorical chart palette — the reports ramp mid-tones (fixed order) */
-  --series-1: #2b7fb2;
-  --series-2: #b8862e;
-  --series-3: #6d4fa8;
-  --series-4: #3a8e5a;
-  --series-5: #e07ab2;
-  --series-6: #b03c3c;
+  --green: #4ADE9B;
+  --green-bg: rgba(74,222,155,0.12);
+  --green-border: rgba(74,222,155,0.30);
+  --red: #FF7A85;
+  --red-bg: rgba(255,122,133,0.12);
+  --amber: #F2B84B;
+  --amber-bg: rgba(242,184,75,0.12);
+  --teal: #B9B7CC;   /* trace panels in the lavender of the mark */
 
   /* Glass surfaces */
-  --glass: rgba(255,255,255,0.62);
-  --glass-strong: rgba(255,255,255,0.82);
-  --hairline: rgba(15,23,42,0.07);
-  --glass-border: rgba(255,255,255,0.45);
-  --glass-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 6px 18px rgba(15,23,42,0.05),
-                  0 28px 64px rgba(15,23,42,0.07);
-  --glass-shadow-lg: 0 1px 2px rgba(15,23,42,0.04), 0 8px 22px rgba(15,23,42,0.08),
-                     0 32px 72px rgba(15,23,42,0.10);
+  --glass: rgba(16,44,66,0.55);
+  --glass-strong: rgba(14,40,60,0.78);
+  --surface: rgba(10,32,48,0.97);  /* menus and modals */
+  --hairline: rgba(255,255,255,0.08);
+  --glass-border: rgba(157,197,224,0.16);
+  --glass-shadow: 0 1px 2px rgba(0,0,0,0.20), 0 6px 18px rgba(0,0,0,0.22),
+                  0 28px 64px rgba(0,0,0,0.28);
+  --glass-shadow-lg: 0 1px 2px rgba(0,0,0,0.22), 0 8px 22px rgba(0,0,0,0.28),
+                     0 32px 72px rgba(0,0,0,0.36);
+  color-scheme: dark;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -149,9 +142,9 @@ html, body, #root {
 .m10 { top: 78%; left: 97%; width: 4cqw; }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: rgba(15,23,42,0.04); }
-::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.18); border-radius: 5px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.30); }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+::-webkit-scrollbar-thumb { background: rgba(157,197,224,0.18); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(157,197,224,0.32); }
 
 /* ═══ Header — the Roads/RAM light glass header recipe ═══ */
 .app-header {
@@ -168,14 +161,14 @@ html, body, #root {
   object-fit: contain; display: block;
   /* the artwork touches the edges of its file, so no rounding or clipping here */
   padding: 2px 3px; overflow: visible;
-  filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.08));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
 }
 /* The partner mark, top right: the SAS wordmark at a height that reads as the EHS logo's equal
    (the EHS lock-up is two rows tall, the SAS wordmark one, so it sits a little smaller). */
 .partner-logo {
   height: 3.9cqw; width: auto; min-height: 42px; max-height: 56px;
   object-fit: contain; display: block;
-  filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.08));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
 }
 .title-block { display: flex; flex-direction: column; gap: 0.6cqw; min-width: 0; }
 .title-row { display: flex; align-items: center; gap: 1.4cqw; width: 100%; }
@@ -199,20 +192,20 @@ html, body, #root {
 
 /* ═══ Glass panels ═══ */
 .glass-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(240,245,251,0.94) 100%);
+  background: linear-gradient(180deg, rgba(255,255,255,0.075) 0%, rgba(255,255,255,0.025) 100%);
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
-  border: 1px solid rgba(170,187,207,0.55);
+  border: 1px solid var(--glass-border);
   border-radius: 14px;
   box-shadow:
-    0 0 0 4px rgba(75,97,121,0.22),
-    0 10px 30px rgba(0,0,0,0.22),
+    0 1px 2px rgba(0,0,0,0.20),
+    0 10px 30px rgba(0,0,0,0.25),
     0 30px 80px rgba(0,0,0,0.30),
-    inset 0 1px 0 rgba(255,255,255,0.95),
-    inset 0 -1px 0 rgba(255,255,255,0.20),
-    inset 1px 0 0 rgba(255,255,255,0.45),
-    inset -1px 0 0 rgba(255,255,255,0.30),
-    inset 0 0 30px rgba(200,199,210,0.12);
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    inset 0 -1px 0 rgba(255,255,255,0.03),
+    inset 1px 0 0 rgba(255,255,255,0.05),
+    inset -1px 0 0 rgba(255,255,255,0.03),
+    inset 0 0 30px rgba(95,147,196,0.06);
   position: relative;
   overflow: hidden;
 }
@@ -225,7 +218,7 @@ html, body, #root {
   padding-left: 8px;
   border-left: 2px solid var(--brand);
   line-height: 1.25;
-  box-shadow: -1px 0 0 rgba(7,29,73,0.15);
+  box-shadow: -1px 0 0 rgba(127,176,220,0.15);
 }
 
 .accent-line {
@@ -244,7 +237,7 @@ html, body, #root {
   font-size: 11px; font-weight: 600;
   color: var(--text-dim);
   white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 
@@ -264,12 +257,12 @@ html, body, #root {
   border-left: 3px solid var(--brand);
   border-radius: 14px;
   border-top-left-radius: 4px;
-  box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 4px 10px rgba(15,23,42,0.05);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.20), 0 4px 12px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 .msg-user-bubble {
-  background: linear-gradient(135deg, rgba(7,29,73,0.08), rgba(7,29,73,0.03));
-  border: 1px solid rgba(7,29,73,0.14);
+  background: linear-gradient(135deg, rgba(127,176,220,0.08), rgba(127,176,220,0.03));
+  border: 1px solid rgba(127,176,220,0.14);
   border-radius: 14px;
   border-top-right-radius: 4px;
 }
@@ -277,26 +270,26 @@ html, body, #root {
 .suggestion-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 13px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(240,240,246,0.7));
-  border: 1px solid rgba(15,23,42,0.10);
+  background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+  border: 1px solid rgba(157,197,224,0.18);
   border-radius: 999px;
   font-size: 12px; font-weight: 600;
   color: var(--text-md);
   cursor: pointer; transition: all 0.18s;
-  box-shadow: 0 1px 2px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .suggestion-chip:hover {
   background: var(--brand);
   color: white;
   border-color: var(--brand);
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(7,29,73,0.25);
+  box-shadow: 0 3px 10px rgba(127,176,220,0.25);
 }
 .suggestion-chip .chip-tag {
   font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
   color: var(--brand);
 }
-.suggestion-chip:hover .chip-tag { color: rgba(255,255,255,0.8); }
+.suggestion-chip:hover .chip-tag { color: rgba(255,255,255,0.85); }
 
 /* ═══ Agent trace ═══ */
 .trace-panel {
@@ -376,7 +369,7 @@ html, body, #root {
 }
 .ram-page .ram-logo {
   height: 30px; width: auto; object-fit: contain; display: block;
-  filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.08));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
 }
 .ram-page .ram-title-row { flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px; }
 .ram-page .ram-title {
@@ -401,7 +394,7 @@ html, body, #root {
 /* ─── SAS-blue re-skins of the host's shared chat classes ──────────── */
 .ram-page .panel-title {
   border-left: 2px solid var(--brand);
-  box-shadow: -1px 0 0 rgba(7,29,73,0.15);
+  box-shadow: -1px 0 0 rgba(127,176,220,0.15);
 }
 .ram-page .chat-watermark {
   width: 280px; height: 280px; opacity: 0.06;
@@ -410,8 +403,8 @@ html, body, #root {
   border-left: 3px solid var(--brand);
 }
 .ram-page .msg-user-bubble {
-  background: linear-gradient(135deg, rgba(7,29,73,0.08), rgba(7,29,73,0.03));
-  border: 1px solid rgba(7,29,73,0.14);
+  background: linear-gradient(135deg, rgba(127,176,220,0.08), rgba(127,176,220,0.03));
+  border: 1px solid rgba(127,176,220,0.14);
   border-radius: 14px;
   border-top-right-radius: 4px;
 }

@@ -58,27 +58,22 @@ The official logo is `public/brand/SANAD_M_E_RGB_TRIANGLE.svg`, kept as issued (
 
 `VITE_LOGO_URL` points the header at a hosted copy instead of `public/sanad-logo-white.svg`.
 
-The palette is taken from the two official versions of the mark and lives in the `:root` block of
-`src/index.css`:
+The app is dark throughout, the hackathon's glass recipe (gradient panels, lit edges, soft
+bokeh) on the petrol navy of Sanad's event livery (the MRO Asia Pacific 2026 artwork), with the
+sky of its window view as the accent. Tokens live in the `:root` block of `src/index.css`:
 
-| Token | Colour | From |
+| Token | Colour | Use |
 |---|---|---|
-| `--brand` | `#071D49` | Sanad navy, the colour of the official SVG |
-| `--brand-lo` | `#121037` | the deep indigo behind the dark version of the mark |
-| `--accent` | `#6C6A82` | slate violet, the darker facets |
-| `--accent-md`, `--text-faint` | `#A3A1B2` | lavender grey, the middle facets |
-| `--mist` | `#D9D9E3` | the lightest facet |
-| `--text-dim` | `#5A5772` | the darkest facet edge |
+| `--frame` | `#051E2E` | the page: petrol navy, lit from the top with a sky glow and a sea-teal glow below |
+| `--brand` | `#5F93C4` | sky: accents, active states, chips, the send button gradient |
+| `--brand-hi`, `--brand-lo` | `#9DC5E0`, `#B6DEF2` | light and pale sky: focus rings, accent text |
+| `--accent` | `#B9B7CC` | lavender from the official mark's facets: the trace panels |
+| `--sea` | `#226984` | sea teal: background glow and bokeh |
+| `--text`, `--text-md`, `--text-dim`, `--text-faint` | `#F1F5FA` … `#5E7690` | light ink on dark |
+| `--glass`, `--glass-strong`, `--surface` | dark navy glass | panels, bubbles, menus and modals |
 
-The page itself takes Sanad's event livery (the MRO Asia Pacific 2026 artwork): a petrol-navy
-frame lit from the top, with the chat cards as the bright window on it.
+The official navy `#071D49` is kept in `public/sanad-logo.svg` and in the mark component's
+`tone="navy"`, for use on light backgrounds.
 
-| Token | Colour | From |
-|---|---|---|
-| `--frame` | `#051E2E` | the petrol navy around the window |
-| `--rim` | `#AABBCF` | the steel window rim (card edge) |
-| `--sky`, `--sky-lt` | `#5F93C4`, `#9DC5E0` | the sky through the window (glow, eyebrow, accent line) |
-| `--sea` | `#226984` | the water (bottom glow, bokeh) |
-
-Inside the cards everything follows the hackathon recipe in the Sanad palette above; the trace
-panels use the slate violet where the hackathon used bronze.
+There is no "Connected" indicator: the chat card shows a status message only when something is
+wrong (backend offline, not configured), and the Sign in button when the deployment needs one.
