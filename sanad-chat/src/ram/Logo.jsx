@@ -36,6 +36,7 @@ export function SanadMark({ size = 28, tone = 'navy', className = '', style }) {
  * VITE_LOGO_URL can point it at a hosted copy instead.
  */
 export function Lockup() {
-  const url = import.meta.env.VITE_LOGO_URL || '/sanad-logo.svg';
+  // White on the dark frame, as on Sanad's event artwork
+  const url = import.meta.env.VITE_LOGO_URL || '/sanad-logo-white.svg';
   return <img className="brand-logo" src={url} alt="Sanad — A Mubadala Company" />;
 }

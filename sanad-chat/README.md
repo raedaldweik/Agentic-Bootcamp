@@ -51,11 +51,12 @@ The official logo is `public/brand/SANAD_M_E_RGB_TRIANGLE.svg`, kept as issued (
 
 | File | What it is |
 |---|---|
-| `public/sanad-logo.svg` | The official artwork with the corner triangle removed and cropped to the lockup. The header shows it top left |
+| `public/sanad-logo.svg` | The official artwork with the corner triangle removed and cropped to the lockup, in navy for light backgrounds |
+| `public/sanad-logo-white.svg` | The same artwork in white, for the dark frame. The header shows it top left |
 | `public/sanad-mark.svg` | The favicon: the official S in white facets on Sanad's deep indigo, as on the dark version of the mark |
 | `src/ram/Logo.jsx` | The official S geometry as a component, navy on light (avatars, watermark, sign-in) or white on dark |
 
-`VITE_LOGO_URL` points the header at a hosted copy instead of `public/sanad-logo.svg`.
+`VITE_LOGO_URL` points the header at a hosted copy instead of `public/sanad-logo-white.svg`.
 
 The palette is taken from the two official versions of the mark and lives in the `:root` block of
 `src/index.css`:
@@ -69,5 +70,15 @@ The palette is taken from the two official versions of the mark and lives in the
 | `--mist` | `#D9D9E3` | the lightest facet |
 | `--text-dim` | `#5A5772` | the darkest facet edge |
 
-The page background, glass and bokeh follow the hackathon recipe with these lavender tints in place
-of its warm pearl; the trace panels use the slate violet where the hackathon used bronze.
+The page itself takes Sanad's event livery (the MRO Asia Pacific 2026 artwork): a petrol-navy
+frame lit from the top, with the chat cards as the bright window on it.
+
+| Token | Colour | From |
+|---|---|---|
+| `--frame` | `#051E2E` | the petrol navy around the window |
+| `--rim` | `#AABBCF` | the steel window rim (card edge) |
+| `--sky`, `--sky-lt` | `#5F93C4`, `#9DC5E0` | the sky through the window (glow, eyebrow, accent line) |
+| `--sea` | `#226984` | the water (bottom glow, bokeh) |
+
+Inside the cards everything follows the hackathon recipe in the Sanad palette above; the trace
+panels use the slate violet where the hackathon used bronze.
