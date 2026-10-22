@@ -85,7 +85,7 @@ export default function SignIn({ health }) {
     <>
       <button onClick={beginSignin}
         className="px-4 py-1.5 rounded-full text-[11px] font-bold text-white hover:scale-105 transition-transform"
-        style={{ background: 'var(--brand-grad)', boxShadow: '0 3px 12px rgba(29,79,128,0.30)' }}>
+        style={{ background: 'var(--brand-grad)', boxShadow: '0 3px 12px rgba(127,176,220,0.30)' }}>
         {t('signIn')}
       </button>
 
@@ -94,9 +94,9 @@ export default function SignIn({ health }) {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6"
           style={{ background: 'rgba(2,10,18,0.62)', backdropFilter: 'blur(4px)' }}>
           <div className="glass-card w-full max-w-[440px] p-7 animate-slide-up"
-            style={{ background: 'rgba(255,255,255,0.95)' }}>
+            style={{ background: 'rgba(10,32,48,0.95)' }}>
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(29,79,128,0.08)', border: '1px solid rgba(29,79,128,0.2)' }}>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(127,176,220,0.08)', border: '1px solid rgba(127,176,220,0.2)' }}>
                 <SanadMark size={22} />
               </div>
               <div>
@@ -109,7 +109,7 @@ export default function SignIn({ health }) {
 
             {signinError && (
               <div className="rounded-lg px-4 py-3 mb-5 text-[12px]"
-                style={{ background: 'var(--red-bg)', color: 'var(--red)', border: '1px solid rgba(185,28,44,0.22)' }}>
+                style={{ background: 'var(--red-bg)', color: 'var(--red)', border: '1px solid rgba(255,122,133,0.30)' }}>
                 {signinError}
               </div>
             )}
@@ -121,7 +121,7 @@ export default function SignIn({ health }) {
                 </p>
                 <a href={signin.authorizeUrl} target="_blank" rel="noreferrer"
                   className="block w-full text-center py-2.5 rounded-lg text-[12.5px] font-bold text-white mb-4 hover:opacity-90 transition-opacity"
-                  style={{ background: 'var(--brand-grad)', boxShadow: '0 3px 12px rgba(29,79,128,0.30)' }}>
+                  style={{ background: 'var(--brand-grad)', boxShadow: '0 3px 12px rgba(127,176,220,0.30)' }}>
                   {t('openSignInPage')}
                 </a>
                 <div className="flex gap-2">
@@ -129,7 +129,7 @@ export default function SignIn({ health }) {
                     onKeyDown={e => e.key === 'Enter' && submitCode()}
                     placeholder={t('pasteCode')} autoFocus dir="ltr"
                     className="flex-1 rounded-lg px-3 py-2.5 text-[13px] border outline-none font-mono tracking-wide"
-                    style={{ background: 'rgba(255,255,255,0.7)', borderColor: 'rgba(29,79,128,0.35)', color: 'var(--text)' }} />
+                    style={{ background: 'rgba(10,32,48,0.7)', borderColor: 'rgba(127,176,220,0.35)', color: 'var(--text)' }} />
                   <button onClick={submitCode} disabled={submitting}
                     className="px-4 rounded-lg text-[12px] font-bold text-white disabled:opacity-50"
                     style={{ background: 'var(--brand-grad)' }}>
@@ -143,14 +143,14 @@ export default function SignIn({ health }) {
                   {t('deviceInstructions')}
                 </p>
                 <div className="rounded-xl py-4 text-center mb-4" dir="ltr"
-                  style={{ background: 'rgba(29,79,128,0.07)', border: '1px dashed rgba(29,79,128,0.35)' }}>
-                  <span className="text-2xl font-extrabold tracking-[0.3em]" style={{ color: 'var(--brand-hi)' }}>
+                  style={{ background: 'rgba(127,176,220,0.07)', border: '1px dashed rgba(127,176,220,0.35)' }}>
+                  <span className="text-2xl font-extrabold tracking-[0.3em]" style={{ color: 'var(--brand)' }}>
                     {signin.userCode}
                   </span>
                 </div>
                 <a href={signin.verificationUriComplete || signin.verificationUri} target="_blank" rel="noreferrer"
                   className="block w-full text-center py-2.5 rounded-lg text-[12.5px] font-bold text-white mb-3 hover:opacity-90 transition-opacity"
-                  style={{ background: 'var(--brand-grad)', boxShadow: '0 3px 12px rgba(29,79,128,0.30)' }}>
+                  style={{ background: 'var(--brand-grad)', boxShadow: '0 3px 12px rgba(127,176,220,0.30)' }}>
                   {t('openVerification')}
                 </a>
                 <div className="flex items-center justify-center gap-2 text-[11px]" style={{ color: 'var(--text-dim)' }}>
@@ -161,7 +161,7 @@ export default function SignIn({ health }) {
             )}
 
             <button onClick={cancelSignin}
-              className="w-full mt-4 py-2 rounded-lg text-[11.5px] font-semibold transition-all hover:bg-[rgba(15,23,42,0.04)]"
+              className="w-full mt-4 py-2 rounded-lg text-[11.5px] font-semibold transition-all hover:bg-[rgba(255,255,255,0.04)]"
               style={{ border: '1px solid var(--hairline)', color: 'var(--text-dim)' }}>
               {signinError ? t('close') : t('cancel')}
             </button>

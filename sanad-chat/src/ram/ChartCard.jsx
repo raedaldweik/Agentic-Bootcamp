@@ -10,9 +10,9 @@ import { useMemo, useRef, useState } from 'react';
  * ("pct_controlled") or objects ({ key, label }) — both are accepted.
  */
 
-// Sanad categorical palette on the light chat: steel navy, slate violet and sky first, then mid-tones.
-const PALETTE = ['#1D4F80', '#6C6A82', '#5F93C4', '#b45309', '#047857',
-                 '#071D49', '#A3A1B2', '#0891b2', '#92400e', '#226984'];
+// Sanad categorical palette for the dark theme: sky, lavender and sea from the brand first, then accents.
+const PALETTE = ['#7FB0DC', '#B9B7CC', '#3FB6C6', '#E8B65A', '#4ADE9B',
+                 '#9DC5E0', '#8E8CA8', '#F28C6B', '#C4A7F2', '#DDE6F5'];
 
 const VB_W = 720;
 const VB_H = 380;
@@ -165,16 +165,16 @@ function Cartesian({ type, labels, series, stacked, xKey, onHover, onLeave }) {
       {ticks.map((tv, t) => (
         <g key={t}>
           <line x1={M.left} x2={M.left + PLOT_W} y1={yPix(tv)} y2={yPix(tv)}
-                stroke="rgba(15,23,42,0.08)" strokeWidth="1" />
+                stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
           <text x={M.left - 8} y={yPix(tv) + 3} textAnchor="end"
-                fontSize="11" fill="#8193A8">{fmt(tv)}</text>
+                fontSize="11" fill="#A3A1B2">{fmt(tv)}</text>
         </g>
       ))}
       {/* axes */}
       <line x1={M.left} x2={M.left} y1={M.top} y2={M.top + PLOT_H}
-            stroke="rgba(15,23,42,0.18)" />
+            stroke="rgba(255,255,255,0.18)" />
       <line x1={M.left} x2={M.left + PLOT_W} y1={M.top + PLOT_H} y2={M.top + PLOT_H}
-            stroke="rgba(15,23,42,0.18)" />
+            stroke="rgba(255,255,255,0.18)" />
 
       {/* series geometry */}
       {type === 'bar' && <Bars {...{ series, stacked, n, bandW, xCenter, yPix, yMin }} />}
@@ -186,7 +186,7 @@ function Cartesian({ type, labels, series, stacked, xKey, onHover, onLeave }) {
       {/* x labels */}
       {labels.map((lab, i) => (
         <text key={i} x={xCenter(i)} y={M.top + PLOT_H + (rotate ? 14 : 18)}
-              textAnchor={rotate ? 'end' : 'middle'} fontSize="11" fill="#4F6178"
+              textAnchor={rotate ? 'end' : 'middle'} fontSize="11" fill="#9FB3C8"
               transform={rotate ? `rotate(-35 ${xCenter(i)} ${M.top + PLOT_H + 14})` : undefined}>
           {lab.length > 14 ? `${lab.slice(0, 13)}…` : lab}
         </text>
@@ -251,7 +251,7 @@ function Lines({ type, series, n, xCenter, yPix, yMin }) {
             <path d={line} fill="none" stroke={s.color} strokeWidth="2.5"
                   strokeLinejoin="round" strokeLinecap="round" />
             {segs.map((p, i) => (
-              <circle key={i} cx={p[0]} cy={p[1]} r="3.2" fill="#fff"
+              <circle key={i} cx={p[0]} cy={p[1]} r="3.2" fill="#0A2436"
                       stroke={s.color} strokeWidth="2" />
             ))}
           </g>
@@ -303,7 +303,7 @@ function Pie({ labels, series, onHover, onLeave }) {
   return (
     <g>
       {arcs.map((seg, i) => seg.path && (
-        <path key={i} d={seg.path} fill={seg.color} opacity="0.9" stroke="#fff"
+        <path key={i} d={seg.path} fill={seg.color} opacity="0.9" stroke="#0A2436"
               strokeWidth="1.5" style={{ cursor: 'pointer' }}
               onMouseMove={(e) => onHover(e, seg.label,
                 [{ name: `${seg.pct.toFixed(1)}%`, color: seg.color, value: seg.value }])}
@@ -311,7 +311,7 @@ function Pie({ labels, series, onHover, onLeave }) {
       ))}
       {arcs.map((seg, i) => seg.path && seg.pct >= 6 && (
         <text key={`l${i}`} x={seg.lx} y={seg.ly} textAnchor="middle"
-              fontSize="11" fontWeight="700" fill="#fff">{`${seg.pct.toFixed(0)}%`}</text>
+              fontSize="11" fontWeight="700" fill="#04192A">{`${seg.pct.toFixed(0)}%`}</text>
       ))}
     </g>
   );
