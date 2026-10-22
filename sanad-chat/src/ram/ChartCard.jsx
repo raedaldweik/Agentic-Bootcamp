@@ -10,9 +10,9 @@ import { useMemo, useRef, useState } from 'react';
  * ("pct_controlled") or objects ({ key, label }) — both are accepted.
  */
 
-// Sanad categorical palette: the brand blues first, then the hackathon mid-tones.
-const PALETTE = ['#0B5BD3', '#3B8BFF', '#b45309', '#047857', '#073A8A',
-                 '#475569', '#6d4fa8', '#0891b2', '#92400e', '#1e293b'];
+// Sanad categorical palette: navy, slate violet and lavender from the mark first, then mid-tones.
+const PALETTE = ['#071D49', '#6C6A82', '#A3A1B2', '#b45309', '#047857',
+                 '#121037', '#475569', '#0891b2', '#92400e', '#1e293b'];
 
 const VB_W = 720;
 const VB_H = 380;
@@ -167,7 +167,7 @@ function Cartesian({ type, labels, series, stacked, xKey, onHover, onLeave }) {
           <line x1={M.left} x2={M.left + PLOT_W} y1={yPix(tv)} y2={yPix(tv)}
                 stroke="rgba(15,23,42,0.08)" strokeWidth="1" />
           <text x={M.left - 8} y={yPix(tv) + 3} textAnchor="end"
-                fontSize="11" fill="#94a3b8">{fmt(tv)}</text>
+                fontSize="11" fill="#A3A1B2">{fmt(tv)}</text>
         </g>
       ))}
       {/* axes */}
@@ -186,7 +186,7 @@ function Cartesian({ type, labels, series, stacked, xKey, onHover, onLeave }) {
       {/* x labels */}
       {labels.map((lab, i) => (
         <text key={i} x={xCenter(i)} y={M.top + PLOT_H + (rotate ? 14 : 18)}
-              textAnchor={rotate ? 'end' : 'middle'} fontSize="11" fill="#475569"
+              textAnchor={rotate ? 'end' : 'middle'} fontSize="11" fill="#5A5772"
               transform={rotate ? `rotate(-35 ${xCenter(i)} ${M.top + PLOT_H + 14})` : undefined}>
           {lab.length > 14 ? `${lab.slice(0, 13)}…` : lab}
         </text>

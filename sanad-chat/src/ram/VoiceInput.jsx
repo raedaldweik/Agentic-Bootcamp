@@ -44,7 +44,7 @@ export default function VoiceInput({ onTranscript, disabled, title }) {
       className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all ${
         isListening
           ? 'bg-red-500/15 text-red-500'
-          : 'hover:bg-[rgba(11,91,211,0.08)]'
+          : 'hover:bg-[rgba(7,29,73,0.08)]'
       } disabled:opacity-30`}
       style={!isListening ? { color: 'var(--text-dim)' } : {}}
     >

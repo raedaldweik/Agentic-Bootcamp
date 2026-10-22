@@ -4,21 +4,23 @@
 @tailwind utilities;
 
 :root {
-  /* ── Sanad brand — primary blue on the hackathon's warm-pearl glass system ── */
-  --brand: #0B5BD3;
-  --brand-hi: #3B8BFF;
-  --brand-lo: #073A8A;
-  --brand-grad: linear-gradient(135deg, #3B8BFF, #0B5BD3, #073A8A);
-  --nav-grad: linear-gradient(135deg, #03122E 0%, #073A8A 45%, #073A8A 80%, #0B4FB8 100%);
-  --gold: #b8852e;                 /* the reports "premium accent" */
-  --gold-light: #d4a64f;
-  --ink-5: #94a3b8;
+  /* ── Sanad brand — the official navy (#071D49), the deep indigo of the dark mark (#121037)
+        and the slate-violet / lavender greys of its facets, on the hackathon glass system ── */
+  --brand: #071D49;
+  --brand-hi: #2B3A75;
+  --brand-lo: #121037;
+  --brand-grad: linear-gradient(135deg, #2B3A75, #071D49, #121037);
+  --nav-grad: linear-gradient(135deg, #121037 0%, #071D49 45%, #071D49 80%, #2B3A75 100%);
+  --accent: #6C6A82;               /* slate violet */
+  --accent-md: #A3A1B2;            /* lavender grey */
+  --mist: #D9D9E3;                 /* the lightest facet */
+  --ink-5: #A3A1B2;
 
   /* Ink ladder */
-  --text: #0a1628;
-  --text-md: #1e293b;
-  --text-dim: #475569;
-  --text-faint: #94a3b8;
+  --text: #0B1433;
+  --text-md: #262B47;
+  --text-dim: #5A5772;
+  --text-faint: #A3A1B2;
 
   /* Status (reserved — never used as series colors) */
   --green: #047857;
@@ -28,7 +30,7 @@
   --red-bg: rgba(185,28,44,0.09);
   --amber: #b45309;
   --amber-bg: rgba(180,83,9,0.10);
-  --teal: #0B5BD3;   /* trace panels follow the brand blue */
+  --teal: #6C6A82;   /* trace panels in Sanad slate violet */
 
   /* Validated categorical chart palette — the reports ramp mid-tones (fixed order) */
   --series-1: #2b7fb2;
@@ -39,8 +41,8 @@
   --series-6: #b03c3c;
 
   /* Glass surfaces */
-  --glass: rgba(255,254,251,0.62);
-  --glass-strong: rgba(255,254,251,0.82);
+  --glass: rgba(255,255,255,0.62);
+  --glass-strong: rgba(255,255,255,0.82);
   --hairline: rgba(15,23,42,0.07);
   --glass-border: rgba(255,255,255,0.45);
   --glass-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 6px 18px rgba(15,23,42,0.05),
@@ -55,7 +57,7 @@ html, body, #root {
   width: 100%; height: 100%;
   font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--text-md);
-  background: radial-gradient(ellipse 90% 90% at center, #e8e2d4 0%, #d8d4cc 45%, #c2bfb9 100%);
+  background: radial-gradient(ellipse 90% 90% at center, #ecebf1 0%, #dcdbe4 45%, #c6c5d1 100%);
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -69,11 +71,11 @@ html, body, #root {
   overflow: hidden;
   display: flex; flex-direction: column;
   background:
-    radial-gradient(ellipse 70% 55% at 8% 5%,   rgba(255, 235, 200, 0.55) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 50% at 95% 8%,  rgba(205,218,235, 0.45) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at 92% 95%, rgba(220, 200, 175, 0.45) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 50% at 5% 95%,  rgba(235, 215, 200, 0.50) 0%, transparent 55%),
-    linear-gradient(140deg, #f7f3ec 0%, #f1ebe3 55%, #efe7d8 100%);
+    radial-gradient(ellipse 70% 55% at 8% 5%,   rgba(217, 217, 227, 0.55) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 95% 8%,  rgba(200,199,210, 0.45) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 92% 95%, rgba(163, 161, 178, 0.45) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 5% 95%,  rgba(217, 217, 227, 0.50) 0%, transparent 55%),
+    linear-gradient(140deg, #f6f6f9 0%, #efeff4 55%, #e8e7ef 100%);
 }
 
 .app-shell::before {
@@ -91,9 +93,9 @@ html, body, #root {
   content: '';
   position: absolute; inset: 0;
   background:
-    radial-gradient(ellipse 40% 32% at 75% 25%, rgba(90,120,160, 0.10) 0%, transparent 65%),
-    radial-gradient(ellipse 35% 28% at 20% 70%, rgba(215, 175, 120, 0.14) 0%, transparent 65%),
-    radial-gradient(ellipse 30% 30% at 85% 75%, rgba(220, 180, 135, 0.12) 0%, transparent 65%);
+    radial-gradient(ellipse 40% 32% at 75% 25%, rgba(108,106,130, 0.10) 0%, transparent 65%),
+    radial-gradient(ellipse 35% 28% at 20% 70%, rgba(108, 106, 130, 0.14) 0%, transparent 65%),
+    radial-gradient(ellipse 30% 30% at 85% 75%, rgba(163, 161, 178, 0.12) 0%, transparent 65%);
   pointer-events: none; z-index: 0;
 }
 
@@ -106,14 +108,14 @@ html, body, #root {
   will-change: opacity, transform;
   mix-blend-mode: multiply;
 }
-.mega-blue   { background: radial-gradient(circle, rgba(90,120,160, 0.26) 0%, rgba(90,120,160, 0.07) 35%, transparent 70%); filter: blur(2cqw); }
-.mega-cyan   { background: radial-gradient(circle, rgba(225, 195, 150, 0.30) 0%, rgba(225, 195, 150, 0.07) 35%, transparent 70%); filter: blur(2.2cqw); }
-.mega-purple { background: radial-gradient(circle, rgba(180, 150, 200, 0.25) 0%, rgba(180, 150, 200, 0.06) 35%, transparent 70%); filter: blur(1.8cqw); }
-.mega-amber  { background: radial-gradient(circle, rgba(225, 185, 140, 0.30) 0%, rgba(225, 185, 140, 0.08) 35%, transparent 70%); filter: blur(1.8cqw); }
-.blue-blob   { background: radial-gradient(circle, rgba(90,120,160, 0.24) 0%, rgba(90,120,160, 0.06) 50%, transparent 80%); filter: blur(0.9cqw); }
-.cyan-blob   { background: radial-gradient(circle, rgba(225, 195, 150, 0.28) 0%, rgba(225, 195, 150, 0.06) 50%, transparent 80%); filter: blur(0.85cqw); }
-.amber-blob  { background: radial-gradient(circle, rgba(225, 185, 140, 0.30) 0%, rgba(225, 185, 140, 0.07) 50%, transparent 80%); filter: blur(0.7cqw); }
-.purple-blob { background: radial-gradient(circle, rgba(180, 150, 200, 0.25) 0%, rgba(180, 150, 200, 0.06) 50%, transparent 80%); filter: blur(0.9cqw); }
+.mega-blue   { background: radial-gradient(circle, rgba(108,106,130, 0.26) 0%, rgba(108,106,130, 0.07) 35%, transparent 70%); filter: blur(2cqw); }
+.mega-cyan   { background: radial-gradient(circle, rgba(200, 199, 210, 0.30) 0%, rgba(200, 199, 210, 0.07) 35%, transparent 70%); filter: blur(2.2cqw); }
+.mega-purple { background: radial-gradient(circle, rgba(163, 161, 178, 0.25) 0%, rgba(163, 161, 178, 0.06) 35%, transparent 70%); filter: blur(1.8cqw); }
+.mega-amber  { background: radial-gradient(circle, rgba(217, 217, 227, 0.30) 0%, rgba(217, 217, 227, 0.08) 35%, transparent 70%); filter: blur(1.8cqw); }
+.blue-blob   { background: radial-gradient(circle, rgba(108,106,130, 0.24) 0%, rgba(108,106,130, 0.06) 50%, transparent 80%); filter: blur(0.9cqw); }
+.cyan-blob   { background: radial-gradient(circle, rgba(200, 199, 210, 0.28) 0%, rgba(200, 199, 210, 0.06) 50%, transparent 80%); filter: blur(0.85cqw); }
+.amber-blob  { background: radial-gradient(circle, rgba(217, 217, 227, 0.30) 0%, rgba(217, 217, 227, 0.07) 50%, transparent 80%); filter: blur(0.7cqw); }
+.purple-blob { background: radial-gradient(circle, rgba(163, 161, 178, 0.25) 0%, rgba(163, 161, 178, 0.06) 50%, transparent 80%); filter: blur(0.9cqw); }
 
 @keyframes slow-breathe {
   0%, 100% { opacity: 0.65; transform: translate(-50%, -50%) scale(1); }
@@ -186,7 +188,7 @@ html, body, #root {
 .header-eyebrow {
   font-size: 9.5px; font-weight: 800;
   letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--brand);
+  color: var(--accent);
 }
 
 /* ═══ Glass panels ═══ */
@@ -204,7 +206,7 @@ html, body, #root {
     inset 0 -1px 0 rgba(255,255,255,0.20),
     inset 1px 0 0 rgba(255,255,255,0.45),
     inset -1px 0 0 rgba(255,255,255,0.30),
-    inset 0 0 30px rgba(230,200,190,0.12);
+    inset 0 0 30px rgba(200,199,210,0.12);
   position: relative;
   overflow: hidden;
 }
@@ -217,13 +219,13 @@ html, body, #root {
   padding-left: 8px;
   border-left: 2px solid var(--brand);
   line-height: 1.25;
-  box-shadow: -1px 0 0 rgba(11,91,211,0.15);
+  box-shadow: -1px 0 0 rgba(7,29,73,0.15);
 }
 
 .accent-line {
   flex: 1; min-width: 0; height: 1px;
-  background: linear-gradient(90deg, var(--brand-hi) 0%, var(--brand) 50%, rgba(11,91,211,0.4) 80%, transparent 100%);
-  box-shadow: 0 0 6px rgba(11,91,211,0.25);
+  background: linear-gradient(90deg, var(--brand-hi) 0%, var(--brand) 50%, rgba(7,29,73,0.4) 80%, transparent 100%);
+  box-shadow: 0 0 6px rgba(7,29,73,0.25);
 }
 
 .status-pill {
@@ -260,8 +262,8 @@ html, body, #root {
 }
 
 .msg-user-bubble {
-  background: linear-gradient(135deg, rgba(11,91,211,0.08), rgba(11,91,211,0.03));
-  border: 1px solid rgba(11,91,211,0.14);
+  background: linear-gradient(135deg, rgba(7,29,73,0.08), rgba(7,29,73,0.03));
+  border: 1px solid rgba(7,29,73,0.14);
   border-radius: 14px;
   border-top-right-radius: 4px;
 }
@@ -269,7 +271,7 @@ html, body, #root {
 .suggestion-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 13px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(247,243,236,0.7));
+  background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(240,240,246,0.7));
   border: 1px solid rgba(15,23,42,0.10);
   border-radius: 999px;
   font-size: 12px; font-weight: 600;
@@ -282,7 +284,7 @@ html, body, #root {
   color: white;
   border-color: var(--brand);
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(11,91,211,0.25);
+  box-shadow: 0 3px 10px rgba(7,29,73,0.25);
 }
 .suggestion-chip .chip-tag {
   font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
@@ -292,23 +294,23 @@ html, body, #root {
 
 /* ═══ Agent trace ═══ */
 .trace-panel {
-  background: linear-gradient(135deg, rgba(11,91,211,0.05), rgba(11,91,211,0.02));
-  border: 1px solid rgba(11,91,211,0.22);
+  background: linear-gradient(135deg, rgba(108,106,130,0.05), rgba(108,106,130,0.02));
+  border: 1px solid rgba(108,106,130,0.22);
   border-radius: 10px;
   overflow: hidden;
 }
 .trace-header {
   display: flex; align-items: center; gap: 8px;
   padding: 7px 14px;
-  background: rgba(11,91,211,0.07);
-  border-bottom: 1px solid rgba(11,91,211,0.12);
+  background: rgba(108,106,130,0.07);
+  border-bottom: 1px solid rgba(108,106,130,0.12);
   font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--teal); cursor: pointer;
 }
 .trace-step {
   display: flex; align-items: flex-start; gap: 10px;
   padding: 7px 14px;
-  border-bottom: 1px solid rgba(11,91,211,0.08);
+  border-bottom: 1px solid rgba(108,106,130,0.08);
   font-size: 11.5px;
 }
 .trace-step:last-child { border-bottom: none; }
@@ -316,7 +318,7 @@ html, body, #root {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 10px; font-weight: 600;
   color: var(--teal);
-  background: rgba(11,91,211,0.10);
+  background: rgba(108,106,130,0.10);
   padding: 1px 7px; border-radius: 4px;
   white-space: nowrap;
 }
@@ -379,8 +381,8 @@ html, body, #root {
 }
 .ram-page .ram-accent {
   flex: 1; min-width: 24px; height: 1px;
-  background: linear-gradient(90deg, var(--brand-hi) 0%, var(--brand) 50%, rgba(11,91,211,0.4) 80%, transparent 100%);
-  box-shadow: 0 0 6px rgba(11,91,211,0.25);
+  background: linear-gradient(90deg, var(--brand-hi) 0%, var(--brand) 50%, rgba(7,29,73,0.4) 80%, transparent 100%);
+  box-shadow: 0 0 6px rgba(7,29,73,0.25);
 }
 
 /* ─── Chat body layout (sidebar + main card) ───────────────────────── */
@@ -393,7 +395,7 @@ html, body, #root {
 /* ─── SAS-blue re-skins of the host's shared chat classes ──────────── */
 .ram-page .panel-title {
   border-left: 2px solid var(--brand);
-  box-shadow: -1px 0 0 rgba(11,91,211,0.15);
+  box-shadow: -1px 0 0 rgba(7,29,73,0.15);
 }
 .ram-page .chat-watermark {
   width: 280px; height: 280px; opacity: 0.06;
@@ -402,8 +404,8 @@ html, body, #root {
   border-left: 3px solid var(--brand);
 }
 .ram-page .msg-user-bubble {
-  background: linear-gradient(135deg, rgba(11,91,211,0.08), rgba(11,91,211,0.03));
-  border: 1px solid rgba(11,91,211,0.14);
+  background: linear-gradient(135deg, rgba(7,29,73,0.08), rgba(7,29,73,0.03));
+  border: 1px solid rgba(7,29,73,0.14);
   border-radius: 14px;
   border-top-right-radius: 4px;
 }
@@ -411,23 +413,23 @@ html, body, #root {
 
 /* Reasoning trace — SAS teal (the host's version is bronze) */
 .ram-page .trace-panel {
-  background: linear-gradient(135deg, rgba(11,91,211,0.04), rgba(11,91,211,0.02));
-  border: 1px solid rgba(11,91,211,0.18);
+  background: linear-gradient(135deg, rgba(108,106,130,0.04), rgba(108,106,130,0.02));
+  border: 1px solid rgba(108,106,130,0.18);
   border-radius: 10px;
   overflow: hidden;
 }
 .ram-page .trace-header {
   display: flex; align-items: center; gap: 8px;
   padding: 7px 14px;
-  background: rgba(11,91,211,0.06);
-  border-bottom: 1px solid rgba(11,91,211,0.10);
+  background: rgba(108,106,130,0.06);
+  border-bottom: 1px solid rgba(108,106,130,0.10);
   font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--teal); cursor: pointer;
 }
 .ram-page .trace-step {
   display: flex; align-items: flex-start; gap: 10px;
   padding: 7px 14px;
-  border-bottom: 1px solid rgba(11,91,211,0.06);
+  border-bottom: 1px solid rgba(108,106,130,0.06);
   font-size: 11.5px;
 }
 .ram-page .trace-step:last-child { border-bottom: none; }
@@ -435,7 +437,7 @@ html, body, #root {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 10px; font-weight: 600;
   color: var(--teal);
-  background: rgba(11,91,211,0.08);
+  background: rgba(108,106,130,0.08);
   padding: 1px 7px; border-radius: 4px;
   white-space: nowrap;
 }
@@ -479,19 +481,6 @@ html, body, #root {
 }
 .ram-page .cc-leg-item { display: inline-flex; align-items: center; gap: 5px; }
 .ram-page .cc-leg-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
-
-/* ═══ Sanad lockup, top left (where the hackathon app carries the EHS logo) ═══ */
-.brand-lockup { display: flex; align-items: center; gap: 12px; padding: 2px 3px; }
-.brand-mark { flex: none; width: clamp(40px, 3.6cqw, 52px); height: auto; filter: drop-shadow(0 2px 6px rgba(11,91,211,0.25)); }
-.brand-word {
-  font-family: 'Manrope', sans-serif; font-weight: 800;
-  font-size: clamp(20px, 1.9cqw, 28px); letter-spacing: 0.18em; line-height: 1;
-  color: var(--text);
-}
-.brand-sub {
-  margin-top: 5px; font-size: 9px; font-weight: 700; letter-spacing: 0.22em;
-  text-transform: uppercase; color: var(--text-dim); white-space: nowrap;
-}
 
 /* Watermark: the Sanad mark, faint, behind the messages */
 .chat-watermark { display: flex; align-items: center; justify-content: center; }

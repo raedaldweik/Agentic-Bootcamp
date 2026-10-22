@@ -1,36 +1,41 @@
-import { useStrings } from '../lib/strings';
+import { useId } from 'react';
+
+// The three facets of the official Sanad S (SANAD_M_E_RGB_TRIANGLE.svg), each a
+// horizontal gradient of one colour at different opacities, exactly as issued.
+const FACETS = [
+  { d: 'M27.1,108.8V37.1c0-5.5,4.5-9.9,10-9.9h131.8L27.1,108.8z', from: 0.3, to: 1 },
+  { d: 'M27.1,108.8 L27.1,37.2 L168.9,118.8 L168.9,188.5 Z', from: 0.8, to: 0.3 },
+  { d: 'M168.9,118.8v69.8c0,5.5-4.5,10-10,10H27.1L168.9,118.8z', from: 0.3, to: 0.6 },
+];
 
 /**
- * The Sanad "S" — a geometric uppercase letterform built from two structured
- * forms, upper and lower, that overlap through the middle band; the overlap
- * is drawn in a deeper tone (the transparency effect of the identity).
+ * The Sanad "S" mark. `tone="navy"` is the official colour on light
+ * surfaces (#071D49); `tone="white"` is the version used on Sanad's deep indigo.
  */
-export function SanadMark({ size = 28, className = '', style }) {
+export function SanadMark({ size = 28, tone = 'navy', className = '', style }) {
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  const color = tone === 'white' ? '#FFFFFF' : '#071D49';
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" className={className} style={style} aria-hidden="true">
-      <path d="M60 4 H12 V39 H52 V29 H22 V14 H55 Z" fill="#2C72E0" />
-      <path d="M4 60 H52 V25 H12 V35 H42 V50 H9 Z" fill="#0B5BD3" />
-      <path d="M12 25 H22 V29 H52 V39 H42 V35 H12 Z" fill="#083F9A" />
+    <svg width={size} height={size} viewBox="22 22 152 182" className={className} style={style} aria-hidden="true">
+      <defs>
+        {FACETS.map((f, i) => (
+          <linearGradient key={i} id={`${uid}f${i}`} gradientUnits="userSpaceOnUse" x1="27.0877" y1="0" x2="168.9367" y2="0">
+            <stop offset="0" stopColor={color} stopOpacity={f.from} />
+            <stop offset="1" stopColor={color} stopOpacity={f.to} />
+          </linearGradient>
+        ))}
+      </defs>
+      {FACETS.map((f, i) => <path key={i} d={f.d} fill={`url(#${uid}f${i})`} />)}
     </svg>
   );
 }
 
 /**
- * Header lockup, top left (where the hackathon app carries the EHS logo).
- * Set VITE_LOGO_URL (for example /sanad-logo.svg after dropping the official
- * file into public/) to show the official artwork instead.
+ * Header logo, top left (where the hackathon app carries the EHS logo): the
+ * official Sanad lockup, mark + wordmark + "A Mubadala Company".
+ * VITE_LOGO_URL can point it at a hosted copy instead.
  */
 export function Lockup() {
-  const { t } = useStrings();
-  const url = import.meta.env.VITE_LOGO_URL;
-  if (url) return <img className="brand-logo" src={url} alt="Sanad" />;
-  return (
-    <div className="brand-lockup" title="Sanad">
-      <SanadMark size={44} className="brand-mark" />
-      <div>
-        <div className="brand-word">SANAD</div>
-        <div className="brand-sub">{t('mubadala')}</div>
-      </div>
-    </div>
-  );
+  const url = import.meta.env.VITE_LOGO_URL || '/sanad-logo.svg';
+  return <img className="brand-logo" src={url} alt="Sanad — A Mubadala Company" />;
 }

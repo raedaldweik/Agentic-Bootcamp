@@ -1,9 +1,9 @@
 # Sanad AI — standalone chat on SAS Retrieval Agent Manager
 
 The Agentic AI Hackathon's chatbot (the **Hackathon Agent** tab, `frontend/src/ram/`) on its own,
-in the Sanad (a Mubadala company) brand. Same warm-pearl glass design, same layout and the same
-features; the EHS logo is replaced by the Sanad mark and wordmark, the SAS logo is removed, and
-the brand blue is Sanad's. English only. Nothing else from the hackathon app is included.
+in the Sanad (a Mubadala company) brand. Same glass design, same layout and the same features;
+the EHS logo is replaced by the official Sanad logo, the SAS logo is removed, and the colours are
+Sanad's. English only. Nothing else from the hackathon app is included.
 
 ## What is in it
 
@@ -13,7 +13,7 @@ the brand blue is Sanad's. English only. Nothing else from the hackathon app is 
 | The chat page: recent conversations, agent / collection dropdown, connection status and sign-in, messages with the live agent activity, attach, voice, send | `src/ram/RamPage.jsx` |
 | Answer card: markdown, interactive SVG charts, VA report snapshots, source chips, tool-call trace, usage, the details popup | `src/ram/ResponseCard.jsx`, `ChartCard.jsx`, `ReportCard.jsx`, `ToolCallTrace.jsx`, `QueryDetails.jsx`, `SourceViewer.jsx` |
 | Sign-in for RAM deployments that need it (Keycloak device code, Viya SASLogon code) | `src/ram/SignIn.jsx` |
-| The hackathon glass stylesheet with the Sanad tokens | `src/index.css` (`:root`) |
+| The hackathon glass stylesheet in the Sanad palette | `src/index.css` (`:root`) |
 | Every UI string, and the suggestion chips | `src/lib/strings.js` |
 
 The backend contract is unchanged: the same `/api/ram/*` endpoints as the hackathon app
@@ -44,14 +44,30 @@ backend (it sets `FRONTEND_DIST=/app/sanad-chat/dist`). On Railway, create a sec
 from the same repo and set its Dockerfile path to `Dockerfile.sanad`; the environment variables
 are the same as the hackathon service.
 
-## Brand assets
+## Brand
 
-`public/sanad-mark.svg` (the S, also the favicon) and `public/sanad-logo.svg` (mark + wordmark)
-are built-in renderings of the Sanad mark — a geometric uppercase S made of two structured forms
-that overlap through the middle band — not the official files. To use the official artwork:
+The official logo is `public/brand/SANAD_M_E_RGB_TRIANGLE.svg`, kept as issued (mark, wordmark and
+"A Mubadala Company" on Sanad's white corner triangle).
 
-1. Drop the official files over `public/sanad-mark.svg` and `public/sanad-logo.svg`.
-2. Set `VITE_LOGO_URL=/sanad-logo.svg` so the header shows the official lockup instead of the
-   built-in mark + wordmark (`src/ram/Logo.jsx`).
-3. Put the official hex values into the `:root` block of `src/index.css` (`--brand`,
-   `--brand-hi`, `--brand-lo`, `--brand-grad`).
+| File | What it is |
+|---|---|
+| `public/sanad-logo.svg` | The official artwork with the corner triangle removed and cropped to the lockup. The header shows it top left |
+| `public/sanad-mark.svg` | The favicon: the official S in white facets on Sanad's deep indigo, as on the dark version of the mark |
+| `src/ram/Logo.jsx` | The official S geometry as a component, navy on light (avatars, watermark, sign-in) or white on dark |
+
+`VITE_LOGO_URL` points the header at a hosted copy instead of `public/sanad-logo.svg`.
+
+The palette is taken from the two official versions of the mark and lives in the `:root` block of
+`src/index.css`:
+
+| Token | Colour | From |
+|---|---|---|
+| `--brand` | `#071D49` | Sanad navy, the colour of the official SVG |
+| `--brand-lo` | `#121037` | the deep indigo behind the dark version of the mark |
+| `--accent` | `#6C6A82` | slate violet, the darker facets |
+| `--accent-md`, `--text-faint` | `#A3A1B2` | lavender grey, the middle facets |
+| `--mist` | `#D9D9E3` | the lightest facet |
+| `--text-dim` | `#5A5772` | the darkest facet edge |
+
+The page background, glass and bokeh follow the hackathon recipe with these lavender tints in place
+of its warm pearl; the trace panels use the slate violet where the hackathon used bronze.

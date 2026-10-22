@@ -1,5 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <path d="M60 4 H12 V39 H52 V29 H22 V14 H55 Z" fill="#2C72E0"/>
-  <path d="M4 60 H52 V25 H12 V35 H42 V50 H9 Z" fill="#0B5BD3"/>
-  <path d="M12 25 H22 V29 H52 V39 H42 V35 H12 Z" fill="#083F9A"/>
+  <defs>
+    <linearGradient id="f1" gradientUnits="userSpaceOnUse" x1="27.0877" y1="0" x2="168.9367" y2="0"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.3"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient>
+    <linearGradient id="f2" gradientUnits="userSpaceOnUse" x1="27.0877" y1="0" x2="168.9367" y2="0"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.8"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0.3"/></linearGradient>
+    <linearGradient id="f3" gradientUnits="userSpaceOnUse" x1="27.0877" y1="0" x2="168.9367" y2="0"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.3"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0.6"/></linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="#121037"/>
+  <g transform="translate(6.84 3.02) scale(0.2567)">
+    <path fill="url(#f1)" d="M27.1,108.8V37.1c0-5.5,4.5-9.9,10-9.9h131.8L27.1,108.8z"/>
+    <polygon fill="url(#f2)" points="27.1,108.8 27.1,37.2 27.1,37.2 168.9,118.8 168.9,188.5"/>
+    <path fill="url(#f3)" d="M168.9,118.8v69.8c0,5.5-4.5,10-10,10H27.1L168.9,118.8z"/>
+  </g>
 </svg>
