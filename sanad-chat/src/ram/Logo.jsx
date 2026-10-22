@@ -12,7 +12,7 @@ const FACETS = [
  * The Sanad "S" mark. `tone="navy"` is the official colour on light
  * surfaces (#071D49); `tone="white"` is the version used on Sanad's deep indigo.
  */
-export function SanadMark({ size = 28, tone = 'white', className = '', style }) {
+export function SanadMark({ size = 28, tone = 'navy', className = '', style }) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const color = tone === 'white' ? '#FFFFFF' : '#071D49';
   return (

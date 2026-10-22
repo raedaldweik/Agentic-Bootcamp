@@ -58,19 +58,27 @@ The official logo is `public/brand/SANAD_M_E_RGB_TRIANGLE.svg`, kept as issued (
 
 `VITE_LOGO_URL` points the header at a hosted copy instead of `public/sanad-logo-white.svg`.
 
-The app is dark throughout, the hackathon's glass recipe (gradient panels, lit edges, soft
-bokeh) on the petrol navy of Sanad's event livery (the MRO Asia Pacific 2026 artwork), with the
-sky of its window view as the accent. Tokens live in the `:root` block of `src/index.css`:
+The page and header are dark: the hackathon's glass recipe (gradients, lit edges, soft bokeh) on
+the petrol navy of Sanad's event livery (the MRO Asia Pacific 2026 artwork), lit with the sky of
+its window view. The chat itself is light so it reads easily: the conversation list, the chat card,
+bubbles, input and menus are pale frosted glass with a soft sky gradient and dark navy ink.
+
+Page and header tokens live in the `:root` block of `src/index.css`:
 
 | Token | Colour | Use |
 |---|---|---|
-| `--frame` | `#051E2E` | the page: petrol navy, lit from the top with a sky glow and a sea-teal glow below |
-| `--brand` | `#5F93C4` | sky: accents, active states, chips, the send button gradient |
-| `--brand-hi`, `--brand-lo` | `#9DC5E0`, `#B6DEF2` | light and pale sky: focus rings, accent text |
-| `--accent` | `#B9B7CC` | lavender from the official mark's facets: the trace panels |
-| `--sea` | `#226984` | sea teal: background glow and bokeh |
-| `--text`, `--text-md`, `--text-dim`, `--text-faint` | `#F1F5FA` … `#5E7690` | light ink on dark |
-| `--glass`, `--glass-strong`, `--surface` | dark navy glass | panels, bubbles, menus and modals |
+| `--frame` | `#051E2E` | the page: petrol navy, a sky glow from the top and a sea-teal glow below |
+| `--sky`, `--sky-lt` | `#5F93C4`, `#9DC5E0` | the header eyebrow and accent line, background glow |
+| `--sea` | `#226984` | background glow and bokeh |
+
+The chat area's tokens are scoped to `.ram-page .ram-chat` at the end of the same file:
+
+| Token | Colour | Use |
+|---|---|---|
+| `--panel-top`, `--panel-bottom` | pale sky glass | the conversation list and chat cards |
+| `--brand`, `--brand-hi`, `--brand-lo` | `#2F6FA8`, `#1D5A93`, `#0B2F55` | steel-blue accents and accent text |
+| `--teal` | `#5A5772` | trace panels: the slate violet of the official mark |
+| `--text` … `--text-faint` | `#0B1433` … `#8193A8` | dark navy ink |
 
 The official navy `#071D49` is kept in `public/sanad-logo.svg` and in the mark component's
 `tone="navy"`, for use on light backgrounds.
