@@ -26,7 +26,9 @@ async function req(path, opts = {}) {
 
 // Health decides the mode. A network failure, a dev-proxy error (502/504) or a
 // 404 (served by something that is not this backend) all mean "no backend".
-export const getHealth = async () => {
+// The first check is shared: every other call waits for it, so nothing races
+// ahead to a backend that is not there.
+async function probeHealth() {
   if (demoMode) return demo.getHealth();
   try {
     const ctrl = new AbortController();
@@ -41,6 +43,13 @@ export const getHealth = async () => {
     demoMode = true;
     return demo.getHealth();
   }
+}
+let firstCheck = null;
+const modeReady = () => (firstCheck ||= probeHealth());
+export const getHealth = async () => {
+  if (!firstCheck) return modeReady();
+  await firstCheck;
+  return probeHealth();
 };
 
 export const startDeviceAuth = () => req('/auth/device/start', { method: 'POST' });
@@ -65,6 +74,7 @@ export const signOut = async () => {
 
 // Extract text from an uploaded file (multipart — no JSON headers)
 export const extractAttachment = async (file) => {
+  await modeReady();
   if (demoMode) return demo.extractAttachment(file);
   const fd = new FormData();
   fd.append('file', file);
@@ -76,9 +86,9 @@ export const extractAttachment = async (file) => {
   return r.json();
 };
 
-export const getAgents = () => demoMode ? demo.getAgents() : req('/agents');
-export const getCollections = () => demoMode ? demo.getCollections() : req('/collections');
-export const getSessions = () => demoMode ? demo.getSessions() : req('/sessions');
+export const getAgents = async () => { await modeReady(); return demoMode ? demo.getAgents() : req('/agents'); };
+export const getCollections = async () => { await modeReady(); return demoMode ? demo.getCollections() : req('/collections'); };
+export const getSessions = async () => { await modeReady(); return demoMode ? demo.getSessions() : req('/sessions'); };
 export const getSessionQueries = (sessionId) =>
   demoMode ? demo.getSessionQueries(sessionId) : req(`/sessions/${encodeURIComponent(sessionId)}/queries`);
 export const deleteSession = (sessionId) =>

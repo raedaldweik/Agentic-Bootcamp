@@ -1,0 +1,529 @@
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useStrings, SUGGESTIONS } from '../lib/strings';
+import { ChatProvider, useChat } from '../lib/ChatContext';
+import ResponseCard from './ResponseCard';
+import SourceViewer from './SourceViewer';
+import QueryDetails from './QueryDetails';
+import TargetSelector from './TargetSelector';
+import SignIn from './SignIn';
+import VoiceInput from './VoiceInput';
+import { SanadMark } from './Logo';
+import {
+  getHealth, getAgents, getCollections, submitQuery, getQueryStatus, getQueryTrace, extractAttachment,
+  loadSession, saveSession, clearSession, restoreSession, signOut,
+} from '../lib/api';
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// Flatten a trace into display steps for the live activity indicator
+function traceSteps(trace) {
+  if (!trace) return [];
+  return [
+    ...(trace.toolCalls || []).map(c => ({ key: `t-${c.id}`, icon: '🛠', label: c.toolName || 'tool call' })),
+    ...(trace.retrievalCalls || []).map(c => ({ key: `r-${c.id}`, icon: '📚', label: 'retrieving documents' })),
+    ...(trace.llmCalls || []).map(c => ({ key: `l-${c.id}`, icon: '✦', label: 'LLM' })),
+  ];
+}
+
+const AttachIcon = ({ size = 12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+  </svg>
+);
+
+const AssistantAvatar = () => (
+  <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center p-1.5"
+    style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(15,23,42,0.10)', boxShadow: '0 1px 3px rgba(15,23,42,0.08)' }}>
+    <SanadMark size={18} />
+  </div>
+);
+
+/* ─── RAM connection controls: status · sign-in · language (sit in the chat card's title row) ─── */
+function RamControls() {
+  const { t } = useStrings();
+  const [health, setHealth] = useState(null);
+
+  // Health, re-checked every minute and whenever a call comes back "not signed
+  // in". If the backend lost this browser's session (a redeploy), the copy the
+  // browser kept is handed back before anyone is asked to sign in again.
+  const check = useCallback(async () => {
+    let h;
+    try { h = await getHealth(); } catch { setHealth({ status: 'down' }); return; }
+    if (h.status === 'signin_required') {
+      const saved = loadSession();
+      if (saved) {
+        try {
+          const r = await restoreSession(saved);
+          if (r.ok) { saveSession(r.session); window.location.reload(); return; }
+        } catch { clearSession(); }
+      }
+    }
+    setHealth(h);
+  }, []);
+  useEffect(() => {
+    check();
+    const timer = setInterval(check, 60000);
+    window.addEventListener('ram:signin-required', check);
+    return () => { clearInterval(timer); window.removeEventListener('ram:signin-required', check); };
+  }, [check]);
+
+  const ok = health?.status === 'ok';
+  const needsSignin = health?.status === 'signin_required';
+  // Sign out only makes sense for an interactive sign-in (not a configured token or the mock)
+  const canSignOut = ok && health?.mode === 'live' && health?.auth === 'device';
+  const [signingOut, setSigningOut] = useState(false);
+  const doSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try { await signOut(); } catch { /* the local copy is gone either way */ }
+    window.location.reload();
+  };
+  const label = health == null ? t('connecting')
+    : health.mode === 'demo' ? t('demoMode')
+    : health.mode === 'mock' ? t('mockMode')
+    : ok ? t('connected')
+    : needsSignin ? t('signInRequired')
+    : health.status === 'unconfigured' ? t('notConfigured')
+    : t('backendOffline');
+
+  return (
+    <div className="flex items-center gap-2 shrink-0">
+      <div className="status-pill">
+        <span className={`w-2 h-2 rounded-full ${ok ? '' : 'animate-pulse'}`}
+          style={{ background: ok ? 'var(--green)' : needsSignin ? 'var(--amber)' : health ? 'var(--red)' : 'var(--amber)' }} />
+        <span>{label}</span>
+      </div>
+      {needsSignin && <SignIn health={health} />}
+      {canSignOut && (
+        <button onClick={doSignOut} disabled={signingOut} className="ram-lang-btn" title={t('signOutTitle')}>
+          {signingOut ? '…' : t('signOut')}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ─── Chat body: recent conversations · agent dropdown · messages · input ─── */
+function ChatBody() {
+  const { t } = useStrings();
+  const { chats, activeChat, activeChatId, setActiveChatId, addMessage, setChatSession, renameChat, deleteChat, createNewChat } = useChat();
+  const messages = activeChat?.messages || [];
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [liveTrace, setLiveTrace] = useState(null);   // tool/LLM/RAG calls while a query runs
+  const [details, setDetails] = useState(null);       // { data, query } for the details popup
+  const [source, setSource] = useState(null);
+  const [chatMenu, setChatMenu] = useState(null);
+  const [renamingChat, setRenamingChat] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
+
+  // Available agents / collections for the dropdown
+  const [agents, setAgents] = useState([]);
+  const [collections, setCollections] = useState([]);
+  const [target, setTarget] = useState(null);
+  const [targetsLoading, setTargetsLoading] = useState(true);
+  const [targetsError, setTargetsError] = useState(null);
+
+  // Ad-hoc attachment: text is extracted server-side and inlined into the query
+  const [attachment, setAttachment] = useState(null);
+  const [attaching, setAttaching] = useState(false);
+  const [attachError, setAttachError] = useState(null);
+
+  const inputRef = useRef(null);
+  const endRef = useRef(null);
+  const fileRef = useRef(null);
+
+  const pickFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file
+    if (!file) return;
+    setAttachError(null);
+    setAttaching(true);
+    try {
+      const doc = await extractAttachment(file);
+      setAttachment(doc);
+    } catch (err) {
+      setAttachError(err.message);
+    }
+    setAttaching(false);
+  };
+
+  useEffect(() => {
+    Promise.allSettled([getAgents(), getCollections()]).then(([a, c]) => {
+      const agentList = a.status === 'fulfilled' ? a.value : [];
+      const collList = c.status === 'fulfilled' ? c.value : [];
+      setAgents(agentList);
+      setCollections(collList);
+      if (a.status === 'rejected' && c.status === 'rejected') {
+        setTargetsError(a.reason?.message || 'Could not reach RAM');
+      } else if (agentList.length > 0) {
+        // Default to the first published agent
+        setTarget({ type: 'agent', id: agentList[0].id, name: agentList[0].name });
+      } else if (collList.length > 0) {
+        setTarget({ type: 'collection', id: collList[0].id, name: collList[0].name });
+      }
+      setTargetsLoading(false);
+    });
+  }, []);
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading]);
+
+  const send = async (text) => {
+    const q = (text || input).trim();
+    if (!q || loading) return;
+    if (!target) {
+      addMessage(activeChatId, { role: 'assistant', type: 'text', content: t('selectAgentFirst'), isError: true });
+      return;
+    }
+    setInput('');
+    const attached = attachment;
+    setAttachment(null);
+    setAttachError(null);
+    addMessage(activeChatId, { role: 'user', type: 'text', content: q, attachmentName: attached?.name });
+    setLoading(true);
+    setLiveTrace(null);
+    try {
+      const sub = await submitQuery(q, target, activeChat?.sessionId || null,
+        attached ? [{ name: attached.name, text: attached.text }] : null);
+      if (sub.querySessionId) setChatSession(activeChatId, sub.querySessionId, target);
+
+      let res = sub.result;
+      if (!res) {
+        // Poll for the result; in parallel, surface the tool/LLM/retrieval
+        // calls RAM has recorded so far as live activity under the indicator.
+        const interval = Math.max((sub.pollInterval || 2) * 1000, 1000);
+        const deadline = Date.now() + (sub.timeout || 600) * 1000;
+        let consecutiveErrors = 0;
+        let tick = 0;
+        for (;;) {
+          await sleep(interval);
+          // The live trace is three RAM calls; with a room full of people polling,
+          // fetching it every other tick halves that traffic without a visible difference.
+          if (tick++ % 2 === 0) getQueryTrace(sub.queryId).then(setLiveTrace).catch(() => {});
+          let st;
+          try {
+            st = await getQueryStatus(sub.queryId);
+            consecutiveErrors = 0;
+          } catch (e) {
+            // A single failed poll (e.g. a brief backend/gateway drop under load)
+            // shouldn't kill the turn — the query is still running on RAM.
+            // Keep polling; give up only after several in a row.
+            if (++consecutiveErrors >= 5) throw e;
+            if (Date.now() >= deadline)
+              throw new Error(t('agentTimeout', { n: sub.timeout || 600 }));
+            continue;
+          }
+          if (st.done) { res = st.result; break; }
+          if (Date.now() >= deadline)
+            throw new Error(t('agentTimeout', { n: sub.timeout || 600 }));
+        }
+      }
+
+      if (res.errorCode && res.errorCode !== 0) {
+        addMessage(activeChatId, { role: 'assistant', type: 'text', content: `${t('agentErrorPrefix')} ${res.errorText || 'query failed'}`, isError: true });
+      } else {
+        // Pull the final trace — its tool-call *outputs* carry payloads (like the
+        // chart specs) that the inline response.toolCalls may omit.
+        let trace = null;
+        try { trace = await getQueryTrace(res.queryId || sub.queryId); } catch { /* best-effort */ }
+        addMessage(activeChatId, { role: 'assistant', type: 'structured', data: trace ? { ...res, trace } : res, query: q });
+      }
+    } catch (err) {
+      addMessage(activeChatId, { role: 'assistant', type: 'text', content: `${t('errorPrefix')} ${err.message}`, isError: true });
+      // Lost session: let the controls restore it (or show Sign in) right away.
+      if (/not signed in/i.test(err.message)) window.dispatchEvent(new Event('ram:signin-required'));
+    }
+    setLoading(false);
+    setLiveTrace(null);
+    inputRef.current?.focus();
+  };
+
+  const startRename = (chat) => { setRenamingChat(chat.id); setRenameValue(chat.title); setChatMenu(null); };
+  const finishRename = (id) => { if (renameValue.trim()) renameChat(id, renameValue.trim()); setRenamingChat(null); };
+
+  // Scope "Recent conversations" to the selected agent/collection. Chats with
+  // no recorded target (brand-new local ones, or sessions the server couldn't
+  // attribute) stay visible everywhere.
+  const visibleChats = chats.filter(chat => {
+    if (!target) return true;
+    const tagged = chat.agentId || (chat.collectionIds && chat.collectionIds.length > 0);
+    if (!tagged) return true;
+    return target.type === 'agent'
+      ? chat.agentId === target.id
+      : (chat.collectionIds || []).includes(target.id);
+  });
+
+  // When the target changes, don't leave an out-of-scope conversation open
+  useEffect(() => {
+    if (!target || visibleChats.some(c => c.id === activeChatId)) return;
+    if (visibleChats.length > 0) setActiveChatId(visibleChats[0].id);
+    else createNewChat();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target]);
+
+  return (
+    <div className="ram-chat">
+
+      {/* Chat history panel — past RAM query sessions + local chats */}
+      <div className="w-[260px] shrink-0 glass-card flex flex-col">
+        <div className="p-4 border-b border-[rgba(15,23,42,0.07)]">
+          <p className="panel-title">{t('recentConversations')}</p>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {visibleChats.map(chat => {
+            const isRenaming = renamingChat === chat.id;
+            const menuOpen = chatMenu === chat.id;
+            return (
+              <div key={chat.id} className="relative group">
+                {isRenaming ? (
+                  <div className="px-2 py-1.5">
+                    <input value={renameValue} onChange={e => setRenameValue(e.target.value)}
+                      onBlur={() => finishRename(chat.id)} onKeyDown={e => e.key === 'Enter' && finishRename(chat.id)} autoFocus
+                      className="w-full rounded-lg px-2 py-1.5 text-xs border outline-none"
+                      style={{ background: 'rgba(255,255,255,0.5)', borderColor: 'var(--brand-hi)', color: 'var(--text)' }} />
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <button onClick={() => setActiveChatId(chat.id)}
+                      className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs text-start truncate transition-all ${
+                        chat.id === activeChatId
+                          ? 'font-semibold'
+                          : 'hover:bg-[rgba(11,91,211,0.05)] border border-transparent'
+                      }`}
+                      style={chat.id === activeChatId
+                        ? { color: 'var(--brand-lo)', background: 'rgba(11,91,211,0.14)', border: '1px solid rgba(11,91,211,0.30)', borderInlineStart: '3px solid var(--brand)' }
+                        : { color: 'var(--text-md)' }
+                      }>
+                      <span className="text-sm">💬</span>
+                      <span className="truncate flex-1">{chat.title === 'New conversation' ? t('newConversationTitle') : chat.title}</span>
+                    </button>
+                    <button onClick={e => { e.stopPropagation(); setChatMenu(menuOpen ? null : chat.id); }}
+                      className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[rgba(11,91,211,0.1)] transition-all shrink-0 ms-0.5"
+                      style={{ color: 'var(--text-faint)' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                {menuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setChatMenu(null)} />
+                    <div className="absolute end-0 top-full mt-0.5 rounded-xl shadow-xl overflow-hidden z-50 min-w-[130px] animate-fade-up"
+                      style={{ background: 'rgba(255,255,255,0.96)', border: '1px solid rgba(11,91,211,0.2)', backdropFilter: 'blur(20px)' }}>
+                      <button onClick={() => startRename(chat)} className="w-full flex items-center gap-2 px-3 py-2 text-[11px] hover:bg-[rgba(11,91,211,0.05)]" style={{ color: 'var(--text-md)' }}>
+                        {t('rename')}
+                      </button>
+                      <button onClick={() => { deleteChat(chat.id); setChatMenu(null); }} className="w-full flex items-center gap-2 px-3 py-2 text-[11px] hover:bg-[var(--red-bg)]" style={{ color: 'var(--red)' }}>
+                        {t('delete')}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="p-3 border-t border-[rgba(15,23,42,0.07)]">
+          <button onClick={() => { createNewChat(); }}
+            className="w-full py-2.5 rounded-lg text-xs font-bold transition-all"
+            style={{ border: '2px dashed rgba(11,91,211,0.35)', color: 'var(--brand)', background: 'rgba(11,91,211,0.03)' }}>
+            {t('newConversation')}
+          </button>
+        </div>
+      </div>
+
+      {/* Main chat area */}
+      <div className="flex-1 min-w-0 glass-card flex flex-col relative" style={{ boxShadow: 'var(--glass-shadow-lg)' }}>
+        <div className="chat-watermark"><SanadMark size={280} /></div>
+
+        {/* Header: conversation title + agent dropdown */}
+        <div className="flex items-center justify-between gap-3 px-6 py-3 border-b border-[rgba(15,23,42,0.07)] relative z-[5]">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-[3px] h-4 rounded shrink-0" style={{ background: 'var(--brand-grad)' }} />
+            <span className="text-sm font-bold truncate" style={{ color: 'var(--text)' }}>
+              {(activeChat?.title && activeChat.title !== 'New conversation') ? activeChat.title : t('newConversationTitle')}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <TargetSelector agents={agents} collections={collections} target={target}
+              onChange={setTarget} loading={targetsLoading} error={targetsError} />
+            <RamControls />
+          </div>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 relative z-[1]">
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex gap-2.5 animate-fade-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+              {/* Avatar */}
+              {msg.role === 'user' ? (
+                <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-[10px] font-bold"
+                  style={{ background: 'rgba(11,91,211,0.12)', border: '1px solid rgba(11,91,211,0.28)', color: 'var(--brand-lo)' }}>
+                  {t('you')}
+                </div>
+              ) : (
+                <AssistantAvatar />
+              )}
+              {/* Bubble */}
+              <div className="max-w-[70%]">
+                {msg.type === 'structured' ? (
+                  <ResponseCard data={msg.data} onOpenSource={(doc) => setSource(doc)}
+                    onOpenDetails={(d) => setDetails({ data: d, query: msg.query })} />
+                ) : (
+                  <div className={`px-4 py-3 text-[13px] leading-[1.75] ${
+                    msg.role === 'user' ? 'msg-user-bubble' : 'msg-bot-bubble'
+                  } ${msg.isError ? 'text-[var(--red)]' : ''}`}
+                    style={{ color: msg.isError ? undefined : 'var(--text)' }}>
+                    {msg.attachmentName && (
+                      <div className="flex items-center gap-1.5 mb-2 px-2 py-1 rounded-md text-[11px] font-semibold w-fit"
+                        style={{ background: 'rgba(11,91,211,0.10)', border: '1px solid rgba(11,91,211,0.22)', color: 'var(--brand-lo)' }}>
+                        <AttachIcon size={11} />
+                        {msg.attachmentName}
+                      </div>
+                    )}
+                    {msg.type === 'welcome' ? t('welcome') : msg.content}
+                  </div>
+                )}
+                {msg.type === 'welcome' && messages.length === 1 && !loading && (
+                  <div className="flex flex-wrap gap-2 mt-3 animate-fade-up">
+                    {SUGGESTIONS.map((s) => (
+                      <button key={s.tag} className="suggestion-chip" onClick={() => send(s.prompt)} disabled={!target} title={s.prompt}>
+                        <span className="chip-tag">{s.tag}</span>{s.title}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {loading && (() => {
+            const steps = traceSteps(liveTrace);
+            return (
+              <div className="flex gap-2.5 animate-fade-up">
+                <AssistantAvatar />
+                <div className="msg-bot-bubble px-4 py-3 min-w-[180px]">
+                  {/* Live agent activity — tool/LLM/RAG calls recorded so far */}
+                  {steps.length > 0 && (
+                    <div className="mb-2.5 space-y-1.5">
+                      {steps.slice(-6).map((s, i, arr) => (
+                        <div key={s.key} className="flex items-center gap-2 text-[11.5px] animate-fade-up"
+                          style={{ color: i === arr.length - 1 ? 'var(--brand-lo)' : 'var(--text-dim)' }}>
+                          <span className="text-[10px] w-4 text-center shrink-0">{s.icon}</span>
+                          <span className="truncate font-medium">{s.label}</span>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="3" className="shrink-0 ms-auto">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1.5">
+                      {[0, 1, 2].map(j => (
+                        <span key={j} className="w-1.5 h-1.5 rounded-full"
+                          style={{ background: 'var(--brand)', opacity: 0.3, animation: `pop 1.4s ease-in-out infinite ${j * 0.15}s` }} />
+                      ))}
+                    </div>
+                    {steps.length > 0 && (
+                      <span className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
+                        {t('stepsSoFar', { n: steps.length, s: steps.length !== 1 ? 's' : '' })}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+          <div ref={endRef} />
+        </div>
+
+        {/* Attachment chip / status */}
+        {(attachment || attaching || attachError) && (
+          <div className="px-5 pt-1 relative z-[1] animate-fade-up">
+            {attachError ? (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11.5px]"
+                style={{ background: 'var(--red-bg)', border: '1px solid rgba(185,28,44,0.22)', color: 'var(--red)' }}>
+                {attachError}
+                <button onClick={() => setAttachError(null)} className="font-bold hover:opacity-70">✕</button>
+              </div>
+            ) : attaching ? (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11.5px]"
+                style={{ background: 'rgba(11,91,211,0.07)', border: '1px solid rgba(11,91,211,0.20)', color: 'var(--text-dim)' }}>
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--brand)' }} />
+                {t('readingDocument')}
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11.5px] font-semibold"
+                style={{ background: 'rgba(11,91,211,0.08)', border: '1px solid rgba(11,91,211,0.25)', color: 'var(--brand-lo)' }}>
+                <AttachIcon size={12} />
+                {attachment.name}
+                <span className="font-normal" style={{ color: 'var(--text-dim)' }}>
+                  {attachment.truncated ? t('firstKChars', { n: Math.round(attachment.text.length / 1000) }) : t('kChars', { n: (attachment.chars / 1000).toFixed(1) })}
+                  {' '}{t('sentWithNext')}
+                </span>
+                <button onClick={() => setAttachment(null)} className="font-bold hover:opacity-70" style={{ color: 'var(--text-dim)' }}>✕</button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Input bar */}
+        <div className="px-5 pb-4 pt-2 relative z-[1]">
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl border border-[rgba(15,23,42,0.10)] transition-all focus-within:border-[var(--brand-hi)] focus-within:shadow-[0_0_0_3px_rgba(11,91,211,0.10)]"
+            style={{ background: 'var(--glass-strong)', backdropFilter: 'blur(12px)' }}>
+            <input ref={fileRef} type="file" accept=".pdf,.docx,.doc,.txt,.md,.csv,.json,.xlsx,.pptx" className="hidden" onChange={pickFile} />
+            <button onClick={() => fileRef.current?.click()} disabled={attaching || loading} title={t('attachTooltip')}
+              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all hover:bg-[rgba(11,91,211,0.08)] disabled:opacity-30"
+              style={{ color: 'var(--text-dim)' }}>
+              <AttachIcon size={15} />
+            </button>
+            <textarea ref={inputRef} rows="1" value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+              placeholder={target ? t('askAnything', { name: target.name }) : t('selectThenAsk')}
+              className="flex-1 bg-transparent border-none outline-none text-[13px] py-2 px-2 resize-none leading-relaxed"
+              style={{ fontFamily: 'inherit', color: 'var(--text)' }} />
+
+            <VoiceInput disabled={loading} title={t('speakTooltip')}
+              onTranscript={(text) => { setInput(prev => (prev ? `${prev} ${text}` : text)); inputRef.current?.focus(); }} />
+            <button onClick={() => send()}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0 hover:scale-105 transition-transform"
+              style={{ background: 'var(--brand-grad)', boxShadow: '0 3px 12px rgba(11,91,211,0.30)' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                className="ram-send-icon">
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {details && (
+        <QueryDetails data={details.data} query={details.query}
+          onClose={() => setDetails(null)}
+          onOpenSource={(doc) => setSource(doc)} />
+      )}
+      {source && <SourceViewer source={source} onClose={() => setSource(null)} />}
+    </div>
+  );
+}
+
+/* ─── Page root: applies the language direction to ITS OWN container only ─── */
+function PageShell() {
+  return (
+    <div className="ram-page h-full">
+      <ChatBody />
+    </div>
+  );
+}
+
+/** Sanad AI — chat page backed by SAS Retrieval Agent Manager (via /api/ram). */
+export default function RamPage() {
+  return (
+    <ChatProvider>
+      <PageShell />
+    </ChatProvider>
+  );
+}

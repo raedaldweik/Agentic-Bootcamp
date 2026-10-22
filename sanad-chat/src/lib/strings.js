@@ -4,6 +4,7 @@ const STR = {
   appTitle: 'Sanad AI',
   tagline: 'Engineering intelligence',
   mubadala: 'A Mubadala company',
+  eyebrow: 'Engineering intelligence on SAS Retrieval Agent Manager',
   poweredBy: 'Powered by SAS Retrieval Agent Manager',
 
   connecting: 'Connecting…',
@@ -35,8 +36,8 @@ const STR = {
   cancel: 'Cancel',
 
   // Sidebar
-  conversations: 'Conversations',
-  newConversation: 'New conversation',
+  recentConversations: 'Recent conversations',
+  newConversation: '+ New conversation',
   newConversationTitle: 'New conversation',
   rename: 'Rename',
   delete: 'Delete',
@@ -49,7 +50,7 @@ const STR = {
   heroTitle: 'What can I support you with?',
   heroSub: 'Ask about engine shop visits, turnaround, lease portfolios or any document in your collections. Every answer shows its tool calls, retrieval and sources.',
   heroHint: 'Press / to focus · Enter to send · Shift+Enter for a new line',
-  welcome: 'Welcome to Sanad AI. Pick an agent published in RAM and ask about engine shop visits, turnaround, lease portfolios or your documents.',
+  welcome: 'Welcome to Sanad AI. Pick an agent published in RAM from the dropdown above and ask about engine shop visits, turnaround, lease portfolios or your documents. Every answer shows its tool calls, retrieval and sources.',
 
   // Target selector
   selectAgent: 'Select an agent',
@@ -94,8 +95,8 @@ const STR = {
   clickToZoom: 'Click to enlarge',
 
   // Flight recorder (query details)
-  flightRecorder: 'Flight recorder',
-  flightRecorderHint: 'Every tool, retrieval and model call behind this answer',
+  queryDetails: 'Query details',
+  queryDetailsHint: 'Details view — tools, LLM calls, retrieval trace',
   loadingTrace: 'loading trace…',
   inputPrompt: 'Input prompt',
   toolCallsSection: 'Tool calls',
@@ -119,10 +120,10 @@ const STR = {
 // Suggested prompts on the welcome screen: a short label, the prompt that is
 // sent, and an icon key handled by the hero component.
 export const SUGGESTIONS = [
-  { icon: 'trend', title: 'Shop-visit turnaround', prompt: 'Show the engine shop-visit turnaround trend for the last 12 months.' },
-  { icon: 'bars', title: 'Induction capacity', prompt: 'Compare inductions by engine type this quarter against slot capacity.' },
-  { icon: 'pie', title: 'Lease exposure', prompt: 'Break down the leasing portfolio exposure by region.' },
-  { icon: 'doc', title: 'Manuals & SOPs', prompt: 'What does the SOP say about borescope inspection intervals after a hot-section repair?' },
+  { tag: 'MRO', title: 'Shop-visit turnaround trend', prompt: 'Show the engine shop-visit turnaround trend for the last 12 months.' },
+  { tag: 'CAPACITY', title: 'Inductions vs slot capacity', prompt: 'Compare inductions by engine type this quarter against slot capacity.' },
+  { tag: 'LEASING', title: 'Portfolio exposure by region', prompt: 'Break down the leasing portfolio exposure by region.' },
+  { tag: 'SOP', title: 'Borescope intervals after repair', prompt: 'What does the SOP say about borescope inspection intervals after a hot-section repair?' },
 ];
 
 export function t(key, vars) {

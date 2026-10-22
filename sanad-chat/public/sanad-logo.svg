@@ -1,9 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" width="320" height="64">
-  <g>
-    <path d="M60 4 H12 V39 H52 V29 H22 V14 H55 Z" fill="#3B8BFF"/>
-    <path d="M4 60 H52 V25 H12 V35 H42 V50 H9 Z" fill="#0B5BD3"/>
-    <path d="M12 25 H22 V29 H52 V39 H42 V35 H12 Z" fill="#9FDCFF"/>
-  </g>
-  <text x="80" y="41" font-family="Sora, Inter, Helvetica, Arial, sans-serif" font-weight="800" font-size="32" letter-spacing="5" fill="#EEF4FF">SANAD</text>
-  <text x="82" y="57" font-family="Inter, Helvetica, Arial, sans-serif" font-weight="600" font-size="9" letter-spacing="3" fill="#8AA0C8">A MUBADALA COMPANY</text>
+  <path d="M60 4 H12 V39 H52 V29 H22 V14 H55 Z" fill="#2C72E0"/>
+  <path d="M4 60 H52 V25 H12 V35 H42 V50 H9 Z" fill="#0B5BD3"/>
+  <path d="M12 25 H22 V29 H52 V39 H42 V35 H12 Z" fill="#083F9A"/>
+  <text x="80" y="41" font-family="Manrope, Inter, Helvetica, Arial, sans-serif" font-weight="800" font-size="32" letter-spacing="5" fill="#0a1628">SANAD</text>
+  <text x="82" y="57" font-family="Manrope, Inter, Helvetica, Arial, sans-serif" font-weight="700" font-size="9" letter-spacing="3" fill="#475569">A MUBADALA COMPANY</text>
 </svg>
