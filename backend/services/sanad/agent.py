@@ -395,7 +395,8 @@ async def self_test() -> dict[str, Any]:
     import anthropic
     t0 = time.perf_counter()
     try:
-        r = await client().messages.create(model=MODEL, max_tokens=200, output_config={"effort": "low"},
+        # the plainest request there is, so the check says whether the key and model work and nothing else
+        r = await client().messages.create(model=MODEL, max_tokens=512,
                                            messages=[{"role": "user", "content": "Reply with the single word: ready"}])
         return {"ok": True, "model": r.model, "ms": round((time.perf_counter() - t0) * 1000)}
     except anthropic.APIError as e:

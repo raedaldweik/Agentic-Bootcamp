@@ -91,6 +91,19 @@ The image is slim (the chat, `sanad_app.py`, the assistant, its data and documen
 in about a second. `/api/health` reports whether a model key is present; the start-up log says
 whether the model answered a test call.
 
+**After the first deploy, run the acceptance check** from any machine with Python:
+
+```bash
+cd backend && pip install httpx
+python -m scripts.sanad_smoke https://your-app.up.railway.app      # add --code ... if you set an access code
+```
+
+It asks the storyline's 14 questions as each role at the right shop time, then 11 questions
+that are not in the storyline (free-form, a what-if, a document question, a chart, actions
+that must succeed and actions that must be refused). For each it prints how it was answered,
+the time to the first words and to the complete answer, and the card shown, and it flags
+anything wrong: an answer that fell back to the shop data, a missing card, a slow answer.
+
 ## Each browser is its own user
 
 There is no sign-in. A browser gets an HttpOnly cookie on first contact, and its conversations

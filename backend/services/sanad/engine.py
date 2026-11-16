@@ -276,8 +276,11 @@ class Engine:
                         out = await agent.run(question, ctx, history=[self._public(t) for t in earlier], prefetched=prefetched,
                                               attachments=attachments, emit=emit, fallback_cards=strong)
                         self._failures = 0
+                        self.model_check = {"ok": True, "model": out.get("model"), "ms": (out.get("usage") or {}).get("model_ms")}
                     except agent.Unavailable as e:
                         log.warning("model unavailable (%s); answering directly", e.reason)
+                        if e.reason != "refusal":
+                            self.model_check = {"ok": False, "error": e.public or e.reason}
                         if e.reason == "refusal":
                             out = {"text": e.public, "cards": [], "followups": []}
                         else:
