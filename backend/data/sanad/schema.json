@@ -1,0 +1,296 @@
+{
+  "note": "Synthetic demonstration data. Not Sanad operational data.",
+  "scenario_start": "2026-10-28 09:30",
+  "tables": {
+    "engines": {
+      "description": "Engines in the shop (the command-centre list). One row per engine.",
+      "columns": {
+        "engine_id": "Shop reference, e.g. ENG-204",
+        "engine_type": "Engine model (fictional types TF-35, TF-50)",
+        "esn": "Engine serial number",
+        "customer": "Operator (fictional)",
+        "workscope": "Overhaul, Performance restoration or Hospital visit",
+        "induction_ts": "When the engine was inducted",
+        "committed_tat_days": "Committed turnaround time in days",
+        "committed_completion_ts": "Committed completion (delivery) date and time",
+        "workstation": "Gate and bay where the engine is worked",
+        "planned_hours": "Planned labour hours for the visit",
+        "work_order": "Work order number"
+      }
+    },
+    "schedule_tasks": {
+      "description": "Remaining planned work per engine, as a task network. The forecast is computed from this plus the live events.",
+      "columns": {
+        "engine_id": "Engine",
+        "task_id": "Task code, unique within the engine",
+        "seq": "Order in the plan",
+        "task": "What the task is",
+        "duration_h": "Working hours needed",
+        "calendar": "day = Gate day shift 07:30-17:30 (plus approved overtime); continuous = round-the-clock coverage",
+        "depends_on": "Predecessor task_id (blank for none)",
+        "needs": "External gate: part:<id> (must have arrived), tool:<id> (must be at the gate), release:<job card> (supervisor release)",
+        "planned_start": "Earliest planned start (blank = as soon as predecessors finish)",
+        "job_card": "Job card, where one applies",
+        "resequence_saving_h": "Hours saved on this task when permitted preparatory work is re-sequenced",
+        "disposition_extra_h": "Hours added to this task when a blade repair disposition is in force"
+      }
+    },
+    "bay_slots": {
+      "description": "Reserved workstation windows. The installation window is the booked fan-module reassembly slot.",
+      "columns": {
+        "engine_id": "Engine",
+        "workstation": "Gate and bay",
+        "activity": "What the slot is for",
+        "window_start": "Slot opens",
+        "window_end": "Slot closes (after this the bay is allocated to other work)"
+      }
+    },
+    "parts": {
+      "description": "Part master for the parts that matter to the engines in the shop.",
+      "columns": {
+        "part_id": "Part number",
+        "description": "What it is",
+        "engine_type": "Engine model",
+        "module": "Engine module",
+        "note": "Why it matters"
+      }
+    },
+    "inventory": {
+      "description": "Stock by location. ready_at_gate_ts is when a unit could be at the workstation if it is requested.",
+      "columns": {
+        "part_id": "Part number",
+        "location": "Store",
+        "on_hand": "Units on hand",
+        "stock_status": "Serviceability / hold status",
+        "ready_at_gate_ts": "Earliest time a unit could be at the gate, including any confirmation and transfer (blank if none on hand)",
+        "transfer_cost_usd": "Cost of an authorised transfer (synthetic)",
+        "approval_required": "Who must approve the use of this stock"
+      }
+    },
+    "purchase_orders": {
+      "description": "Open purchase orders for critical parts.",
+      "columns": {
+        "po_id": "Purchase order",
+        "part_id": "Part",
+        "qty": "Quantity",
+        "supplier": "Supplier (fictional)",
+        "engine_id": "Engine the part is for",
+        "work_order": "Work order charged",
+        "deliver_to": "Delivery point"
+      }
+    },
+    "po_events": {
+      "description": "Purchase order history. The latest row per PO gives the current promised arrival.",
+      "columns": {
+        "ts": "When it happened",
+        "po_id": "Purchase order",
+        "event": "What happened",
+        "promised_arrival_ts": "Promised arrival at the delivery point after this event",
+        "note": "Detail",
+        "source": "Who or what recorded it"
+      },
+      "event_time": "ts"
+    },
+    "supplier_quotes": {
+      "description": "Expedite quotations received from suppliers.",
+      "columns": {
+        "ts": "When the quote was received",
+        "quote_ref": "Quotation reference",
+        "po_id": "Purchase order",
+        "option": "What is offered",
+        "arrival_ts": "Arrival at the delivery point if accepted",
+        "fee_usd": "Expedite fee (synthetic)",
+        "valid_until": "Quote validity"
+      },
+      "event_time": "ts"
+    },
+    "tools": {
+      "description": "Tool master.",
+      "columns": {
+        "tool_id": "Tool number",
+        "tool": "Name",
+        "used_for": "Purpose",
+        "calibration_required": "1 if the tool is calibrated",
+        "calibration_due": "Calibration valid to (blank if not required)",
+        "home_location": "Where it normally lives"
+      }
+    },
+    "job_card_tools": {
+      "description": "Tools each job card calls for.",
+      "columns": {
+        "job_card": "Job card",
+        "section": "Section of the job card",
+        "tool_id": "Tool"
+      }
+    },
+    "tool_events": {
+      "description": "Tool custody and sighting history. A camera detection is a sighting, not a custody change.",
+      "columns": {
+        "ts": "When it happened",
+        "tool_id": "Tool",
+        "event": "Issued, Camera detection, Tool request raised, Handover signed or Checked in",
+        "location": "Where the tool was at this event",
+        "custodian": "Who holds custody after this event",
+        "source": "Record that says so",
+        "expected_available_ts": "For an issue: when the tool is expected back",
+        "note": "Detail"
+      },
+      "event_time": "ts"
+    },
+    "job_cards": {
+      "description": "Approved job cards.",
+      "columns": {
+        "job_card": "Job card number",
+        "title": "Task",
+        "revision": "Latest approved revision",
+        "status": "Approval status",
+        "engine_id": "Engine",
+        "module": "Module",
+        "key_care_point": "The care point the job card stresses",
+        "est_hours": "Estimated working hours for the crew",
+        "crew": "Technicians needed",
+        "document": "Source document title"
+      }
+    },
+    "job_card_steps": {
+      "description": "The steps of each job card, in order.",
+      "columns": {
+        "job_card": "Job card",
+        "step_no": "Step number",
+        "title": "Step title",
+        "instruction": "What to do",
+        "confirm": "What to confirm before moving on"
+      }
+    },
+    "readiness_events": {
+      "description": "Readiness checks for a job card. The latest row per check gives its current state.",
+      "columns": {
+        "ts": "When the state was recorded",
+        "job_card": "Job card",
+        "check_no": "Check number (1-6)",
+        "check_name": "The readiness check",
+        "detail": "Current detail",
+        "owner": "Who owns the check",
+        "state": "done, blocked or pending"
+      },
+      "event_time": "ts"
+    },
+    "approvals": {
+      "description": "Decisions recorded by authorised people. The assistant never creates rows here.",
+      "columns": {
+        "ts": "When the decision was recorded",
+        "ref": "Reference",
+        "kind": "expedite, work_release, overtime, resequence or disposition",
+        "subject": "What was decided",
+        "decision": "The decision",
+        "decided_by": "Role that decided",
+        "engine_id": "Engine",
+        "work_order": "Work order charged, if any",
+        "amount_usd": "Amount, if any (synthetic)",
+        "window_start": "For overtime: start",
+        "window_end": "For overtime: end"
+      },
+      "event_time": "ts"
+    },
+    "disposition_dependencies": {
+      "description": "What a finding disposition adds to the plan.",
+      "columns": {
+        "ts": "When the dependency was created",
+        "ref": "Disposition reference",
+        "kind": "process or material",
+        "dependency": "What is now needed",
+        "where": "Gate or store",
+        "state": "Current state"
+      },
+      "event_time": "ts"
+    },
+    "task_events": {
+      "description": "Actual task progress recorded on the shop floor.",
+      "columns": {
+        "ts": "When it happened",
+        "engine_id": "Engine",
+        "task_id": "Task code",
+        "event": "Started or Completed",
+        "note": "Detail"
+      },
+      "event_time": "ts"
+    },
+    "progress_log": {
+      "description": "Labour hours booked per engine. The latest row per engine gives hours completed.",
+      "columns": {
+        "ts": "When booked",
+        "engine_id": "Engine",
+        "hours_completed": "Cumulative labour hours completed"
+      },
+      "event_time": "ts"
+    },
+    "engine_stage_events": {
+      "description": "Repair stage history. The latest row per engine gives the current stage.",
+      "columns": {
+        "ts": "When the stage changed",
+        "engine_id": "Engine",
+        "repair_stage": "Stage",
+        "current_process": "What is happening now"
+      },
+      "event_time": "ts"
+    },
+    "findings": {
+      "description": "Inspection findings raised on the shop floor.",
+      "columns": {
+        "ts": "When recorded",
+        "finding_id": "Finding reference",
+        "engine_id": "Engine",
+        "job_card": "Job card it was found under",
+        "component": "Component",
+        "serial": "Component serial number",
+        "damage": "Type of damage",
+        "recorded_by": "Who recorded it",
+        "standard": "Standard it was assessed against"
+      },
+      "event_time": "ts"
+    },
+    "finding_measurements": {
+      "description": "Measurements taken for each finding, by blade zone.",
+      "columns": {
+        "finding_id": "Finding",
+        "zone": "Blade zone letter",
+        "zone_name": "Zone name",
+        "location": "Where on the blade",
+        "result_mm": "Measured scratch depth in mm",
+        "limit_mm": "Serviceable limit in mm for this zone"
+      }
+    },
+    "inspection_limits": {
+      "description": "Serviceable limits from the Inspection Standards Manual.",
+      "columns": {
+        "manual": "Manual",
+        "reference": "Chapter, revision and table",
+        "component": "Component",
+        "damage": "Damage type",
+        "zone": "Blade zone",
+        "limit_mm": "Serviceable limit in mm",
+        "if_exceeded": "What the manual requires when the limit is exceeded"
+      }
+    },
+    "staff": {
+      "description": "People in the scenario, by role identifier. No personal names are held.",
+      "columns": {
+        "staff_id": "Role identifier",
+        "role": "Role",
+        "area": "Where they work",
+        "qualifications": "Relevant qualifications",
+        "assigned_job_card": "Job card they are assigned to, if any",
+        "assigned_engine": "Engine they are assigned to, if any"
+      }
+    },
+    "approval_matrix": {
+      "description": "Who may approve what, from the Approval Authority Matrix (QP-014).",
+      "columns": {
+        "action": "The action or decision",
+        "authority": "Role that may approve it",
+        "cannot_approve": "Roles that may not",
+        "reference": "Where it is written"
+      }
+    }
+  }
+}

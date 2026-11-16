@@ -1,0 +1,7 @@
+ts,engine_id,repair_stage,current_process
+2026-10-25 08:00,ENG-201,"Repair, Core Module",Core module repair; reassembly from 2 Nov
+2026-10-26 08:00,ENG-204,"Disassembly, Fan Module",Fan module disassembly; fan blade removal next (JC-FAN-204)
+2026-10-28 13:00,ENG-204,"Disassembly, Fan Module",Fan blade removal in progress (JC-FAN-204)
+2026-10-29 03:00,ENG-204,"Inspection, Fan Blades","Blade cleaning, NDT and repair; P-4582 fit and reassembly from 3 Nov"
+2026-10-24 08:00,ENG-209,"Inspection, LPT Module",LPT module inspection; repair from 5 Nov
+2026-10-27 08:00,ENG-215,"Assembly, Final",Final assembly; test cell run from 30 Oct

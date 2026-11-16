@@ -1,0 +1,3 @@
+ts,engine_id,task_id,event,note
+2026-10-28 13:00,ENG-204,FBR,Started,Fan blade removal started at Gate 1 (JC-FAN-204)
+2026-10-29 03:00,ENG-204,FBR,Completed,All blades removed and inspected; one finding raised

@@ -1,48 +1,142 @@
-# Sanad AI — standalone chat on SAS Retrieval Agent Manager
+# Sanad MRO Intelligence Hub
 
-The Agentic AI Hackathon's chatbot (the **Hackathon Agent** tab, `frontend/src/ram/`) on its own,
-in the Sanad (a Mubadala company) brand. Same glass design, same layout and the same features;
-the EHS logo is replaced by the official Sanad logo, the SAS logo is removed, and the colours are
-Sanad's. English only. Nothing else from the hackathon app is included.
+The Sanad chat (the Agentic AI Hackathon chatbot design, in the Sanad brand) with a working
+assistant behind it: the **Sanad Digital Assistant** for the engine shop. It answers questions
+about engine status, delivery risk, recovery options, job cards, tools, inspection findings and
+approvals from shop data and approved documents, for three roles, by typing or by voice.
 
-## What is in it
+It is not a script. Every answer is worked out from the data at the moment it is asked, so
+questions outside the demonstration storyline work too. The data itself is synthetic.
 
-| Piece | Where |
+## What it does
+
+| | |
 |---|---|
-| Header: Sanad lockup top left, eyebrow, title, accent line (no partner logo) | `src/App.jsx`, `src/ram/Logo.jsx` |
-| The chat page: recent conversations, agent / collection dropdown, connection status and sign-in, messages with the live agent activity, attach, voice, send | `src/ram/RamPage.jsx` |
-| Answer card: markdown, interactive SVG charts, VA report snapshots, source chips, tool-call trace, usage, the details popup | `src/ram/ResponseCard.jsx`, `ChartCard.jsx`, `ReportCard.jsx`, `ToolCallTrace.jsx`, `QueryDetails.jsx`, `SourceViewer.jsx` |
-| Sign-in for RAM deployments that need it (Keycloak device code, Viya SASLogon code) | `src/ram/SignIn.jsx` |
-| The hackathon glass stylesheet in the Sanad palette | `src/index.css` (`:root`) |
-| Every UI string, and the suggestion chips | `src/lib/strings.js` |
+| **Three roles** | Engine Shop Manager, Technician, Supervisor, chosen from the "Asking as" dropdown. The role sets the suggested questions and what the assistant may do on that person's behalf. |
+| **Shop time** | A demonstration clock with six moments of the story (the delivery slips, the recovery is approved, the tool arrives, the finding is recorded, the plan is reassessed) and any other time. The data is shown as it stood at that time, so the same question changes its answer through the day. |
+| **Visual answers** | A short answer plus a card: status tables, the critical path, option comparisons, readiness checklists, tool custody, job card steps, and a blade inspection view with each zone against its limit. Charts on request. |
+| **Next questions** | Two or three one-tap follow-ups docked above the input after every answer. |
+| **Voice** | Tap the microphone and speak. Words appear as they are heard, shop ids are tidied ("t one one seven" becomes T-117), and the question sends itself after a short pause that can be cancelled. "Read aloud" speaks the answers. Chrome, Edge and Safari. |
+| **Actions, with limits** | The assistant can raise a tool handover request, draft a finding, route a deviation evidence package, submit a recovery option and confirm job card steps. Each creates a *pending* record in the Notebook. It cannot approve, certify, accept or release anything, and the role rules are enforced in code. |
+| **Grounding** | Each answer lists the documents it rests on, and the details panel shows every lookup, model call and timing. |
+| **Any question** | Beyond the standard views the assistant can query the shop tables (read-only SQL), search the documents, and run what-if schedules. |
 
-The backend contract is unchanged: the same `/api/ram/*` endpoints as the hackathon app
-(`backend/routers/ram.py`), so anything that works on the hackathon's RAM page works here.
+## How it stays fast
+
+1. A small router recognises the common questions and fetches the matching view in a few
+   milliseconds, before the model is called. The card is on screen in under half a second.
+2. The model receives that view with the question, so most answers take **one** model call.
+3. The answer streams as it is written, and answers are short by instruction: the card carries
+   the table, the text says what it means.
+4. The instructions, data schema and tool definitions never change between questions, so they
+   are served from the prompt cache.
+5. If the model is slow, rate limited or down, the question is answered straight from the shop
+   data and the answer says so. After repeated failures the model is skipped for 30 seconds so
+   nobody waits on a timeout.
+
+Without a model key the standard questions still work (answered in milliseconds from the data);
+free-form questions, what-ifs and actions need the key.
 
 ## Run it
 
 ```bash
+# backend (Python 3.11+)
+cd backend
+pip install -r requirements-sanad.txt
+export ANTHROPIC_API_KEY=...            # optional for a first look, needed for free-form questions
+uvicorn sanad_app:app --port 8000
+
+# chat, in another terminal
 cd sanad-chat
 npm install
-npm run dev            # http://localhost:5174
+npm run dev                             # http://localhost:5174, proxies /api to :8000
 ```
 
-**Nothing else running?** The app notices that no backend answers `/api/ram/health` and switches
-to **Showcase mode**: an in-browser stand-in for RAM with three Sanad-flavoured agents, two
-collections, scripted answers with charts, sources and a trace that fills in step by step. Every
-figure is synthetic and every answer says so. The status pill in the chat card shows the mode.
-`VITE_DEMO=true npm run dev` forces it even when a backend is up.
+`npm run build` writes `sanad-chat/dist`, which `sanad_app` serves itself, so in production
+there is one process and one port.
 
-**Against the real backend:** start it as in the root README (`uvicorn main:app --port 8000` in
-`backend/`); the dev server proxies `/api` to it. `RAM_MOCK=true` on the backend gives the
-backend's own mock; `RAM_API_URL` (+ auth) points it at a live SAS Retrieval Agent Manager.
+## Settings
 
-## Deploy it
+All are environment variables on the backend. Only the first matters to start.
 
-`Dockerfile.sanad` at the repo root builds this folder and serves it from the same FastAPI
-backend (it sets `FRONTEND_DIST=/app/sanad-chat/dist`). On Railway, create a second service
-from the same repo and set its Dockerfile path to `Dockerfile.sanad`; the environment variables
-are the same as the hackathon service.
+| Variable | Default | What it does |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | none | The model key. Without it only the standard questions are answered. |
+| `SANAD_MODEL` | `claude-opus-5-5` | The model. A smaller model such as `claude-haiku-5-5` answers sooner at some cost in judgement on unusual questions. |
+| `SANAD_EFFORT` | `low` | How much the model deliberates: `low`, `medium` or `high`. Lower is faster. |
+| `SANAD_FAST_MODE` | off | `true` requests fast output on models that offer it. A premium-priced option; if the API rejects it the service carries on without it. |
+| `SANAD_FAST_PATH` | off | `true` answers an exact standard question straight from its view, with no model call. Instant, but the wording is fixed. |
+| `SANAD_ACCESS_CODE` | none | If set, the chat asks for this code before it can be used. Recommended on a public address, because every question spends the model key. |
+| `SANAD_RATE_PER_MIN` | `30` | Questions per browser per minute. |
+| `SANAD_GLOBAL_RATE_PER_MIN` | `600` | Questions per minute across everyone. |
+| `SANAD_MAX_CONCURRENCY` | `24` | Model calls in flight at once. More than this queue briefly. |
+| `SANAD_STATE_FILE` | `backend/data/runtime/sanad_state.json` | Where conversations and notebooks are saved. Point it at a mounted volume to keep them across deploys. `SANAD_PERSIST=false` keeps them in memory only. |
+| `SANAD_FALLBACKS` | on | `false` switches off the server-side fallback model for declined requests. |
+| `SANAD_AGENT` | `true` | `false` serves the chat on SAS Retrieval Agent Manager instead (see below). |
+
+## Deploy on Railway
+
+1. Create a service from this repository.
+2. In the service settings, set the **config file path** to `/railway.sanad.toml`. It builds
+   `Dockerfile.sanad` and sets the health check. (The repository's default `railway.toml` builds
+   the hackathon app.) If your Railway project has no such setting, set the variable
+   `RAILWAY_DOCKERFILE_PATH=Dockerfile.sanad` instead.
+3. Add the variables: `ANTHROPIC_API_KEY`, and `SANAD_ACCESS_CODE` if the address is public.
+4. Keep it at **one replica**. Questions in flight are held in memory by the process that
+   took them.
+5. Optional: mount a volume and set `SANAD_STATE_FILE` to a path on it, so conversations
+   survive a redeploy.
+
+The image is slim (the chat, `sanad_app.py`, the assistant, its data and documents) and starts
+in about a second. `/api/health` reports whether a model key is present; the start-up log says
+whether the model answered a test call.
+
+## Each browser is its own user
+
+There is no sign-in. A browser gets an HttpOnly cookie on first contact, and its conversations
+and notebook are visible to no one else. "Reset demo" in the Notebook forgets them.
+
+## Where things are
+
+| Piece | Where |
+|---|---|
+| Shop data: 24 tables as CSV, with their descriptions | `backend/data/sanad/`, built by `backend/scripts/build_sanad_scenario.py` |
+| Approved documents: job card, maintenance instructions, inspection standards, procedures | `backend/data/sanad/docs/*.md` |
+| The shop as of a moment, and the schedule that forecasts each engine | `backend/services/sanad/ops.py` |
+| The twelve standard views, each with its card | `backend/services/sanad/views.py` |
+| Tools: views, read-only SQL, document search, charts, role-gated actions | `backend/services/sanad/tools.py` |
+| The model loop, the instructions, streaming | `backend/services/sanad/agent.py` |
+| Question router (pre-fetch) and the no-model answers | `router.py`, `direct.py` |
+| Conversations, limits, fallback, persistence | `backend/services/sanad/engine.py` |
+| Roles, suggested questions and the story moments | `backend/services/sanad/scenario.py` |
+| HTTP API (`/api/assistant/*`) and the standalone app | `backend/routers/sanad.py`, `backend/sanad_app.py` |
+| The chat page, cards, menus, voice | `sanad-chat/src/hub/` |
+
+To change the story, edit `build_sanad_scenario.py` and run
+`python -m scripts.build_sanad_scenario` from `backend/`. Forecasts, statuses and option
+finish dates are computed from the events by the schedule, not typed in, so they follow.
+
+## Tests
+
+```bash
+cd backend
+pip install pytest
+python -m pytest tests/sanad -q
+```
+
+176 tests: the read-only SQL guard, the schedule against the storyline, every view at every
+moment, the router, the role rules, the HTTP API, limits and the access code. The model path
+runs against a local stand-in for the Anthropic API that speaks the real streaming format, so
+the real SDK, the tool loop, streaming, retries, the outage fallback and stop are exercised
+without a key.
+
+## Running on SAS Retrieval Agent Manager instead
+
+Set `SANAD_AGENT=false` and the `RAM_*` variables from the root README. The same chat then
+talks to RAM through `/api/ram/*` and shows RAM's agents and collections
+(`src/ram/RamPage.jsx`). The chat decides which page to show by asking the server what it
+serves, so the label on screen always matches what is behind it. With no backend at all
+(`npm run dev` alone) it falls back to the RAM showcase with scripted answers.
 
 ## Brand
 

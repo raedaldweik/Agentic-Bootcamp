@@ -1,0 +1,4 @@
+job_card,title,revision,status,engine_id,module,key_care_point,est_hours,crew,document
+JC-FAN-204,Engine fan blade removal,C,Approved,ENG-204,Fan module,Avoid damaging the O-ring and adjacent parts,14,2,"JC-FAN-204 Fan Blade Removal, Revision C"
+JC-FAN-231,Install fan retaining ring P-4582,B,Approved,ENG-204,Fan module,Fit only a ring with confirmed configuration,2,2,"Approved Maintenance Instructions: Fan Module, Revision C"
+JC-FAN-232,Fan module reassembly,C,Approved,ENG-204,Fan module,Refit blades in mapped slot order,4,2,"Approved Maintenance Instructions: Fan Module, Revision C"

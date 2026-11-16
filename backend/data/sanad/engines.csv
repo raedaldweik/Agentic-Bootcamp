@@ -1,0 +1,5 @@
+engine_id,engine_type,esn,customer,workscope,induction_ts,committed_tat_days,committed_completion_ts,workstation,planned_hours,work_order
+ENG-201,TF-35,ESN-326918,Altair Airways,Performance restoration,2026-09-22 18:00,45,2026-11-06 18:00,"Gate 2, Core Module Bay",610,WO-2026-04388
+ENG-204,TF-35,ESN-327104,Meridian Air,Overhaul,2026-09-24 18:00,40,2026-11-03 18:00,"Gate 1, Fan Module Bay",540,WO-2026-04417
+ENG-209,TF-50,ESN-510233,Zephyr Airlines,Overhaul,2026-09-25 18:00,50,2026-11-14 18:00,"Gate 4, LPT Module Bay",720,WO-2026-04431
+ENG-215,TF-35,ESN-326771,Borealis Airlines,Hospital visit,2026-09-26 18:00,35,2026-10-31 18:00,"Gate 5, Final Assembly",430,WO-2026-04452

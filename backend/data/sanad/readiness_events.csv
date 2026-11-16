@@ -1,0 +1,11 @@
+ts,job_card,check_no,check_name,detail,owner,state
+2026-10-27 15:00,JC-FAN-204,1,Work authorisation,Required before release,Supervisor,done
+2026-10-27 15:05,JC-FAN-204,2,Job card JC-FAN-204,"Available, revision C",Planning,done
+2026-10-27 15:10,JC-FAN-204,3,Technician qualification,Confirmed for fan blade task,Training records,done
+2026-10-27 15:15,JC-FAN-204,4,Tool T-117,Planned from the main tool crib,Tool control,pending
+2026-10-27 15:15,JC-FAN-204,5,Work area,Gate 1 bay reserved,Supervisor,pending
+2026-10-27 15:15,JC-FAN-204,6,Safety precautions,To confirm before start,Technician,pending
+2026-10-28 09:20,JC-FAN-204,4,Tool T-117,"Not at Gate 1, tool request raised",Tool control,blocked
+2026-10-28 12:58,JC-FAN-204,4,Tool T-117,Checked in at the Gate 1 tool board; calibration in date,Tool control,done
+2026-10-28 12:59,JC-FAN-204,5,Work area,Gate 1 bay confirmed clear,Supervisor,done
+2026-10-28 13:00,JC-FAN-204,6,Safety precautions,Confirmed at start by TEC-1142,Technician,done

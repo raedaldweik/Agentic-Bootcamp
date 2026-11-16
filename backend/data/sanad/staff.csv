@@ -1,0 +1,9 @@
+staff_id,role,area,qualifications,assigned_job_card,assigned_engine
+MGR-0107,Engine Shop Manager,Command centre,Shop management; overtime authorisation,,
+SUP-0210,Supervisor,Gates 1-3,Work release; re-sequencing of permitted preparatory work,,ENG-204
+TEC-1142,Technician,Gate 1,TF-35 fan blade removal and inspection,JC-FAN-204,ENG-204
+TEC-1163,Technician,Gate 1,TF-35 fan module,JC-FAN-204,ENG-204
+TEC-1187,Technician,Gate 3,TF-35 fan module; spare module repair,JC-FAN-198,
+QE-0318,Quality Engineer,Engineering / Quality,Deviation and disposition authority under QP-014,,
+PRC-0044,Procurement Lead,Procurement,Supplier expedite spend,,
+LOG-0061,Logistics Coordinator,Logistics,Freight confirmation,,

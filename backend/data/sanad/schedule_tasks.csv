@@ -1,0 +1,15 @@
+engine_id,task_id,seq,task,duration_h,calendar,depends_on,needs,planned_start,job_card,resequence_saving_h,disposition_extra_h
+ENG-204,FBR,1,Fan blade removal and inspection,14,day,,tool:T-117;release:JC-FAN-204,2026-10-28 07:30,JC-FAN-204,0,0
+ENG-204,BLP,2,"Blade processing: clean, NDT, repair, moment weigh, map",110,continuous,FBR,,,,0,8
+ENG-204,INS,3,P-4582 installation (fan retaining ring),2,continuous,BLP,part:P-4582,,JC-FAN-231,0,0
+ENG-204,RFM,4,Fan module reassembly,4,continuous,INS,,,JC-FAN-232,2,0
+ENG-204,FTR,5,Final test and release,4,continuous,RFM,,,,2,0.5
+ENG-201,CMR,1,Core module reassembly,60,continuous,,,2026-11-02 09:00,,0,0
+ENG-201,FAS,2,Final assembly,24,continuous,CMR,,,,0,0
+ENG-201,FTR,3,Final test and release,12,continuous,FAS,,,,0,0
+ENG-209,LPR,1,LPT module repair,120,continuous,,,2026-11-05 03:00,,0,0
+ENG-209,MRA,2,Module reassembly,48,continuous,LPR,,,,0,0
+ENG-209,FAS,3,Final assembly,24,continuous,MRA,,,,0,0
+ENG-209,FTR,4,Final test and release,12,continuous,FAS,,,,0,0
+ENG-215,FAC,1,Final assembly close-up,24,continuous,,,2026-10-29 06:00,,0,0
+ENG-215,FTR,2,Final test and release,10,continuous,FAC,,,,0,0

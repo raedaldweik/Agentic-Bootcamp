@@ -1,0 +1,7 @@
+part_id,location,on_hand,stock_status,ready_at_gate_ts,transfer_cost_usd,approval_required
+P-4582,Main Store AUH,0,No stock,,,
+P-4582,AUH-Satellite Store,1,Serviceable; available 28 Oct 2026; configuration confirmation required before issue,2026-11-04 00:00,300,Inventory and configuration confirmation
+P-2210,Gate 1 stores,6,Serviceable,2026-10-28 08:00,0,None
+P-3391,Main Store AUH,14,Serviceable,2026-10-28 12:00,0,None
+P-7714,Main Store AUH,9,Serviceable,2026-10-28 12:00,0,None
+P-6120,Main Store AUH,0,No stock,,,

@@ -1,0 +1,11 @@
+action,authority,cannot_approve,reference
+Deviation or concession,Authorised Engineering or Quality role,Technician; Supervisor; Sanad Digital Assistant,QP-014 section 4.2
+Acceptance or disposition of a finding,Authorised Engineering or Quality role,Technician; Supervisor; Sanad Digital Assistant,QP-014 section 4.3
+Certification of work,Certifying staff,Anyone else; Sanad Digital Assistant,QP-014 section 4.5
+Release of an engine,Certifying staff with Quality release,Anyone else; Sanad Digital Assistant,QP-014 section 4.6
+Work release at a workstation,Supervisor,Technician; Sanad Digital Assistant,QP-014 section 5.1
+Overtime,Engine Shop Manager,Supervisor; Technician; Sanad Digital Assistant,QP-014 section 5.3
+Supplier expedite spend,"Procurement, with logistics confirmation",Shop roles; Sanad Digital Assistant,QP-014 section 6.1
+Alternate stock transfer,"Inventory control, with configuration confirmation",Shop roles; Sanad Digital Assistant,QP-014 section 6.2
+Re-sequencing of permitted preparatory work,Supervisor,Technician; Sanad Digital Assistant,QP-014 section 5.2
+Tool custody handover,"Releasing custodian and receiving person, both signing",Camera detection alone; Sanad Digital Assistant,TC-003 section 3.4

@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react';
 import RamPage from './ram/RamPage';
+import HubPage from './hub/HubPage';
 import { Lockup } from './ram/Logo';
 import { useStrings } from './lib/strings';
+import { detect } from './lib/hubApi';
 
 function Bokeh() {
   return (
@@ -18,15 +21,15 @@ function Bokeh() {
 }
 
 /* The hackathon header: brand lockup top left, eyebrow + title + accent line. No partner logo. */
-function Header() {
+function Header({ hub }) {
   const { t } = useStrings();
   return (
     <header className="app-header">
       <Lockup />
       <div className="title-block">
-        <div className="header-eyebrow">{t('eyebrow')}</div>
+        <div className="header-eyebrow">{hub ? t('hubEyebrow') : t('eyebrow')}</div>
         <div className="title-row">
-          <h1 className="app-title"><b>{t('appTitle')}</b></h1>
+          <h1 className="app-title"><b>{hub ? t('hubTitle') : t('appTitle')}</b></h1>
           <div className="accent-line" />
         </div>
       </div>
@@ -35,13 +38,20 @@ function Header() {
   );
 }
 
+/* Which assistant is behind the chat is decided once, by asking the server: the built-in
+   Sanad Digital Assistant when it is served, otherwise SAS Retrieval Agent Manager (or the
+   showcase when nothing answers). The label on screen follows what is really there. */
 export default function App() {
+  const [mode, setMode] = useState(null);         // null while asking · { hub: health } · { ram: true }
+  useEffect(() => { detect().then((health) => setMode(health ? { hub: health } : { ram: true })); }, []);
+  useEffect(() => { if (mode?.hub) document.title = 'Sanad MRO Intelligence Hub'; }, [mode]);
   return (
     <div className="app-shell">
       <Bokeh />
-      <Header />
+      <Header hub={!mode || !!mode.hub} />
       <main className="flex-1 min-h-0 relative z-[1]">
-        <RamPage />
+        {mode?.hub && <HubPage health={mode.hub} />}
+        {mode?.ram && <RamPage />}
       </main>
     </div>
   );

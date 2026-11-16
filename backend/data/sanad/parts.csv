@@ -1,0 +1,6 @@
+part_id,description,engine_type,module,note
+P-4582,"Fan retaining ring, front",TF-35,Fan module,Required before fan module reassembly; no approved substitute
+P-2210,Spinner O-ring set,TF-35,Fan module,Replace on every spinner removal
+P-3391,Fan blade lock plate,TF-35,Fan module,Inspect and reuse within limits
+P-7714,Annulus filler,TF-35,Fan module,Inspect and reuse within limits
+P-6120,LPT stage 2 seal segment,TF-50,LPT module,On order for ENG-209

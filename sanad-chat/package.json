@@ -2,7 +2,7 @@
   "name": "sanad-chat",
   "private": true,
   "version": "1.0.0",
-  "description": "Sanad AI — standalone chat experience for SAS Retrieval Agent Manager, in the Sanad (Mubadala) brand",
+  "description": "Sanad MRO Intelligence Hub: the Sanad chat and its engine shop assistant",
   "type": "module",
   "scripts": {
     "dev": "vite",

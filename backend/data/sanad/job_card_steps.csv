@@ -1,0 +1,7 @@
+job_card,step_no,title,instruction,confirm
+JC-FAN-204,1,Verify before starting,"Confirm the work is released, revision C is at the work stand, and all six tools are on the Gate 1 tool board, including T-117.","Release, revision and tools confirmed"
+JC-FAN-204,2,Protect the work area,"Fit the protective cover kit (K-014) over the fan case liner, spinner and adjacent blades. Position the padded blade storage rack (T-529) beside the stand.",Covers fitted and rack in position
+JC-FAN-204,3,Remove the spinner,Remove the spinner fasteners with the torque wrench (T-063) in the sequence shown. Lift the spinner clear without touching the O-ring seat. Bag and tag the fasteners and discard the O-ring.,Spinner removed; O-ring seat undamaged
+JC-FAN-204,4,Release the lock plates,"Release the blade retaining lock plates with the lock plate removal tool (T-208), one blade position at a time. Do not lever against the disk.",Lock plates released and tagged by position
+JC-FAN-204,5,Extract the blades,Support each blade with the blade support fixture (T-311) and pull it from its disk slot with the fan blade extractor (T-117). Place each blade on the rack in slot order.,All blades on the rack in slot order
+JC-FAN-204,6,Inspect and record,"Inspect each blade against Inspection Standards Manual Chapter 72, Revision F, Table 72-21-3. Record any finding with depth, length and position. Do not disposition a finding.",Inspection recorded; findings raised

@@ -1,0 +1,6 @@
+ts,po_id,event,promised_arrival_ts,note,source
+2026-10-12 10:15,PO-2026-11873,Order confirmed,2026-11-03 12:00,Standard freight to Gate 1 receiving,Procurement
+2026-10-28 08:40,PO-2026-11873,Delivery date updated,2026-11-04 20:00,Supplier rescheduled dispatch; arrival moved from 3 Nov 12:00 to 4 Nov 20:00,Supplier portal
+2026-10-28 11:05,PO-2026-11873,Expedite approved,2026-11-03 10:00,"Priority air freight under EXQ-0592; expedite fee USD 2,400 recorded against WO-2026-04417",Procurement
+2026-10-28 11:20,PO-2026-11873,"Shipped, in transit",2026-11-03 10:00,Airway bill issued; expected at Gate 1,Logistics
+2026-10-20 09:30,PO-2026-11902,Order confirmed,2026-11-04 12:00,Standard freight to Gate 4 receiving,Procurement

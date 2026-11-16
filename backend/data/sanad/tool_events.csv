@@ -1,0 +1,13 @@
+ts,tool_id,event,location,custodian,source,expected_available_ts,note
+2026-10-27 16:00,T-208,Checked in,Gate 1 tool board,Gate 1 tool board,Tool control,,
+2026-10-27 16:00,T-063,Checked in,Gate 1 tool board,Gate 1 tool board,Tool control,,Calibration label in date
+2026-10-27 16:00,T-311,Checked in,Gate 1 tool board,Gate 1 tool board,Tool control,,
+2026-10-27 16:00,T-529,Checked in,Gate 1 bay,Gate 1 bay,Tool control,,
+2026-10-27 16:00,K-014,Checked in,Gate 1 stores,Gate 1 stores,Tool control,,
+2026-10-27 07:22,T-117,Issued,Gate 3,TEC-1187,Issuance log,2026-10-28 13:00,Issued from the main tool crib for a spare fan module task (JC-FAN-198)
+2026-10-28 09:12,T-117,Camera detection,Gate 3 bench,TEC-1187,Gate 3 bench camera,2026-10-28 13:00,Detection only; custody unchanged
+2026-10-28 09:20,T-117,Tool request raised,Gate 3 bench,TEC-1187,Tool control,2026-10-28 13:00,TR-2026-0718: requested at Gate 1 for JC-FAN-204 by TEC-1142
+2026-10-28 12:50,T-117,Handover signed,Gate 3 bench,SUP-0210,Tool control,,Identity label verified at the bench; custody signed over by TEC-1187
+2026-10-28 12:58,T-117,Checked in,Gate 1 tool board,Gate 1 tool board,Tool control,,Arrival recorded at Gate 1; calibration label in date
+2026-10-26 14:00,T-402,Checked in,Gate 3 bench,Gate 3 bench,Tool control,,
+2026-10-26 14:00,T-615,Checked in,Gate 3 bench,Gate 3 bench,Tool control,,

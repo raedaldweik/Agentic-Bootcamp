@@ -1,0 +1,4 @@
+finding_id,zone,zone_name,location,result_mm,limit_mm
+FND-2026-0412,A,Tip,"Leading edge, outer span",0.14,0.25
+FND-2026-0412,B,Mid-span,"Leading edge, mid span",0.8,0.25
+FND-2026-0412,C,Root,"Leading edge, inner span",0.22,0.25

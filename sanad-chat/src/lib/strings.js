@@ -6,6 +6,8 @@ const STR = {
   mubadala: 'A Mubadala company',
   eyebrow: 'Engineering intelligence on SAS Retrieval Agent Manager',
   poweredBy: 'Powered by SAS Retrieval Agent Manager',
+  hubTitle: 'Sanad MRO Intelligence Hub',
+  hubEyebrow: 'Engine shop operations assistant',
 
   connecting: 'Connecting…',
   connected: 'Connected',

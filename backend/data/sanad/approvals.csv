@@ -1,0 +1,6 @@
+ts,ref,kind,subject,decision,decided_by,engine_id,work_order,amount_usd,window_start,window_end
+2026-10-28 11:05,EXQ-0592,expedite,Recovery option B: expedite the supplier shipment of P-4582,Approved,"Procurement, with logistics confirmation",ENG-204,WO-2026-04417,2400,,
+2026-10-28 13:00,WR-2026-2204,work_release,Work release for JC-FAN-204 at Gate 1,Released,Supervisor SUP-0210,ENG-204,,,,
+2026-10-28 13:10,OT-2026-0311,overtime,Overtime for two technicians at Gate 1 to complete fan blade removal,Approved,Engine Shop Manager MGR-0107,ENG-204,WO-2026-04417,,2026-10-28 17:30,2026-10-29 03:00
+2026-10-28 13:20,RSQ-0147,resequence,Recovery option C: re-sequence permitted preparatory work,Authorised,Supervisor SUP-0210,ENG-204,,0,,
+2026-10-29 08:30,DEV-2026-0093,disposition,"Finding FND-2026-0412: blend repair to repair scheme RS-72-21-08, then re-inspection",Disposition issued,Quality Engineer QE-0318 (Engineering / Quality),ENG-204,,,,

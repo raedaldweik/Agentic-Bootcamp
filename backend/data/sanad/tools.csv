@@ -1,0 +1,9 @@
+tool_id,tool,used_for,calibration_required,calibration_due,home_location
+T-117,Fan blade extractor,Pulling each blade out of its disk slot,1,2027-01-15,Main tool crib
+T-208,Lock plate removal tool,Releasing the blade retaining lock plates,0,,Gate 1 tool board
+T-063,"Torque wrench, 50-250 lbf-in",Removing and refitting the spinner fasteners,1,2026-12-12,Gate 1 tool board
+T-311,Blade support fixture,Supporting the blade so the root is not damaged,0,,Gate 1 tool board
+T-529,Padded blade storage rack,Keeping the removed blades in slot order,0,,Gate 1 bay
+K-014,Protective cover kit,"Covering the fan case liner, spinner and adjacent blades",0,,Gate 1 stores
+T-402,Borescope kit,Internal visual inspection,1,2026-11-20,Gate 3 bench
+T-615,Moment weighing rig,Blade moment weighing,1,2027-03-02,Gate 3 bench

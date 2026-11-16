@@ -1,0 +1,4 @@
+manual,reference,component,damage,zone,limit_mm,if_exceeded
+Inspection Standards Manual,"Chapter 72, Revision F, Table 72-21-3",Fan 1 blade,Leading-edge scratch,A (tip),0.25,"Measure depth, length and position; raise a finding; disposition by Engineering / Quality"
+Inspection Standards Manual,"Chapter 72, Revision F, Table 72-21-3",Fan 1 blade,Leading-edge scratch,B (mid-span),0.25,"Measure depth, length and position; raise a finding; disposition by Engineering / Quality"
+Inspection Standards Manual,"Chapter 72, Revision F, Table 72-21-3",Fan 1 blade,Leading-edge scratch,C (root),0.25,"Measure depth, length and position; raise a finding. A crack at the blade base requires rejection regardless of scratch size"
