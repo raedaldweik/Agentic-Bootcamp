@@ -382,6 +382,35 @@
   .hub-page .hub-mic { width: 48px; height: 44px; }
   .hub-page .hub-send { width: 46px; height: 44px; }
 }
+/* the placeholder never wraps: with content-sized fields a long one would make the empty input tall */
+.hub-page .hub-textarea::placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── phones: give the answer the room ───────────────────────────────── */
+@media (max-width: 700px) {
+  .app-shell .app-header { padding: 8px 12px 0; gap: 10px; }
+  .app-shell .brand-logo { height: 36px; min-height: 0; }
+  .app-shell .header-eyebrow { display: none; }
+  .app-shell .app-title { font-size: 15px; }
+  .app-shell .accent-line { display: none; }
+  .hub-page .ram-chat { padding: 8px; }
+  .hub-page .hub-head { padding: 6px 10px; gap: 6px 8px; }
+  .hub-page .hub-head-controls { gap: 6px; flex: 1 1 100%; justify-content: flex-start; }
+  .hub-page .hub-scroll { padding: 12px 10px; }
+  .hub-page .hub-scroll .max-w-\[70\%\] { max-width: 86%; }
+  .hub-page .hub-bot-avatar, .hub-page .hub-user-avatar { width: 26px; height: 26px; }
+  .hub-page .hub-card-body { padding: 12px 12px 14px; }
+  .hub-page .hub-tiles { grid-template-columns: 1fr 1fr; }
+  .hub-page .hub-table { font-size: 11.5px; }
+  .hub-page .hub-table th, .hub-page .hub-table td { padding: 6px 7px; }
+  /* next questions: one row that scrolls sideways, so they cost one line of height */
+  .hub-page .hub-dock { flex-wrap: nowrap; overflow-x: auto; padding: 6px 10px 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .hub-page .hub-dock::-webkit-scrollbar { display: none; }
+  .hub-page .hub-dock-label { display: none; }
+  .hub-page .hub-followup { flex: none; white-space: nowrap; padding: 9px 13px; }
+  .hub-page .hub-footnote { font-size: 9.5px; margin-top: 5px; line-height: 1.35; }
+  .hub-page .px-5.pb-3 { padding: 6px 10px 8px; }
+  .hub-page .status-pill { padding: 5px 10px; font-size: 10.5px; }
+}
 @media (max-width: 560px) {
   .hub-page .hub-control-text { display: none; }
   .hub-page .hub-control { padding: 5px; }

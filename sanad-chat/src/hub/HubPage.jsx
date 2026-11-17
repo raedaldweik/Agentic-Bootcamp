@@ -175,6 +175,14 @@ function Hub({ health, onLocked }) {
   const [autoSend, setAutoSend] = useState(null);         // { text } while a spoken question waits to be sent
   const [fresh, setFresh] = useState(null);               // the answer that just arrived: { id, text, cards } as last shown live
 
+  const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 700px)');
+    const on = () => setNarrow(mq.matches);
+    mq.addEventListener?.('change', on);
+    return () => mq.removeEventListener?.('change', on);
+  }, []);
+
   const inputRef = useRef(null);
   const scrollRef = useRef(null);
   const contentRef = useRef(null);
@@ -435,7 +443,7 @@ function Hub({ health, onLocked }) {
             <span className="text-sm font-bold truncate" style={{ color: 'var(--text)' }}>{active?.title || NEW_TITLE}</span>
           </div>
           <div className="hub-head-controls">
-            {!health.llm && <span className="status-pill" style={{ color: 'var(--amber)' }} title="No language model key is configured on the server. The standard questions are answered from the shop data.">Standard answers only</span>}
+            {!health.llm && <span className="status-pill" style={{ color: 'var(--amber)' }} title="No language model key is configured on the server. The standard questions are answered from the shop data.">{narrow ? 'No model key' : 'Standard answers only'}</span>}
             {health.llm && health.modelCheck?.ok === false && <span className="status-pill" style={{ color: 'var(--amber)' }} title={health.modelCheck.error || ''}>Model unavailable</span>}
             {config && <PersonaMenu personas={config.personas} value={persona} onChange={setPersona} />}
             {config && <ClockMenu moments={config.moments} value={shopTime} onChange={setShopTime} clock={config.clock} />}
@@ -553,7 +561,7 @@ function Hub({ health, onLocked }) {
               onChange={(e) => { cancelAutoSend(); setInput(e.target.value); }}
               onFocus={() => autoSend && cancelAutoSend()}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-              placeholder={voice.listening ? 'Listening…' : `Ask the Sanad Digital Assistant${me ? ` as the ${me.title}` : ''}…`}
+              placeholder={voice.listening ? 'Listening…' : narrow ? 'Ask a question…' : `Ask the Sanad Digital Assistant${me ? ` as the ${me.title}` : ''}…`}
               maxLength={config?.limits?.questionChars || 4000} dir="auto"
               className="flex-1 bg-transparent border-none outline-none text-[13.5px] py-2 px-2 resize-none leading-relaxed hub-textarea"
               style={{ fontFamily: 'inherit', color: 'var(--text)' }} />
