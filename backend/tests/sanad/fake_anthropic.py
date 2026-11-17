@@ -73,6 +73,9 @@ def script(body: dict) -> tuple[list[dict], str]:
     text, results = _last_user(body)
     q = _question(body).lower()
     think = {"type": "thinking"}
+    if "loop forever" in q:                                       # never stops asking for tools
+        return [think, {"type": "text", "text": "Checking again."},
+                {"type": "tool_use", "id": f"toolu_loop{len(body['messages'])}", "name": "engine_status", "input": {}}], "tool_use"
     if results:                                                   # second round: write the answer from the tool results
         errors = [r for r in results if r.get("is_error")]
         if errors:

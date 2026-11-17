@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import RamPage from './ram/RamPage';
 import HubPage from './hub/HubPage';
 import { Lockup } from './ram/Logo';
@@ -40,18 +40,45 @@ function Header({ hub }) {
 
 /* Which assistant is behind the chat is decided once, by asking the server: the built-in
    Sanad Digital Assistant when it is served, otherwise SAS Retrieval Agent Manager (or the
-   showcase when nothing answers). The label on screen follows what is really there. */
+   showcase when this is a static preview). The label on screen follows what is really there.
+   A server that cannot be reached shows a retry, never a different application. */
+function Unreachable({ onRetry, trying }) {
+  return (
+    <div className="h-full flex items-center justify-center p-6">
+      <div className="glass-card p-7 w-full max-w-[420px] text-center">
+        <h2 className="text-[17px] font-extrabold mb-1" style={{ color: 'var(--text)' }}>The assistant can't be reached</h2>
+        <p className="text-[12.5px] leading-relaxed mb-4" style={{ color: 'var(--text-dim)' }}>
+          It may be starting or restarting. This page tries again by itself every few seconds.
+        </p>
+        <button onClick={onRetry} disabled={trying} className="px-5 py-2 rounded-lg text-[12.5px] font-bold text-white"
+          style={{ background: 'var(--brand-grad)', opacity: trying ? 0.6 : 1 }}>{trying ? 'Trying…' : 'Try now'}</button>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
-  const [mode, setMode] = useState(null);         // null while asking · { hub: health } · { ram: true }
-  useEffect(() => { detect().then((health) => setMode(health ? { hub: health } : { ram: true })); }, []);
-  useEffect(() => { if (mode?.hub) document.title = 'Sanad MRO Intelligence Hub'; }, [mode]);
+  const [mode, setMode] = useState(null);         // null while asking · { kind: 'hub', health } · { kind: 'ram' } · { kind: 'down' }
+  const [trying, setTrying] = useState(true);
+  const look = useCallback(() => {
+    setTrying(true);
+    detect().then((m) => { setMode(m); setTrying(false); });
+  }, []);
+  useEffect(() => { look(); }, [look]);
+  useEffect(() => {
+    if (mode?.kind !== 'down') return undefined;
+    const timer = setTimeout(look, 5000);
+    return () => clearTimeout(timer);
+  }, [mode, look]);
+  useEffect(() => { if (mode?.kind !== 'ram') document.title = 'Sanad MRO Intelligence Hub'; }, [mode]);
   return (
     <div className="app-shell">
       <Bokeh />
-      <Header hub={!mode || !!mode.hub} />
+      <Header hub={mode?.kind !== 'ram'} />
       <main className="flex-1 min-h-0 relative z-[1]">
-        {mode?.hub && <HubPage health={mode.hub} />}
-        {mode?.ram && <RamPage />}
+        {mode?.kind === 'hub' && <HubPage health={mode.health} />}
+        {mode?.kind === 'ram' && <RamPage />}
+        {mode?.kind === 'down' && <Unreachable onRetry={look} trying={trying} />}
       </main>
     </div>
   );

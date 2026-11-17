@@ -39,11 +39,12 @@ MAX_SESSIONS = 30                 # per browser
 MAX_TURNS = 60                    # per conversation
 MAX_QUESTION_CHARS = 4000
 RATE_PER_MIN = int(os.getenv("SANAD_RATE_PER_MIN", "30"))                 # per browser
-GLOBAL_RATE_PER_MIN = int(os.getenv("SANAD_GLOBAL_RATE_PER_MIN", "600"))
+GLOBAL_RATE_PER_MIN = int(os.getenv("SANAD_GLOBAL_RATE_PER_MIN", "240"))   # everyone together; bounds what a public address can spend
 MAX_IN_FLIGHT = 3                 # per browser
 MODEL_SLOTS = int(os.getenv("SANAD_MAX_CONCURRENCY", "24"))
 SLOT_WAIT_S = 12.0
 POLL_INTERVAL_S = 0.3
+SAVE_DELAY_S = 4.0
 FAST_PATH = os.getenv("SANAD_FAST_PATH", "").lower() in ("1", "true", "yes")
 BREAKER_FAILURES = 3
 BREAKER_OPEN_S = 30.0
@@ -188,6 +189,8 @@ class Engine:
                 "mode": None, "model": None, "notice": None, "errorText": None, "createdAt": _now_iso(), "_t0": time.perf_counter(),
                 "attachments": [str(a.get("name", "attachment"))[:120] for a in attachments or []], "trace": {}}
         session["turns"].append(turn)
+        for old_turn in session["turns"][:-MAX_TURNS]:
+            self.turns.pop(old_turn["queryId"], None)
         del session["turns"][:-MAX_TURNS]
         self.turns[turn["queryId"]] = turn
         o.in_flight += 1
@@ -241,12 +244,20 @@ class Engine:
 
         try:
             # 1. Fetch the views this question most likely needs: milliseconds, before any model call.
-            matches = router.match(question, ctx.shop, ctx.persona, history=[t["content"] for t in earlier[-3:]])
+            try:
+                matches = router.match(question, ctx.shop, ctx.persona, history=[t["content"] for t in earlier[-3:]])
+            except Exception:                            # the pre-fetch is a head start, never a reason to fail
+                log.exception("router failed; continuing without a pre-fetch")
+                matches = []
             prefetched: list[tuple[str, dict]] = []
             strong: list[str] = []
             for i, m in enumerate(matches):
                 t0 = time.perf_counter()
-                handle, result = tools.run_view(m["view"], m["args"], ctx)
+                try:
+                    handle, result = tools.run_view(m["view"], m["args"], ctx)
+                except Exception:
+                    log.exception("pre-fetch of %s failed; continuing without it", m["view"])
+                    continue
                 ms = round((time.perf_counter() - t0) * 1000, 1)
                 ctx.calls.append({"name": m["view"], "input": m["args"], "ok": True, "ms": ms, "prefetched": True,
                                   "output": {"card": handle if result.get("card") else None, "summary": result["summary"]}})
@@ -279,16 +290,17 @@ class Engine:
                         self.model_check = {"ok": True, "model": out.get("model"), "ms": (out.get("usage") or {}).get("model_ms")}
                     except agent.Unavailable as e:
                         log.warning("model unavailable (%s); answering directly", e.reason)
-                        if e.reason != "refusal":
+                        if e.outage:
                             self.model_check = {"ok": False, "error": e.public or e.reason}
                         if e.reason == "refusal":
                             out = {"text": e.public, "cards": [], "followups": []}
                         else:
-                            self._failures += 1
-                            if self._failures >= BREAKER_FAILURES:
-                                self._breaker_until = time.time() + BREAKER_OPEN_S
-                                self._failures = 0
-                            notice = (e.public or "The language model did not answer in time.") + " This answer comes straight from the shop data."
+                            if e.outage:                     # only a failing service trips the breaker, not one awkward question
+                                self._failures += 1
+                                if self._failures >= BREAKER_FAILURES:
+                                    self._breaker_until = time.time() + BREAKER_OPEN_S
+                                    self._failures = 0
+                            notice = (e.public or "The language model could not complete this one.") + " This answer comes straight from the shop data."
                     finally:
                         slot.release()
             if out is None:
@@ -400,20 +412,27 @@ class Engine:
             return
 
         async def later() -> None:
-            await asyncio.sleep(1.5)
-            snapshot = self._dump()
-            await asyncio.to_thread(_write, snapshot)
+            await asyncio.sleep(SAVE_DELAY_S)
+            snapshot = self._snapshot()                  # cheap copies, taken on the loop
+            await asyncio.to_thread(_write, snapshot)    # serialising and writing happen off it
 
         self._save_task = loop.create_task(later())
 
-    def _dump(self) -> str:
+    def _snapshot(self) -> dict:
+        """What is saved: finished turns only, copied so nothing changes under the writer."""
         owners = {}
         for oid, o in list(self.owners.items())[-500:]:
-            sessions = [{**s, "turns": [{k: v for k, v in t.items() if k not in ("_t0", "trace", "preview")} for t in s["turns"]]}
-                        for s in o.sessions.values() if s["turns"]]
+            sessions = []
+            for s in o.sessions.values():
+                turns = [{k: v for k, v in t.items() if k not in ("_t0", "trace", "preview")} for t in s["turns"] if t["state"] != "running"]
+                if turns:
+                    sessions.append({**s, "turns": turns})
             if sessions or o.records:
-                owners[oid] = {"sessions": sessions, "records": o.records}
-        return json.dumps({"saved": _now_iso(), "owners": owners}, default=str, ensure_ascii=False)
+                owners[oid] = {"sessions": sessions, "records": list(o.records)}
+        return {"saved": _now_iso(), "owners": owners}
+
+    def _dump(self) -> str:
+        return json.dumps(self._snapshot(), default=str, ensure_ascii=False)
 
     # -- health -------------------------------------------------------------
     async def check_model(self) -> dict:
@@ -428,8 +447,9 @@ class Engine:
                 "build": os.getenv("RAILWAY_GIT_COMMIT_SHA", "")[:7] or "local", "stats": self.stats}
 
 
-def _write(text: str) -> None:
+def _write(snapshot: dict) -> None:
     try:
+        text = json.dumps(snapshot, default=str, ensure_ascii=False)
         STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
         tmp = STATE_FILE.with_suffix(".tmp")
         tmp.write_text(text, encoding="utf-8")

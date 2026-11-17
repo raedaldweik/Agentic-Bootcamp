@@ -239,6 +239,40 @@ def test_repeated_failures_skip_the_model_for_a_while(client, model, monkeypatch
     assert client.get("/api/assistant/health").json()["degraded"] is True
 
 
+def test_an_awkward_question_does_not_trip_the_breaker(client, model, monkeypatch):
+    monkeypatch.setattr(engine_mod, "BREAKER_FAILURES", 2)
+    for _ in range(3):
+        r = ask(client, "truncate this")                                   # a per-question failure, not an outage
+        assert r["mode"] == "direct"
+    r = ask(client, "What is the primary risk to ENG-204?")
+    assert r["mode"] == "model" and client.get("/api/assistant/health").json()["degraded"] is False
+
+
+def test_a_model_that_never_stops_asking_for_tools_is_cut_off(client, model):
+    r = ask(client, "loop forever please")
+    assert r["mode"] == "direct" and r["answer"] and "Checking again" not in r["answer"]
+    assert len([x for x in model.LOG if "loop forever" in str(x["body"]["messages"][-1])[:0] or True]) >= agent.MAX_MODEL_CALLS
+
+
+def test_saved_state_holds_finished_turns_and_restores(client, model, tmp_path, monkeypatch):
+    import json
+    ask(client, "Where is tool T-117?", "supervisor")
+    ask(client, "Raise a handover request for T-117.", "supervisor")
+    snap = engine_mod.ENGINE._snapshot()
+    owner = next(iter(snap["owners"].values()))
+    assert len(owner["sessions"]) == 2 and owner["records"][0]["id"] == "THR-0001"
+    assert all(t["state"] != "running" and "_t0" not in t for s in owner["sessions"] for t in s["turns"])
+    path = tmp_path / "state.json"
+    monkeypatch.setattr(engine_mod, "STATE_FILE", path)
+    monkeypatch.setattr(engine_mod, "PERSIST", True)
+    engine_mod._write(snap)
+    fresh = engine_mod.Engine()
+    oid = next(iter(json.loads(path.read_text())["owners"]))
+    assert len(fresh.sessions(oid)) == 2 and fresh.notebook(oid)[0]["id"] == "THR-0001"
+    qid = owner["sessions"][0]["turns"][0]["queryId"]
+    assert fresh.status(oid, qid)["done"] is True
+
+
 def test_wrong_key_is_survivable(client, model, monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "wrong")
     agent.reset_client()

@@ -56,10 +56,11 @@ _client = None
 class Unavailable(Exception):
     """The model could not answer (no key, an API error, a refusal, out of time)."""
 
-    def __init__(self, reason: str, *, public: str = ""):
+    def __init__(self, reason: str, *, public: str = "", outage: bool = False):
         super().__init__(reason)
         self.reason = reason
         self.public = public
+        self.outage = outage          # the service itself is the problem, not this one question
 
 
 def api_key() -> str:
@@ -239,9 +240,10 @@ async def run(question: str, ctx: tools.Context, *, history: list[dict], prefetc
     called_views: list[str] = []
     text = ""
 
-    for _ in range(MAX_MODEL_CALLS):
+    finished = False
+    while usage["model_calls"] < MAX_MODEL_CALLS:
         if time.monotonic() > deadline:
-            raise Unavailable("turn budget exceeded")
+            raise Unavailable("turn budget exceeded", public="The language model did not answer in time.", outage=True)
         t0 = time.perf_counter()
         first_token_ms: float | None = None
         text = ""
@@ -263,24 +265,28 @@ async def run(question: str, ctx: tools.Context, *, history: list[dict], prefetc
                 raise Unavailable(f"unparseable tool input: {e}") from e
             continue
         except TimeoutError as e:
-            raise Unavailable("the model took too long") from e
+            raise Unavailable("the model took too long", public="The language model did not answer in time.", outage=True) from e
+        except TypeError as e:                        # an SDK too old to know one of the optional parameters
+            if _degrade(f"sdk: {e}"):
+                continue
+            raise Unavailable(f"sdk: {e}", outage=True) from e
         except anthropic.BadRequestError as e:
             if _degrade(str(e)):
                 continue                              # an optional feature was rejected: retry without it
             log.warning("model rejected the request: %s", str(e)[:300])
             raise Unavailable(f"bad request: {str(e)[:200]}") from e
         except anthropic.AuthenticationError as e:
-            raise Unavailable("the API key was rejected", public="The language model key was rejected.") from e
+            raise Unavailable("the API key was rejected", public="The language model key was rejected.", outage=True) from e
         except anthropic.PermissionDeniedError as e:
-            raise Unavailable(f"permission denied: {str(e)[:160]}") from e
+            raise Unavailable(f"permission denied: {str(e)[:160]}", public="The language model key is not permitted to use this model.", outage=True) from e
         except anthropic.NotFoundError as e:
-            raise Unavailable(f"model {MODEL} not found", public=f"The configured model ({MODEL}) is not available to this key.") from e
+            raise Unavailable(f"model {MODEL} not found", public=f"The configured model ({MODEL}) is not available to this key.", outage=True) from e
         except anthropic.RateLimitError as e:
-            raise Unavailable("rate limited", public="The language model is rate limited right now.") from e
+            raise Unavailable("rate limited", public="The language model is rate limited right now.", outage=True) from e
         except anthropic.APIStatusError as e:
-            raise Unavailable(f"api status {e.status_code}", public="The language model is temporarily unavailable.") from e
+            raise Unavailable(f"api status {e.status_code}", public="The language model is temporarily unavailable.", outage=True) from e
         except anthropic.APIConnectionError as e:     # includes timeouts
-            raise Unavailable(f"connection: {type(e).__name__}", public="The language model could not be reached.") from e
+            raise Unavailable(f"connection: {type(e).__name__}", public="The language model could not be reached.", outage=True) from e
 
         ms = round((time.perf_counter() - t0) * 1000)
         u = response.usage
@@ -306,8 +312,10 @@ async def run(question: str, ctx: tools.Context, *, history: list[dict], prefetc
             if tool_uses or not text.strip():
                 raise Unavailable("ran out of output tokens")
             text += "\n\n_The answer was cut short. Ask me to continue._"
+            finished = True
             break
         if not tool_uses:
+            finished = True
             break
 
         # Run the tools. Inputs were streamed eagerly, so each is validated before it runs.
@@ -318,7 +326,8 @@ async def run(question: str, ctx: tools.Context, *, history: list[dict], prefetc
             args = block.input if isinstance(block.input, dict) else {}
             emit("step", {"id": step_id, "kind": _kind(block.name), "tool": block.name, "state": "running",
                           "label": tools.LABELS.get(block.name, block.name), "detail": tools.detail(block.name, args)})
-            result, is_error = tools.execute(block.name, block.input, ctx)
+            # off the event loop: a heavy query must not hold up everyone else's answers
+            result, is_error = await asyncio.to_thread(tools.execute, block.name, block.input, ctx)
             if block.name in tools.VIEW_NAMES and not is_error and result.get("card"):
                 called_views.append(result["card"])
             emit("step", {"id": step_id, "state": "error" if is_error else "done", "ms": ctx.calls[-1]["ms"],
@@ -326,9 +335,8 @@ async def run(question: str, ctx: tools.Context, *, history: list[dict], prefetc
             results.append({"type": "tool_result", "tool_use_id": block.id, "content": tools.to_json(result), **({"is_error": True} if is_error else {})})
         messages.append({"role": "assistant", "content": response.content})
         messages.append({"role": "user", "content": results})
-    else:
-        if not text.strip():
-            raise Unavailable("too many tool rounds")
+    if not finished:                                  # still asking for tools at the limit: whatever it wrote is not an answer
+        raise Unavailable("too many tool rounds")
 
     clean, wanted, nexts = parse_answer(text)
     if not clean:
@@ -373,6 +381,12 @@ def _request(messages: list[dict]) -> dict[str, Any]:
 def _degrade(error_text: str) -> bool:
     """An optional request feature was rejected: switch it off and say so. True if something changed."""
     low = error_text.lower()
+    if low.startswith("sdk:") and any(_optional.values()):
+        for key in _optional:
+            _optional[key] = False
+        log.warning("the installed anthropic SDK does not take an optional parameter; continuing with the plain request (%s). "
+                    "Upgrade it: pip install -U 'anthropic>=2.8'", error_text[:200])
+        return True
     for key, words in (("fallbacks", ("fallback",)), ("speed", ("speed", "fast mode", "fast-mode")), ("eager", ("eager_input_streaming",)),
                        ("cache", ("cache_control",)), ("effort", ("output_config", "effort"))):
         if _optional[key] and any(w in low for w in words):

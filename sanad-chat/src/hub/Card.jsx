@@ -213,13 +213,15 @@ function Block({ b }) {
   );
 }
 
-export default function Card({ card }) {
+/** `still`: the card was already on screen (shown while the answer streamed), so it does not animate in again. */
+export default function Card({ card, still = false }) {
   if (!card) return null;
+  const enter = still ? '' : 'animate-slide-up';
   if (card.kind === 'chart') {
-    return <div className="hub-card hub-chart animate-slide-up"><ChartCard spec={card} /></div>;
+    return <div className={`hub-card hub-chart ${enter}`}><ChartCard spec={card} /></div>;
   }
   return (
-    <article className="hub-card animate-slide-up">
+    <article className={`hub-card ${enter}`}>
       <header className="hub-card-head">
         <span className="hub-card-bar" />
         <div className="min-w-0">

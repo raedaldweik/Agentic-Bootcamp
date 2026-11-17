@@ -11,6 +11,7 @@ import Markdown from './Markdown';
 import { PersonaMenu, ClockMenu, niceTime } from './Menus';
 import { Notebook, Details, SourceSheet, AccessGate } from './Panels';
 import { useVoice, speak, stopSpeaking, speechSupported } from './voice';
+import CheckPage from './CheckPage';
 import * as api from '../lib/hubApi';
 import './hub.css';
 
@@ -25,9 +26,10 @@ const store = {
 const seconds = (ms) => (ms == null ? '' : ms < 950 ? `${Math.max(0.1, ms / 1000).toFixed(1)} s` : `${(ms / 1000).toFixed(1)} s`);
 
 /** Text that catches up with its target a few characters a frame, so answers flow in. */
-function useFlowing(target, enabled = true) {
-  const [shown, setShown] = useState(enabled ? '' : target);
-  const ref = useRef({ shown: enabled ? '' : target, target });
+function useFlowing(target, enabled = true, from = '') {
+  const start = !enabled ? target : (from && target.startsWith(from) ? from : '');
+  const [shown, setShown] = useState(start);
+  const ref = useRef({ shown: start, target });
   ref.current.target = target;
   useEffect(() => {
     if (!enabled) return undefined;
@@ -63,7 +65,10 @@ function turnsToMessages(turns) {
 
 /* ─── One finished answer ─────────────────────────────────────────────── */
 function Answer({ turn, fresh, onDetails, onSource, onSave, onOpenNotebook, speakingId, onSpeak }) {
-  const text = useFlowing(turn.answer || '', fresh);
+  // `fresh` is set for the answer that has just arrived: { text, cards } is what was already
+  // on screen while it streamed, so the text carries on from there and its card does not blink.
+  const text = useFlowing(turn.answer || '', !!fresh, fresh?.text || '');
+  const onScreen = fresh?.cards || [];
   const [saved, setSaved] = useState(false);
   const typed = !fresh || text.length >= (turn.answer || '').length;
   if (turn.errorText && !turn.answer) {
@@ -73,7 +78,7 @@ function Answer({ turn, fresh, onDetails, onSource, onSave, onOpenNotebook, spea
   return (
     <div className="space-y-2.5">
       <div className="msg-bot-bubble px-4 py-3">
-        <div className="text-[13.5px]" style={{ color: 'var(--text)' }}><Markdown>{text}</Markdown></div>
+        <div className="text-[13.5px]" dir="auto" style={{ color: 'var(--text)' }}><Markdown>{text}</Markdown></div>
         {turn.notice && <div className="hub-notice"><Icon name="alert" size={13} /> {turn.notice}</div>}
       </div>
 
@@ -85,7 +90,8 @@ function Answer({ turn, fresh, onDetails, onSource, onSave, onOpenNotebook, spea
         </button>
       ))}
 
-      {typed && (turn.cards || []).map((c, i) => <Card key={c.id || i} card={c} />)}
+      {(turn.cards || []).map((c, i) => ((typed || onScreen.includes(c.id))
+        ? <Card key={`${c.id}-${i}`} card={c} still={onScreen.includes(c.id)} /> : null))}
 
       <div className="hub-answer-foot">
         {sources.filter((s) => s.kind !== 'data').map((s, i) => (
@@ -137,7 +143,7 @@ function Live({ live }) {
               </div>
             )}
         </div>
-        {(live.cards || []).map((c, i) => <Card key={c.id || i} card={c} />)}
+        {(live.cards || []).map((c, i) => <Card key={`${c.id}-${i}`} card={c} />)}
       </div>
     </div>
   );
@@ -167,7 +173,7 @@ function Hub({ health, onLocked }) {
   const [renaming, setRenaming] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const [autoSend, setAutoSend] = useState(null);         // { text } while a spoken question waits to be sent
-  const [freshId, setFreshId] = useState(null);
+  const [fresh, setFresh] = useState(null);               // the answer that just arrived: { id, text, cards } as last shown live
 
   const inputRef = useRef(null);
   const scrollRef = useRef(null);
@@ -225,7 +231,7 @@ function Hub({ health, onLocked }) {
     ro.observe(contentRef.current);
     return () => ro.disconnect();
   }, [anchor]);
-  useEffect(() => { followRef.current = true; anchor(false); }, [activeId, anchor]);
+  useEffect(() => { followRef.current = true; setFresh(null); anchor(false); }, [activeId, anchor]);
   useEffect(() => { anchor(); }, [messages.length, anchor]);
   const letGo = () => { followRef.current = false; };
   useEffect(() => {
@@ -285,7 +291,9 @@ function Hub({ health, onLocked }) {
         wait = Math.min(every, wait * 1.6);
         let st;
         try { st = await api.getStatus(sub.queryId); failures = 0; } catch (e) {
-          if (e.status === 404 || e.status === 401 || ++failures >= 6) throw e;
+          // the answer is still being written on the server: ride out a dropped connection (about 25 s)
+          if (e.status === 404 || e.status === 401 || e.status === 403 || ++failures >= 15) throw e;
+          wait = Math.min(2000, 300 * failures);
           continue;
         }
         if (st.done) { result = st.result; break; }
@@ -293,7 +301,7 @@ function Hub({ health, onLocked }) {
         setLive(liveRef.current);
         if (Date.now() > deadline) throw new Error('The assistant took too long to answer. Please ask again.');
       }
-      setFreshId(result.queryId);
+      setFresh({ id: result.queryId, text: liveRef.current?.text || '', cards: (liveRef.current?.cards || []).map((c) => c.id) });
       patchChat(chatId, (c) => ({ ...c, messages: [...c.messages, { role: 'assistant', turn: result }] }));
       if (result.records?.length) api.getNotebook().then(setNotebook).catch(() => {});
       if (readAloud && result.answer && result.state !== 'cancelled') sayAnswer(result);
@@ -477,7 +485,7 @@ function Hub({ health, onLocked }) {
               <div key={i} ref={i === lastUserIndex ? lastUserRef : null} className="flex gap-2.5 flex-row-reverse animate-fade-up">
                 <div className="hub-user-avatar">You</div>
                 <div className="max-w-[70%]">
-                  <div className="msg-user-bubble px-4 py-3 text-[13.5px] leading-[1.7]" style={{ color: 'var(--text)' }}>
+                  <div className="msg-user-bubble px-4 py-3 text-[13.5px] leading-[1.7]" dir="auto" style={{ color: 'var(--text)' }}>
                     {msg.attachmentName && <div className="hub-attach-chip"><Icon name="attach" size={11} /> {msg.attachmentName}</div>}
                     {msg.content}
                   </div>
@@ -490,7 +498,7 @@ function Hub({ health, onLocked }) {
                 <div className="hub-answer-col">
                   {msg.error
                     ? <div className="msg-bot-bubble px-4 py-3 text-[13px]" style={{ color: 'var(--red)' }}>{msg.error}</div>
-                    : <Answer turn={msg.turn} fresh={msg.turn.queryId === freshId}
+                    : <Answer turn={msg.turn} fresh={msg.turn.queryId === fresh?.id ? fresh : null}
                         onDetails={setDetails} onSource={setSource} onSave={saveAnswer} onOpenNotebook={() => setShowNotebook(true)}
                         speakingId={speakingId} onSpeak={toggleSpeak} />}
                 </div>
@@ -546,6 +554,7 @@ function Hub({ health, onLocked }) {
               onFocus={() => autoSend && cancelAutoSend()}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               placeholder={voice.listening ? 'Listening…' : `Ask the Sanad Digital Assistant${me ? ` as the ${me.title}` : ''}…`}
+              maxLength={config?.limits?.questionChars || 4000} dir="auto"
               className="flex-1 bg-transparent border-none outline-none text-[13.5px] py-2 px-2 resize-none leading-relaxed hub-textarea"
               style={{ fontFamily: 'inherit', color: 'var(--text)' }} />
             <button onClick={toggleMic} disabled={busy || !voice.supported} aria-pressed={voice.listening}
@@ -571,6 +580,8 @@ function Hub({ health, onLocked }) {
   );
 }
 
+const CHECK = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('check');
+
 export default function HubPage({ health: initial }) {
   const [health, setHealth] = useState(initial);
   const [locked, setLocked] = useState(!!initial.locked);
@@ -584,7 +595,7 @@ export default function HubPage({ health: initial }) {
     <div className="ram-page hub-page h-full">
       {locked
         ? <AccessGate onUnlocked={() => { setLocked(false); api.getHealth().then(setHealth).catch(() => {}); }} />
-        : <Hub health={health} onLocked={lock} />}
+        : CHECK ? <CheckPage health={health} /> : <Hub health={health} onLocked={lock} />}
     </div>
   );
 }

@@ -9,6 +9,7 @@ keeps a public address from spending the model key.
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import os
@@ -98,7 +99,8 @@ async def health(request: Request, sid: str = Depends(browser)):
 
 @router.post("/unlock")
 async def unlock(body: Code, request: Request, response: Response, sid: str = Depends(browser)):
-    if ACCESS_CODE and not hmac.compare_digest(body.code.strip(), ACCESS_CODE):
+    if ACCESS_CODE and not hmac.compare_digest(body.code.strip().encode(), ACCESS_CODE.encode()):
+        await asyncio.sleep(1.0)                         # guessing is slow
         raise HTTPException(status_code=403, detail="That access code is not right.")
     _set_cookie(request, response, ACCESS_COOKIE, _access_token())
     return {"ok": True}

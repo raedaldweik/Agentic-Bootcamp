@@ -12,3 +12,5 @@ Day1
 templates
 sanad-chat/node_modules
 sanad-chat/dist
+# the Sanad assistant's approved documents are data, not project docs
+!backend/data/sanad/docs

@@ -33,6 +33,8 @@ questions outside the demonstration storyline work too. The data itself is synth
 5. If the model is slow, rate limited or down, the question is answered straight from the shop
    data and the answer says so. After repeated failures the model is skipped for 30 seconds so
    nobody waits on a timeout.
+6. A dropped connection while an answer is on its way is ridden out for about 25 seconds, and a
+   server that is restarting shows "The assistant can't be reached" and reconnects by itself.
 
 Without a model key the standard questions still work (answered in milliseconds from the data);
 free-form questions, what-ifs and actions need the key.
@@ -40,7 +42,7 @@ free-form questions, what-ifs and actions need the key.
 ## Run it
 
 ```bash
-# backend (Python 3.11+)
+# backend (Python 3.11 or later; tested on 3.13)
 cd backend
 pip install -r requirements-sanad.txt
 export ANTHROPIC_API_KEY=...            # optional for a first look, needed for free-form questions
@@ -68,7 +70,7 @@ All are environment variables on the backend. Only the first matters to start.
 | `SANAD_FAST_PATH` | off | `true` answers an exact standard question straight from its view, with no model call. Instant, but the wording is fixed. |
 | `SANAD_ACCESS_CODE` | none | If set, the chat asks for this code before it can be used. Recommended on a public address, because every question spends the model key. |
 | `SANAD_RATE_PER_MIN` | `30` | Questions per browser per minute. |
-| `SANAD_GLOBAL_RATE_PER_MIN` | `600` | Questions per minute across everyone. |
+| `SANAD_GLOBAL_RATE_PER_MIN` | `240` | Questions per minute across everyone. This bounds what a public address can spend; raise it for a large group. |
 | `SANAD_MAX_CONCURRENCY` | `24` | Model calls in flight at once. More than this queue briefly. |
 | `SANAD_STATE_FILE` | `backend/data/runtime/sanad_state.json` | Where conversations and notebooks are saved. Point it at a mounted volume to keep them across deploys. `SANAD_PERSIST=false` keeps them in memory only. |
 | `SANAD_FALLBACKS` | on | `false` switches off the server-side fallback model for declined requests. |
@@ -91,18 +93,21 @@ The image is slim (the chat, `sanad_app.py`, the assistant, its data and documen
 in about a second. `/api/health` reports whether a model key is present; the start-up log says
 whether the model answered a test call.
 
-**After the first deploy, run the acceptance check** from any machine with Python:
+**After the first deploy, run the acceptance check.** Open the app with `?check` on the end of
+the address:
 
-```bash
-cd backend && pip install httpx
-python -m scripts.sanad_smoke https://your-app.up.railway.app      # add --code ... if you set an access code
+```
+https://your-app.up.railway.app/?check
 ```
 
-It asks the storyline's 14 questions as each role at the right shop time, then 11 questions
-that are not in the storyline (free-form, a what-if, a document question, a chart, actions
-that must succeed and actions that must be refused). For each it prints how it was answered,
-the time to the first words and to the complete answer, and the card shown, and it flags
-anything wrong: an answer that fell back to the shop data, a missing card, a slow answer.
+Press "Run the check". It asks the storyline's 14 questions as each role at the right shop
+time, then 11 questions that are not in the storyline (free-form, a what-if, a document
+question, a chart, actions that must succeed and actions that must be refused). For each one
+it shows how it was answered (the model or the shop data), the time to the first words and to
+the complete answer, the card shown, and anything that looks wrong: an answer that fell back
+to the shop data, a missing card, a slow answer. "Copy report" gives the whole thing as text.
+It makes real model calls and takes a few minutes. The same check runs from a terminal with
+`python -m scripts.sanad_smoke https://your-app.up.railway.app` in `backend/`.
 
 ## Each browser is its own user
 
@@ -137,7 +142,7 @@ pip install pytest
 python -m pytest tests/sanad -q
 ```
 
-176 tests: the read-only SQL guard, the schedule against the storyline, every view at every
+179 tests: the read-only SQL guard, the schedule against the storyline, every view at every
 moment, the router, the role rules, the HTTP API, limits and the access code. The model path
 runs against a local stand-in for the Anthropic API that speaks the real streaming format, so
 the real SDK, the tool loop, streaming, retries, the outage fallback and stop are exercised

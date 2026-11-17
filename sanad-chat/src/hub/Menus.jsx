@@ -52,6 +52,8 @@ export function PersonaMenu({ personas, value, onChange }) {
   );
 }
 
+const CLOCK_MIN = '2026-10-20 00:00';          // the range the shop data covers; the server holds the same limits
+const CLOCK_MAX = '2026-11-20 00:00';
 const pad = (n) => String(n).padStart(2, '0');
 const toInput = (ts) => (ts || '').replace(' ', 'T');
 const fromInput = (v) => (v || '').replace('T', ' ').slice(0, 16);
@@ -97,7 +99,8 @@ export function ClockMenu({ moments, value, onChange }) {
             <div className="flex gap-2">
               <input id="hub-clock" type="datetime-local" value={custom} min="2026-10-20T00:00" max="2026-11-20T00:00"
                 onChange={(e) => setCustom(e.target.value)} />
-              <button disabled={!custom || fromInput(custom) === value} onClick={() => { onChange(fromInput(custom)); setOpen(false); }}>Set</button>
+              <button disabled={!custom || fromInput(custom) === value}
+                onClick={() => { const t = fromInput(custom); onChange(t < CLOCK_MIN ? CLOCK_MIN : t > CLOCK_MAX ? CLOCK_MAX : t); setOpen(false); }}>Set</button>
             </div>
           </div>
           <div className="hub-menu-foot">

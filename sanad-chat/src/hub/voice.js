@@ -50,12 +50,15 @@ export function useVoice({ onFinal, lang = 'en-US' } = {}) {
   const [interim, setInterim] = useState('');
   const [error, setError] = useState(null);
   const recRef = useRef(null);
-  const finalRef = useRef('');
-  const heardRef = useRef('');
+  const endRef = useRef(null);
   const cbRef = useRef(onFinal);
   cbRef.current = onFinal;
 
-  const stop = useCallback(() => { try { recRef.current?.stop(); } catch { /* already stopped */ } }, []);
+  // Stop listening and use what was heard. If the browser does not confirm, finish anyway.
+  const stop = useCallback(() => {
+    try { recRef.current?.stop(); } catch { /* already stopped */ }
+    setTimeout(() => endRef.current?.(), 700);
+  }, []);
 
   const start = useCallback(() => {
     if (!SR) { setError('Voice input needs Chrome, Edge or Safari. You can still type the question.'); return; }
@@ -66,43 +69,69 @@ export function useVoice({ onFinal, lang = 'en-US' } = {}) {
     rec.continuous = false;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
-    finalRef.current = '';
-    heardRef.current = '';
+    let finals = '';
+    let heard = '';
+    let ended = false;
+    let quiet = null;
     setError(null);
     setInterim('');
 
+    // One way out, taken once: by the browser's own end event, by stop(), or by a watchdog.
+    const end = () => {
+      if (ended) return;
+      ended = true;
+      clearTimeout(quiet);
+      clearTimeout(cap);
+      recRef.current = null;
+      endRef.current = null;
+      setListening(false);
+      setInterim('');
+      const text = (finals || heard).trim();
+      if (text) cbRef.current?.(tidyTranscript(text));
+    };
+    // A recogniser can stall without ending (no service, a permission prompt left open).
+    // Nothing heard in 10 s, or silence for 6 s after words: finish instead of listening for ever.
+    const watch = (ms) => {
+      clearTimeout(quiet);
+      quiet = setTimeout(() => {
+        if (!heard) setError(ERRORS['no-speech']);
+        try { rec.abort(); } catch { /* gone */ }
+        end();
+      }, ms);
+    };
+    const cap = setTimeout(() => { try { rec.stop(); } catch { /* gone */ } setTimeout(end, 700); }, 45000);
+
     rec.onresult = (e) => {
-      let finals = '';
+      let f = '';
       let partial = '';
       for (let i = 0; i < e.results.length; i++) {
         const r = e.results[i];
-        if (r.isFinal) finals += r[0].transcript; else partial += r[0].transcript;
+        if (r.isFinal) f += r[0].transcript; else partial += r[0].transcript;
       }
-      finalRef.current = finals;
-      heardRef.current = (finals + ' ' + partial).trim();
-      setInterim(heardRef.current);
+      finals = f;
+      heard = `${f} ${partial}`.trim();
+      setInterim(heard);
+      watch(6000);
     };
     rec.onerror = (e) => {
       if (e.error === 'aborted') return;
       setError(ERRORS[e.error] || `Voice input stopped (${e.error}).`);
+      if (e.error !== 'no-speech') setTimeout(end, 300);      // most errors are final; do not wait on an end event
     };
-    rec.onend = () => {
-      recRef.current = null;
-      setListening(false);
-      const text = (finalRef.current || heardRef.current).trim();
-      setInterim('');
-      if (text) cbRef.current?.(tidyTranscript(text));
-    };
+    rec.onend = end;
     try {
       rec.start();
       recRef.current = rec;
+      endRef.current = end;
       setListening(true);
+      watch(10000);
     } catch {
+      clearTimeout(cap);
       setError('Voice input could not start. Try again.');
     }
   }, [lang]);
 
-  useEffect(() => () => { try { recRef.current?.abort(); } catch { /* gone */ } }, []);
+  useEffect(() => () => { endRef.current = null; try { recRef.current?.abort(); } catch { /* gone */ } }, []);
 
   return { supported: voiceSupported, listening, interim, error, start, stop, clearError: () => setError(null) };
 }

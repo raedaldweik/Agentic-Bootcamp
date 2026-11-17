@@ -4,8 +4,15 @@
 
 const API = '/api/assistant';
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 async function req(path, opts = {}) {
-  const r = await fetch(`${API}${path}`, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  let r;
+  try {
+    r = await fetch(`${API}${path}`, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  } catch {
+    throw new Error('The connection dropped. Check the network and try again.');
+  }
   if (!r.ok) {
     const e = await r.json().catch(() => ({ detail: 'Connection error' }));
     if (r.status === 401 && e.detail === 'access_code_required') window.dispatchEvent(new Event('hub:locked'));
@@ -16,20 +23,33 @@ async function req(path, opts = {}) {
   return r.json();
 }
 
-/** The built-in assistant's health, or null when this backend does not serve it. */
+/**
+ * Which assistant this server offers.
+ *   { kind: 'hub', health }   the built-in Sanad Digital Assistant
+ *   { kind: 'ram' }           this server does not serve it: the chat runs on SAS RAM (or its showcase)
+ *   { kind: 'down' }          the server could not be reached: it is starting, restarting or offline
+ * A server that is briefly unreachable is asked again before anything is decided, so a restart
+ * never shows someone a different application.
+ */
 export async function detect() {
-  if (import.meta.env.VITE_DEMO === 'true') return null;
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 6000);
-    const r = await fetch(`${API}/health`, { signal: ctrl.signal });
-    clearTimeout(timer);
-    if (!r.ok || !(r.headers.get('content-type') || '').includes('json')) return null;
-    const h = await r.json();
-    return h.mode === 'builtin' ? h : null;
-  } catch {
-    return null;
+  if (import.meta.env.VITE_DEMO === 'true') return { kind: 'ram' };
+  const tries = import.meta.env.DEV ? 1 : 4;
+  for (let attempt = 0; attempt < tries; attempt++) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 7000);
+      const r = await fetch(`${API}/health`, { signal: ctrl.signal, cache: 'no-store' });
+      clearTimeout(timer);
+      const json = (r.headers.get('content-type') || '').includes('json');
+      if (r.ok && json) {
+        const health = await r.json();
+        return health.mode === 'builtin' ? { kind: 'hub', health } : { kind: 'ram' };
+      }
+      if (r.status === 404 || (r.ok && !json)) return { kind: 'ram' };   // answered, and it is not there
+    } catch { /* no answer: try again */ }
+    if (attempt < tries - 1) await sleep(700 * (attempt + 1));
   }
+  return import.meta.env.DEV ? { kind: 'ram' } : { kind: 'down' };
 }
 
 export const getHealth = () => req('/health');
