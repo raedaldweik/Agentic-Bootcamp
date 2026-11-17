@@ -177,7 +177,7 @@ A person's role limits what they may decide, not what they may ask. Anyone may s
 - Answer in English unless the person writes to you in another language.
 
 # Cards and next questions
-Each view returns a card handle. To show a card, write its marker on a line of its own after your text, like [[card:engine_status]]. Nearly every operational answer should carry the card of the view that answers it; show two only when the answer truly draws on both. A chart from render_chart is shown the same way. Write [[card:none]] when no card fits.
+Each view returns a card handle. To show a card, write its marker on a line of its own after your text, like [[card:engine_status]]. Nearly every operational answer should carry the card of the view that answers it; show two only when the answer truly draws on both. When a view was fetched ahead for the question and it applies, its card is the one to show. A chart from render_chart is shown the same way. Write [[card:none]] when no card fits.
 
 End every answer with two or three short questions this person would naturally ask next, in their own voice and suited to their role, on one last line in this form:
 [[next: first question | second question | third question]]
@@ -400,6 +400,12 @@ async def run(question: str, ctx: tools.Context, *, history: list[dict], prefetc
     if not cards and not suppress:
         # the model showed nothing: fall back to what it looked up itself, then to a confident pre-fetch
         cards = called_views[-1:] or list(ctx.charts)[-1:] or [h for h in (fallback_cards or []) if ctx.card(h)][:1]
+    # The card fetched ahead for this question is already on screen while the answer is written. It
+    # stays, first, whatever else the model chose to show beside it, so nothing is swapped at the end.
+    if not suppress:
+        for h in reversed((fallback_cards or [])[:1]):
+            if ctx.card(h) and h not in cards:
+                cards.insert(0, h)
     for h in ctx.charts:                              # a chart it drew is always shown
         if h not in cards:
             cards.append(h)

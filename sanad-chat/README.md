@@ -147,7 +147,7 @@ pip install pytest
 python -m pytest tests/sanad -q
 ```
 
-203 tests: the read-only SQL guard, the schedule against the storyline, every view at every
+204 tests: the read-only SQL guard, the schedule against the storyline, every view at every
 moment, the wording of every answer across the allowed period, the router, the role rules, the HTTP API, limits and the access code. The model path
 runs against a local stand-in for the Anthropic API that speaks the real streaming format, so
 the real SDK, the tool loop, streaming, retries, the outage fallback and stop are exercised

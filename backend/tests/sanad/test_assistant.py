@@ -183,6 +183,15 @@ def test_the_cache_is_warmed_without_generating_anything(client, model):
     assert body["system"][0]["cache_control"]["ttl"] == "1h" and len(body["tools"]) == 21
 
 
+def test_the_card_shown_while_waiting_is_never_swapped_out(client, model):
+    r = ask(client, "Guide me through the job card, other card please.", "technician", "2026-10-28 12:15")
+    preview = [c["id"] for p in r["_partials"] for c in p["cards"]]
+    assert set(preview) <= {"job_card"}                                    # what was on screen while it was written
+    assert [c["id"] for c in r["cards"]] == ["job_card", "task_readiness"]   # stays first; the model's own choice follows
+    r = ask(client, "what's the weather like, and where is tool T-117?", "supervisor")
+    assert r["cards"] == []                                                # the model can still say no card fits
+
+
 def test_markers_never_reach_the_screen_while_streaming(client, model):
     model.STATE["delay"] = 0.004
     r = ask(client, "What is the primary risk to ENG-204?")

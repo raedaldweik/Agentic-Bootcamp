@@ -87,6 +87,9 @@ def script(body: dict) -> tuple[list[dict], str]:
             return [think, {"type": "text", "text": f"Done: **{payload['reference']}** is raised and pending.\n[[next: Where is tool T-117?]]"}], "end_turn"
         cards = "".join(f"\n[[card:{json.loads(r['content']).get('card')}]]" for r in results if json.loads(r["content"]).get("card"))
         return [think, {"type": "text", "text": "Here is what the records show." + cards + "\n[[next: What is the primary risk to ENG-204?]]"}], "end_turn"
+    if "other card" in q:                                         # answers a pre-fetched question but shows a different card
+        if not results:
+            return [think, {"type": "tool_use", "id": "toolu_other", "name": "task_readiness", "input": {}}], "tool_use"
     if "weather" in q:
         return [think, {"type": "text", "text": "I cover this shop's engines, parts, tools, job cards, findings and approvals, so I can't help with the weather.\n[[card:none]]\n[[next: Show me the status of all the engines.]]"}], "end_turn"
     if "how many tools" in q:
