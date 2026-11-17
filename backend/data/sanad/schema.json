@@ -1,5 +1,5 @@
 {
-  "note": "Synthetic demonstration data. Not Sanad operational data.",
+  "note": "Scenario data set for the Sanad MRO Intelligence Hub.",
   "scenario_start": "2026-10-28 09:30",
   "tables": {
     "engines": {
@@ -63,7 +63,7 @@
         "on_hand": "Units on hand",
         "stock_status": "Serviceability / hold status",
         "ready_at_gate_ts": "Earliest time a unit could be at the gate, including any confirmation and transfer (blank if none on hand)",
-        "transfer_cost_usd": "Cost of an authorised transfer (synthetic)",
+        "transfer_cost_usd": "Cost of an authorised transfer",
         "approval_required": "Who must approve the use of this stock"
       }
     },
@@ -99,7 +99,7 @@
         "po_id": "Purchase order",
         "option": "What is offered",
         "arrival_ts": "Arrival at the delivery point if accepted",
-        "fee_usd": "Expedite fee (synthetic)",
+        "fee_usd": "Expedite fee",
         "valid_until": "Quote validity"
       },
       "event_time": "ts"
@@ -186,7 +186,7 @@
         "decided_by": "Role that decided",
         "engine_id": "Engine",
         "work_order": "Work order charged, if any",
-        "amount_usd": "Amount, if any (synthetic)",
+        "amount_usd": "Amount, if any",
         "window_start": "For overtime: start",
         "window_end": "For overtime: end"
       },

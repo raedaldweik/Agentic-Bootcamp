@@ -149,6 +149,42 @@ function Live({ live }) {
   );
 }
 
+/* ─── Model status: shown only when the language model is not answering, with the reason ─── */
+function ModelNote({ health, narrow }) {
+  const [open, setOpen] = useState(false);
+  const missing = !health.llm;
+  const failed = health.llm && health.modelCheck?.ok === false;
+  if (!missing && !failed) return null;
+  const key = health.keyCheck || {};
+  return (
+    <div className="relative">
+      <button className="status-pill" style={{ color: 'var(--amber)', cursor: 'pointer' }} onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        {missing ? (narrow ? 'No model key' : 'Standard answers only') : 'Model unavailable'}
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-50" onClick={() => setOpen(false)} />
+          <div className="hub-menu animate-fade-up" style={{ width: 360, padding: 14 }} role="dialog" aria-label="Language model status">
+            <div className="hub-menu-item-title" style={{ marginBottom: 6 }}>
+              {missing ? 'No language model key is configured' : (health.modelCheck.error || 'The language model is not answering')}
+            </div>
+            <p className="hub-menu-item-sub" style={{ fontSize: 12 }}>
+              Until this is fixed the standard questions are answered straight from the shop data. Free-form questions, what-ifs and actions need the model.
+            </p>
+            {failed && health.modelCheck.detail && <p className="hub-menu-item-sub" style={{ fontSize: 12, marginTop: 8 }}><b style={{ color: 'var(--text)' }}>The API said:</b> {health.modelCheck.detail}</p>}
+            {key.hint && <p className="hub-menu-item-sub" style={{ fontSize: 12, marginTop: 8 }}><b style={{ color: 'var(--text)' }}>What to do:</b> {key.hint}</p>}
+            {key.present && (
+              <p className="hub-menu-item-sub" style={{ fontSize: 11, marginTop: 8 }}>
+                Configured key: {key.kind}, {key.length} characters{key.tidied ? ' (quotes, spaces or a name around it were ignored)' : ''}. The key itself is never shown.
+              </p>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ─── The page ────────────────────────────────────────────────────────── */
 function Hub({ health, onLocked }) {
   const [config, setConfig] = useState(null);
@@ -443,8 +479,7 @@ function Hub({ health, onLocked }) {
             <span className="text-sm font-bold truncate" style={{ color: 'var(--text)' }}>{active?.title || NEW_TITLE}</span>
           </div>
           <div className="hub-head-controls">
-            {!health.llm && <span className="status-pill" style={{ color: 'var(--amber)' }} title="No language model key is configured on the server. The standard questions are answered from the shop data.">{narrow ? 'No model key' : 'Standard answers only'}</span>}
-            {health.llm && health.modelCheck?.ok === false && <span className="status-pill" style={{ color: 'var(--amber)' }} title={health.modelCheck.error || ''}>Model unavailable</span>}
+            <ModelNote health={health} narrow={narrow} />
             {config && <PersonaMenu personas={config.personas} value={persona} onChange={setPersona} />}
             {config && <ClockMenu moments={config.moments} value={shopTime} onChange={setShopTime} clock={config.clock} />}
             {speechSupported && (
@@ -552,7 +587,7 @@ function Hub({ health, onLocked }) {
         )}
 
         {/* Input */}
-        <div className="px-5 pb-3 pt-2 relative z-[1]">
+        <div className="hub-inputwrap px-5 pb-4 pt-2 relative z-[1]">
           <div className={`chat-input flex items-end gap-1.5 px-2 py-1.5 rounded-xl border transition-all ${voice.listening ? 'is-listening' : ''}`}>
             <input ref={fileRef} type="file" accept=".pdf,.docx,.txt,.md,.csv,.json" className="hidden" onChange={pickFile} />
             <button onClick={() => fileRef.current?.click()} disabled={attaching || busy} title="Attach a document to your question"
@@ -576,7 +611,6 @@ function Hub({ health, onLocked }) {
               <button onClick={() => send()} disabled={!input.trim() || voice.listening} className="hub-send" title="Send"><Icon name="send" size={15} /></button>
             )}
           </div>
-          <p className="hub-footnote">{config?.note || 'Synthetic demonstration data.'} Decisions remain with authorised personnel.</p>
         </div>
       </div>
 

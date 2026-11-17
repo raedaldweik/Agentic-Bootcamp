@@ -86,5 +86,4 @@ def public() -> dict[str, Any]:
         "moments": [{**m, "nice": ops.nice(ops.parse(m["ts"]))} for m in MOMENTS],
         "defaultMoment": MOMENTS[0]["ts"],
         "clock": {"min": CLOCK_MIN, "max": CLOCK_MAX, "minNice": ops.nice(ops.parse(CLOCK_MIN), with_year=False), "maxNice": ops.nice(ops.parse(CLOCK_MAX), with_year=False)},
-        "note": "Synthetic demonstration data. Not Sanad operational data.",
     }

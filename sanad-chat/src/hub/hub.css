@@ -45,7 +45,6 @@
 }
 .hub-page .hub-user-meta { font-size: 10.5px; color: var(--text-faint); text-align: end; margin-top: 4px; padding-inline-end: 2px; }
 .hub-page .hub-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.hub-page .hub-footnote { font-size: 10.5px; color: var(--text-faint); text-align: center; margin-top: 7px; }
 
 /* ── header controls ────────────────────────────────────────────────── */
 .hub-page .hub-control {
@@ -407,8 +406,7 @@
   .hub-page .hub-dock::-webkit-scrollbar { display: none; }
   .hub-page .hub-dock-label { display: none; }
   .hub-page .hub-followup { flex: none; white-space: nowrap; padding: 9px 13px; }
-  .hub-page .hub-footnote { font-size: 9.5px; margin-top: 5px; line-height: 1.35; }
-  .hub-page .px-5.pb-3 { padding: 6px 10px 8px; }
+  .hub-page .hub-inputwrap { padding: 6px 10px 10px; }
   .hub-page .status-pill { padding: 5px 10px; font-size: 10.5px; }
 }
 @media (max-width: 560px) {

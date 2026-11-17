@@ -63,7 +63,7 @@ All are environment variables on the backend. Only the first matters to start.
 
 | Variable | Default | What it does |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | none | The model key. Without it only the standard questions are answered. |
+| `ANTHROPIC_API_KEY` | none | The model key, from the Claude Console (it starts with `sk-ant-api`). Without it only the standard questions are answered. If the key is rejected, the chat shows "Model unavailable": tap it, or open `/api/assistant/health`, to see what the API replied and what kind of key is configured. The key itself is never shown. |
 | `SANAD_MODEL` | `claude-opus-5-5` | The model. A smaller model such as `claude-haiku-5-5` answers sooner at some cost in judgement on unusual questions. |
 | `SANAD_EFFORT` | `low` | How much the model deliberates: `low`, `medium` or `high`. Lower is faster. |
 | `SANAD_FAST_MODE` | off | `true` requests fast output on models that offer it. A premium-priced option; if the API rejects it the service carries on without it. |
@@ -143,7 +143,7 @@ pip install pytest
 python -m pytest tests/sanad -q
 ```
 
-185 tests: the read-only SQL guard, the schedule against the storyline, every view at every
+195 tests: the read-only SQL guard, the schedule against the storyline, every view at every
 moment, the wording of every answer across the allowed period, the router, the role rules, the HTTP API, limits and the access code. The model path
 runs against a local stand-in for the Anthropic API that speaks the real streaming format, so
 the real SDK, the tool loop, streaming, retries, the outage fallback and stop are exercised

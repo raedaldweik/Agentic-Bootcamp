@@ -294,7 +294,7 @@ class Engine:
                     except agent.Unavailable as e:
                         log.warning("model unavailable (%s); answering directly", e.reason)
                         if e.outage:
-                            self.model_check = {"ok": False, "error": e.public or e.reason}
+                            self.model_check = {"ok": False, "error": e.public or e.reason, "detail": e.detail}
                         if e.reason == "refusal":
                             out = {"text": e.public, "cards": [], "followups": []}
                         else:
@@ -445,7 +445,7 @@ class Engine:
     def health(self) -> dict:
         live = agent.enabled()
         return {"status": "ok", "mode": "builtin", "assistant": scenario.AGENT["name"], "llm": live, **agent.describe(),
-                "modelCheck": self.model_check if live else None, "fastPath": FAST_PATH,
+                "modelCheck": self.model_check if live else None, "keyCheck": agent.key_report(), "fastPath": FAST_PATH,
                 "degraded": bool(live and time.time() < self._breaker_until),
                 "build": os.getenv("RAILWAY_GIT_COMMIT_SHA", "")[:7] or "local", "stats": self.stats}
 

@@ -284,6 +284,56 @@ def test_wrong_key_is_survivable(client, model, monkeypatch):
     assert r["mode"] == "direct" and "key was rejected" in r["notice"] and r["answer"].startswith("T-117 is away")
 
 
+def test_the_key_is_sent_both_ways_and_tidied(client, model, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", '  "test-key"\n')                 # pasted with quotes and a line break
+    agent.reset_client()
+    assert ask(client, "Where is tool T-117?")["mode"] == "model"
+    assert model.LOG[-1]["x_api_key"] == "test-key" and model.LOG[-1]["authorization"] == "Bearer test-key"
+    for raw, clean in (("ANTHROPIC_API_KEY=sk-ant-api03-abc", "sk-ant-api03-abc"), ("'sk-ant-api03-abc'", "sk-ant-api03-abc"), ("Bearer sk-ant-api03-abc", "sk-ant-api03-abc"),
+                       ("sk-ant-api03-ab\n c", "sk-ant-api03-abc"), ("export ANTHROPIC_API_KEY=\"sk-ant-api03-abc\"", "sk-ant-api03-abc"), ("", "")):
+        assert agent._clean_key(raw) == clean, raw
+
+
+def test_a_rejected_key_is_explained_without_showing_it(client, model, monkeypatch):
+    secret = "sk-ant-api03-" + "Z" * 95
+    monkeypatch.setenv("ANTHROPIC_API_KEY", secret)
+    agent.reset_client()
+    r = ask(client, "Where is tool T-117?", "supervisor")
+    assert r["mode"] == "direct" and "key was rejected" in r["notice"]
+    h = client.get("/api/assistant/health").json()
+    assert h["modelCheck"]["ok"] is False and h["modelCheck"]["error"] == "The language model key was rejected."
+    assert h["modelCheck"]["detail"].startswith("401") and "invalid x-api-key" in h["modelCheck"]["detail"]
+    assert h["keyCheck"] == {"present": True, "kind": "Anthropic API key", "length": 108, "tidied": False, "hint": h["keyCheck"]["hint"]}
+    assert "revoked, deleted, or copied incompletely" in h["keyCheck"]["hint"]
+    assert "ZZZZ" not in client.get("/api/assistant/health").text and secret not in str(r)
+
+
+@pytest.mark.parametrize("key,kind", [
+    ("sk-ant-api03-" + "a" * 95, "Anthropic API key"), ("sk-ant-api03-short", "Anthropic API key"), ("sk-ant-oat01-" + "a" * 80, "Claude subscription token"),
+    ("sk-ant-admin01-" + "a" * 80, "Anthropic admin key"), ("sk-proj-" + "a" * 40, "key from another provider"), ("my key", "not an API key"), ("", "missing"),
+])
+def test_key_report_names_the_kind_and_never_the_key(key, kind, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", key)
+    rep = agent.key_report()
+    assert rep["kind"] == kind and rep["hint"]
+    assert "aaaa" not in str(rep)
+    if key == "sk-ant-api03-short":
+        assert "copied incompletely" in rep["hint"] and "18 characters" in rep["hint"]
+
+
+def test_nothing_on_screen_calls_the_data_synthetic(client):
+    import re
+    from services.sanad import ops, scenario, views
+    assert "note" not in scenario.public()
+    assert not re.search(r"(?i)synthetic|\bdemo\b", str(client.get("/api/assistant/config").json()))
+    for m in scenario.MOMENTS:
+        for name in views.VIEWS:
+            args = {"tool_location": {"tool_id": "T-117"}, "approval_authority": {"action": "approve a deviation"}}.get(name, {})
+            assert not re.search(r"(?i)synthetic|demonstration data", str(views.run(name, ops.shop(m["ts"]), **args))), (name, m["ts"])
+    prompt = agent.system_prompt()
+    assert "synthetic" not in prompt.lower() and "say truthfully that this deployment runs on a demonstration data set" in prompt
+
+
 def test_refusal_and_truncation(client, model):
     assert ask(client, "refuse this")["answer"] == "I can't help with that request."
     r = ask(client, "truncate this")

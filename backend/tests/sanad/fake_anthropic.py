@@ -116,7 +116,8 @@ def script(body: dict) -> tuple[list[dict], str]:
 async def messages(request: Request):
     body = await request.json()
     key = request.headers.get("x-api-key") or request.headers.get("authorization", "").removeprefix("Bearer ")
-    LOG.append({"body": body, "beta": request.headers.get("anthropic-beta", ""), "key": key})
+    LOG.append({"body": body, "beta": request.headers.get("anthropic-beta", ""), "key": key,
+                "x_api_key": request.headers.get("x-api-key", ""), "authorization": request.headers.get("authorization", "")})
     if key != "test-key":
         return JSONResponse({"type": "error", "error": {"type": "authentication_error", "message": "invalid x-api-key"}}, status_code=401)
     if STATE["reject_fallbacks"] and "fallbacks" in body:

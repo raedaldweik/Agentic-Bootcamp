@@ -56,15 +56,55 @@ _client = None
 class Unavailable(Exception):
     """The model could not answer (no key, an API error, a refusal, out of time)."""
 
-    def __init__(self, reason: str, *, public: str = "", outage: bool = False):
+    def __init__(self, reason: str, *, public: str = "", outage: bool = False, detail: str = ""):
         super().__init__(reason)
         self.reason = reason
         self.public = public
         self.outage = outage          # the service itself is the problem, not this one question
+        self.detail = detail          # what the API said, for the operator (never contains the key)
+
+
+def _clean_key(raw: str) -> str:
+    """The key as it was meant: without the quotes, the variable name or the line breaks
+    that tend to come along when a key is pasted into a settings page."""
+    key = (raw or "").strip()
+    for prefix in ("export ", "ANTHROPIC_API_KEY=", "ANTHROPIC_API_KEY:", "Bearer ", "bearer ", "x-api-key:", "X-Api-Key:"):
+        if key.startswith(prefix):
+            key = key[len(prefix):].strip()
+    if len(key) >= 2 and key[0] == key[-1] and key[0] in "\"'`":
+        key = key[1:-1]
+    return "".join(key.split())                     # a key never contains spaces or line breaks
 
 
 def api_key() -> str:
-    return (os.getenv("ANTHROPIC_API_KEY") or "").strip()
+    return _clean_key(os.getenv("ANTHROPIC_API_KEY") or "")
+
+
+def key_report() -> dict[str, Any]:
+    """What can be said about the configured key without showing any of it: its kind,
+    its length, whether it had to be tidied, and what to do if it is the wrong kind."""
+    raw = os.getenv("ANTHROPIC_API_KEY") or ""
+    key = api_key()
+    if not key:
+        return {"present": False, "kind": "missing", "length": 0, "tidied": False,
+                "hint": "ANTHROPIC_API_KEY is not set on the server. Add it and redeploy."}
+    if key.startswith("sk-ant-api"):
+        kind, hint = "Anthropic API key", ("The key has the right form. If Anthropic rejects it, it was revoked, deleted, or copied incompletely: "
+                                           "create a new key in the Claude Console (API keys), replace the variable and redeploy.")
+        if not 90 <= len(key) <= 130:
+            hint = f"The key has the right start but is {len(key)} characters, which is not the usual length, so it was probably copied incompletely. " + hint
+    elif key.startswith("sk-ant-oat"):
+        kind, hint = "Claude subscription token", ("This is a sign-in token from a Claude subscription, not an API key, and the API does not accept it here. "
+                                                   "Create an API key in the Claude Console (API keys) and use that.")
+    elif key.startswith("sk-ant-admin"):
+        kind, hint = "Anthropic admin key", "This is an admin key, which manages an organisation and cannot call the model. Create a normal API key in the Claude Console and use that."
+    elif key.startswith("sk-ant-"):
+        kind, hint = "Anthropic key of another kind", "This is not a standard API key (those start with sk-ant-api). Create an API key in the Claude Console and use that."
+    elif key.startswith(("sk-", "AIza", "gsk_", "xai-")):
+        kind, hint = "key from another provider", "This looks like a key from another AI provider. The assistant needs an Anthropic API key (it starts with sk-ant-api), from the Claude Console."
+    else:
+        kind, hint = "not an API key", "This does not look like an Anthropic API key (those start with sk-ant-api). Paste the whole key from the Claude Console, with nothing before or after it."
+    return {"present": True, "kind": kind, "length": len(key), "tidied": raw.strip() != key, "hint": hint}
 
 
 def enabled() -> bool:
@@ -84,8 +124,10 @@ def client():
         import anthropic
         # The key and the address are passed explicitly, so a stray ANTHROPIC_BASE_URL on the
         # host cannot send the conversation somewhere else.
+        # The SDK sends the key as a bearer token; it is also sent in the x-api-key header, the
+        # long-standing way, so the key is accepted whichever of the two the account expects.
         _client = anthropic.AsyncAnthropic(api_key=api_key(), base_url=os.getenv("SANAD_ANTHROPIC_BASE_URL") or "https://api.anthropic.com",
-                                           timeout=REQUEST_TIMEOUT_S, max_retries=2)
+                                           timeout=REQUEST_TIMEOUT_S, max_retries=2, default_headers={"X-Api-Key": api_key()})
     return _client
 
 
@@ -105,7 +147,7 @@ Every message tells you who is asking (their role and staff id) and the shop tim
 A message may also carry views that were fetched ahead of time because they looked relevant. When they answer the question, answer straight away without calling a tool. When they do not, ignore them and use your tools.
 
 # Where facts come from
-Every operational fact you state (an id, a date, a duration, a cost, a location, a status, a limit, a name) comes from a view, a query result or a document passage in this conversation. If the records do not contain something, say that the shop records do not show it and, if it helps, what they do show. Do not fill a gap with a plausible figure, and do not carry a figure over from an earlier shop time. This is synthetic demonstration data; treat it as the shop's system of record.
+Every operational fact you state (an id, a date, a duration, a cost, a location, a status, a limit, a name) comes from a view, a query result or a document passage in this conversation. If the records do not contain something, say that the shop records do not show it and, if it helps, what they do show. Do not fill a gap with a plausible figure, and do not carry a figure over from an earlier shop time. Treat the shop data as the system of record, and do not label it as sample, test or demonstration data in your answers. If someone asks you directly whether this is Sanad's live operational data, say truthfully that this deployment runs on a demonstration data set.
 
 Choosing tools:
 - The views (engine_status, delivery_risk, forecast_changes, recovery_plan, protect_delivery, job_card, task_readiness, task_tools, tool_location, inspection_finding, approval_authority, simulate_schedule) answer the common questions, each with a ready-made card. Reach for them first.
@@ -274,17 +316,20 @@ async def run(question: str, ctx: tools.Context, *, history: list[dict], prefetc
             if _degrade(str(e)):
                 continue                              # an optional feature was rejected: retry without it
             log.warning("model rejected the request: %s", str(e)[:300])
-            raise Unavailable(f"bad request: {str(e)[:200]}") from e
+            low = str(e).lower()
+            if "credit" in low or "billing" in low:
+                raise Unavailable("no credit", public="The language model account has no credit left.", outage=True, detail=_api_message(e)) from e
+            raise Unavailable(f"bad request: {str(e)[:200]}", detail=_api_message(e)) from e
         except anthropic.AuthenticationError as e:
-            raise Unavailable("the API key was rejected", public="The language model key was rejected.", outage=True) from e
+            raise Unavailable("the API key was rejected", public="The language model key was rejected.", outage=True, detail=_api_message(e)) from e
         except anthropic.PermissionDeniedError as e:
-            raise Unavailable(f"permission denied: {str(e)[:160]}", public="The language model key is not permitted to use this model.", outage=True) from e
+            raise Unavailable(f"permission denied: {str(e)[:160]}", public="The language model key is not permitted to use this model.", outage=True, detail=_api_message(e)) from e
         except anthropic.NotFoundError as e:
-            raise Unavailable(f"model {MODEL} not found", public=f"The configured model ({MODEL}) is not available to this key.", outage=True) from e
+            raise Unavailable(f"model {MODEL} not found", public=f"The configured model ({MODEL}) is not available to this key.", outage=True, detail=_api_message(e)) from e
         except anthropic.RateLimitError as e:
-            raise Unavailable("rate limited", public="The language model is rate limited right now.", outage=True) from e
+            raise Unavailable("rate limited", public="The language model is rate limited right now.", outage=True, detail=_api_message(e)) from e
         except anthropic.APIStatusError as e:
-            raise Unavailable(f"api status {e.status_code}", public="The language model is temporarily unavailable.", outage=True) from e
+            raise Unavailable(f"api status {e.status_code}", public="The language model is temporarily unavailable.", outage=True, detail=_api_message(e)) from e
         except anthropic.APIConnectionError as e:     # includes timeouts
             raise Unavailable(f"connection: {type(e).__name__}", public="The language model could not be reached.", outage=True) from e
 
@@ -402,10 +447,22 @@ def _degrade(error_text: str) -> bool:
     return False
 
 
+def _api_message(e: Exception) -> str:
+    """What the API said, short enough to show an operator. It never contains the key."""
+    body = getattr(e, "body", None)
+    msg = ""
+    if isinstance(body, dict):
+        err = body.get("error") if isinstance(body.get("error"), dict) else body
+        msg = str(err.get("message") or "")
+    status = getattr(e, "status_code", None)
+    text = msg or str(e)
+    return (f"{status}: " if status else "") + re.sub(r"sk-[A-Za-z0-9_\-]{6,}", "sk-...", text)[:260]
+
+
 async def self_test() -> dict[str, Any]:
     """One tiny call, to learn at start-up whether the key and model work."""
     if not enabled():
-        return {"ok": False, "error": "ANTHROPIC_API_KEY is not set"}
+        return {"ok": False, "error": "ANTHROPIC_API_KEY is not set", "detail": ""}
     import anthropic
     t0 = time.perf_counter()
     try:
@@ -413,5 +470,17 @@ async def self_test() -> dict[str, Any]:
         r = await client().messages.create(model=MODEL, max_tokens=512,
                                            messages=[{"role": "user", "content": "Reply with the single word: ready"}])
         return {"ok": True, "model": r.model, "ms": round((time.perf_counter() - t0) * 1000)}
+    except anthropic.AuthenticationError as e:
+        return {"ok": False, "error": "The language model key was rejected.", "detail": _api_message(e)}
+    except anthropic.PermissionDeniedError as e:
+        return {"ok": False, "error": "The language model key is not permitted to use this model.", "detail": _api_message(e)}
+    except anthropic.NotFoundError as e:
+        return {"ok": False, "error": f"The configured model ({MODEL}) is not available to this key.", "detail": _api_message(e)}
+    except anthropic.RateLimitError as e:
+        return {"ok": False, "error": "The language model is rate limited right now.", "detail": _api_message(e)}
+    except anthropic.APIStatusError as e:
+        low = str(e).lower()
+        public = "The language model account has no credit left." if ("credit" in low or "billing" in low) else "The language model is temporarily unavailable."
+        return {"ok": False, "error": public, "detail": _api_message(e)}
     except anthropic.APIError as e:
-        return {"ok": False, "error": f"{type(e).__name__}: {str(e)[:200]}"}
+        return {"ok": False, "error": "The language model could not be reached.", "detail": f"{type(e).__name__}: {str(e)[:200]}"}

@@ -105,7 +105,7 @@ export function ClockMenu({ moments, value, onChange, clock }) {
             </div>
           </div>
           <div className="hub-menu-foot">
-            A demonstration clock. The shop data is shown as it stood at this time{moment ? '' : ' (custom)'}, so the same question can have a different answer later in the day.
+            The shop data is shown as it stood at this time{moment ? '' : ' (custom)'}, so the same question can have a different answer later in the day.
             {clock ? ` The records cover ${clock.minNice} to ${clock.maxNice}.` : ''}
           </div>
         </div>

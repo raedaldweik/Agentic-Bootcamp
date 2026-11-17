@@ -100,7 +100,7 @@ table("parts", "Part master for the parts that matter to the engines in the shop
 table("inventory", "Stock by location. ready_at_gate_ts is when a unit could be at the workstation if it is requested.", {
     "part_id": "Part number", "location": "Store", "on_hand": "Units on hand", "stock_status": "Serviceability / hold status",
     "ready_at_gate_ts": "Earliest time a unit could be at the gate, including any confirmation and transfer (blank if none on hand)",
-    "transfer_cost_usd": "Cost of an authorised transfer (synthetic)", "approval_required": "Who must approve the use of this stock",
+    "transfer_cost_usd": "Cost of an authorised transfer", "approval_required": "Who must approve the use of this stock",
 }, [
     ["P-4582", "Main Store AUH", 0, "No stock", "", "", ""],
     ["P-4582", "AUH-Satellite Store", 1, "Serviceable; available 28 Oct 2026; configuration confirmation required before issue", "2026-11-04 00:00", 300, "Inventory and configuration confirmation"],
@@ -131,7 +131,7 @@ table("po_events", "Purchase order history. The latest row per PO gives the curr
 
 table("supplier_quotes", "Expedite quotations received from suppliers.", {
     "ts": "When the quote was received", "quote_ref": "Quotation reference", "po_id": "Purchase order", "option": "What is offered",
-    "arrival_ts": "Arrival at the delivery point if accepted", "fee_usd": "Expedite fee (synthetic)", "valid_until": "Quote validity",
+    "arrival_ts": "Arrival at the delivery point if accepted", "fee_usd": "Expedite fee", "valid_until": "Quote validity",
 }, [
     ["2026-10-28 09:05", "EXQ-0592", "PO-2026-11873", "Priority air freight", "2026-11-03 10:00", 2400, "2026-10-28 16:00"],
 ], event_time="ts")
@@ -213,7 +213,7 @@ table("readiness_events", "Readiness checks for a job card. The latest row per c
 table("approvals", "Decisions recorded by authorised people. The assistant never creates rows here.", {
     "ts": "When the decision was recorded", "ref": "Reference", "kind": "expedite, work_release, overtime, resequence or disposition",
     "subject": "What was decided", "decision": "The decision", "decided_by": "Role that decided", "engine_id": "Engine",
-    "work_order": "Work order charged, if any", "amount_usd": "Amount, if any (synthetic)", "window_start": "For overtime: start", "window_end": "For overtime: end",
+    "work_order": "Work order charged, if any", "amount_usd": "Amount, if any", "window_start": "For overtime: start", "window_end": "For overtime: end",
 }, [
     ["2026-10-28 11:05", "EXQ-0592", "expedite", "Recovery option B: expedite the supplier shipment of P-4582", "Approved", "Procurement, with logistics confirmation", "ENG-204", "WO-2026-04417", 2400, "", ""],
     ["2026-10-28 13:00", "WR-2026-2204", "work_release", "Work release for JC-FAN-204 at Gate 1", "Released", "Supervisor SUP-0210", "ENG-204", "", "", "", ""],
@@ -320,7 +320,7 @@ def main() -> None:
     for old in OUT.glob("*.csv"):
         old.unlink()
     schema = {
-        "note": "Synthetic demonstration data. Not Sanad operational data.",
+        "note": "Scenario data set for the Sanad MRO Intelligence Hub.",
         "scenario_start": "2026-10-28 09:30",
         "tables": {},
     }

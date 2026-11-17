@@ -53,7 +53,7 @@ export function Notebook({ items, onClose, onRemove, onReset }) {
           {confirming
             ? <><button className="hub-btn is-danger" onClick={() => { setConfirming(false); onReset(); }}>Clear everything</button>
                 <button className="hub-btn" onClick={() => setConfirming(false)}>Keep</button></>
-            : <button className="hub-btn" onClick={() => setConfirming(true)} title="Forget this browser's conversations and notebook">Reset demo</button>}
+            : <button className="hub-btn" onClick={() => setConfirming(true)} title="Forget this browser's conversations and notebook">Clear my history</button>}
         </div>
       )}>
       {items.length === 0 && (

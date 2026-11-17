@@ -387,13 +387,13 @@ def recovery_plan(shop: Shop, engine_id: str | None = None, **_: Any) -> dict:
             "approved": [{"option": o["option"], "ref": o["approval"]["ref"], "ts": o["approval"]["ts"], "decided_by": o["approval"]["decided_by"],
                           "work_order": o["approval"]["work_order"], "amount_usd": o["approval"]["amount_usd"]} for o in approved],
             "supply": {"po_id": sup.get("po_id"), "status": sup.get("status"), "promised_arrival_ts": sup.get("promised_arrival_ts"), "deliver_to": sup.get("deliver_to")},
-            "note": "Costs are synthetic. Options combine: re-sequencing (C) can run alongside A or B."}
+            "note": "Options combine: re-sequencing (C) can run alongside A or B."}
     tiles = [{"label": "Options available", "value": str(len(opts)), "icon": "layers", "tone": "info"},
              {"label": "Lowest cost", "value": _usd(cheapest["cost_usd"]) if cheapest else "No cost", "sub": f"Option {cheapest['option']}" if cheapest else "", "icon": "coins", "tone": "good"},
              {"label": "Earliest finish", "value": nice(parse(best["predicted_completion_ts"]), with_year=False), "sub": f"Option {best['option']}, {_late(best['variance_hours'])}", "icon": "calendar", "tone": "info"}]
     if win:
         tiles.append({"label": "Window closes", "value": nice(parse(win["window_end"]), with_year=False), "icon": "clock", "tone": "warn"})
-    blocks: list[dict] = [{"type": "table", "columns": ["Option", "Action", "Predicted completion", "Cost (synthetic)", "Approval required", "Status"],
+    blocks: list[dict] = [{"type": "table", "columns": ["Option", "Action", "Predicted completion", "Cost", "Approval required", "Status"],
                            "rows": [[o["option"], o["action"], f"{nice(parse(o['predicted_completion_ts']))} ({_late(o['variance_hours'])})",
                                      _usd(o["cost_usd"]) + (f" {o['cost_note']}" if o["cost_usd"] else ""), o["approval_required"],
                                      {"text": o["status"], "tone": "good" if o.get("approved") else "info"}] for o in opts],
@@ -487,7 +487,7 @@ def protect_delivery(shop: Shop, engine_id: str | None = None, **_: Any) -> dict
             "new_dependencies": [{k: d[k] for k in ("kind", "dependency", "where", "state")} for d in deps],
             "unused_levers": unused, "sensitivity": sens}
     tiles = [{"label": "New dependencies", "value": str(len(deps)), "sub": "From the disposition" if deps else "None added", "icon": "branch", "tone": "warn" if deps else "info"},
-             {"label": "Cost of recovery", "value": _usd(cost) if cost else "USD 0", "sub": "Approved so far (synthetic)", "icon": "coins", "tone": "info"},
+             {"label": "Cost of recovery", "value": _usd(cost) if cost else "USD 0", "sub": "Approved so far", "icon": "coins", "tone": "info"},
              {"label": "Critical work ready", "value": nice(critical_ready, with_year=False), "sub": "Before final test and release", "icon": "check", "tone": "good" if fc["variance_hours"] <= 0 else "warn"},
              {"label": "Projected completion", "value": nice(predicted, with_year=False), "sub": _late(fc["variance_hours"]), "icon": "calendar", "tone": _tone(fc["status"])}]
     blocks: list[dict] = []
@@ -511,7 +511,7 @@ def protect_delivery(shop: Shop, engine_id: str | None = None, **_: Any) -> dict
         blocks.append({"type": "table", "title": "New dependencies", "columns": ["Type", "Dependency", "Where", "State"],
                        "rows": [[uc_first(d["kind"]), d["dependency"], d["where"], {"text": d["state"], "tone": "good"}] for d in deps]})
     if unused:
-        blocks.append({"type": "table", "title": "Levers not yet used", "columns": ["Lever", "Would finish", "Cost (synthetic)", "Approval"],
+        blocks.append({"type": "table", "title": "Levers not yet used", "columns": ["Lever", "Would finish", "Cost", "Approval"],
                        "rows": [[u["lever"], f"{nice(parse(u['predicted_completion_ts']))} ({_late(u['variance_hours'])})",
                                  _usd(u["cost_usd"]) if u["cost_usd"] is not None else "Labour cost", u["approval"]] for u in unused]})
     if sens:
