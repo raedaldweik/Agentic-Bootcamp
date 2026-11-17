@@ -815,7 +815,9 @@ def inspection_finding(shop: Shop, engine_id: str | None = None, finding_id: str
             "serial": f["serial"], "damage": f["damage"], "recorded_ts": f["ts"], "recorded_by": f["recorded_by"], "standard": f["standard"], "zones": zrows,
             "disposition": ({"ref": dispo["ref"], "ts": dispo["ts"], "decision": dispo["subject"], "decided_by": dispo["decided_by"]} if dispo else None),
             "status": "Dispositioned" if dispo else "Disposition pending" if above else "Within limits",
-            "rule": "The technician records the finding; only an authorised Engineering or Quality role dispositions it (QP-014)."}
+            "rule": "The technician records the finding; only an authorised Engineering or Quality role dispositions it (QP-014).",
+            "while_pending": ("Work on that blade stops and the blade is tagged and held. Removal of the remaining blades may continue "
+                              "(JC-FAN-204 section 5)." if above and not dispo else None)}
     tiles = [{"label": "Finding", "value": f["finding_id"], "sub": f"{f['damage']} · {f['component']}", "icon": "alert", "tone": "bad" if above else "good"},
              {"label": "Blade serial", "value": f["serial"], "sub": f["engine_id"], "icon": "fan", "tone": "info"},
              {"label": "Zones above limit", "value": f"{len(above)} of {len(zones)}", "sub": ", ".join(f"Zone {z['zone']}" for z in above) or "All within limit", "icon": "target", "tone": "bad" if above else "good"},

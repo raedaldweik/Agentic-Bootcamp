@@ -25,7 +25,7 @@ import re
 import time
 from typing import Any, Awaitable, Callable
 
-from . import corpus, ops, tools
+from . import corpus, ops, records, tools
 from .ops import nice
 
 log = logging.getLogger("sanad.agent")
@@ -46,7 +46,7 @@ FALLBACK_BETA = "server-side-fallback-2026-07-01"
 # take costs a retry, not the answer.
 def _defaults() -> dict[str, bool]:
     return {"fallbacks": os.getenv("SANAD_FALLBACKS", "true").lower() != "false", "speed": FAST_MODE,
-            "eager": True, "cache": True, "effort": True}
+            "eager": True, "cache": True, "ttl": True, "effort": True}
 
 
 _optional = _defaults()
@@ -99,7 +99,8 @@ def key_report() -> dict[str, Any]:
     elif key.startswith("sk-ant-admin"):
         kind, hint = "Anthropic admin key", "This is an admin key, which manages an organisation and cannot call the model. Create a normal API key in the Claude Console and use that."
     elif key.startswith("sk-ant-"):
-        kind, hint = "Anthropic key of another kind", "This is not a standard API key (those start with sk-ant-api). Create an API key in the Claude Console and use that."
+        kind, hint = "Anthropic key", ("The key has the form of an Anthropic key. If Anthropic rejects it, it was revoked, deleted, or copied incompletely: "
+                                       "create a new API key in the Claude Console (API keys), replace the variable and redeploy.")
     elif key.startswith(("sk-", "AIza", "gsk_", "xai-")):
         kind, hint = "key from another provider", "This looks like a key from another AI provider. The assistant needs an Anthropic API key (it starts with sk-ant-api), from the Claude Console."
     else:
@@ -144,10 +145,10 @@ _INSTRUCTIONS = """You are the Sanad Digital Assistant, working inside the Sanad
 # Each question
 Every message tells you who is asking (their role and staff id) and the shop time. The shop data is as it stood at that shop time: later events have not happened yet, so never describe them. The same question can have a different answer at a different shop time, and that is correct.
 
-A message may also carry views that were fetched ahead of time because they looked relevant. When they answer the question, answer straight away without calling a tool. When they do not, ignore them and use your tools.
+A message may also carry views: some fetched ahead of time because they looked relevant to the question, some carried over from the previous answer in the conversation. When they answer the question, answer straight away without calling a tool. They are a head start, not a boundary: when the question is wider than a view you were handed (all the tools in the shop, when the view covers one job card), answer the question that was asked, with run_sql or another view. Never narrow a question to fit a view, and never mention a view that turned out not to apply.
 
 # Where facts come from
-Every operational fact you state (an id, a date, a duration, a cost, a location, a status, a limit, a name) comes from a view, a query result or a document passage in this conversation. If the records do not contain something, say that the shop records do not show it and, if it helps, what they do show. Do not fill a gap with a plausible figure, and do not carry a figure over from an earlier shop time. Treat the shop data as the system of record, and do not label it as sample, test or demonstration data in your answers. If someone asks you directly whether this is Sanad's live operational data, say truthfully that this deployment runs on a demonstration data set.
+Every operational fact you state (an id, a date, a duration, a cost, a location, a status, a limit, a name) comes from a view, a query result or a document passage in this conversation. If the records do not contain something, say that the shop records do not show it and, if it helps, what they do show. Do not fill a gap with a plausible figure, and do not carry a figure over from an earlier shop time. Your own earlier answers in the conversation are summaries, not a source: when a follow-up needs a figure, take it from the views in this message or fetch it again, and do not rebuild it from memory of what you said before. Treat the shop data as the system of record, and do not label it as sample, test or demonstration data in your answers. If someone asks you directly whether this is Sanad's live operational data, say truthfully that this deployment runs on a demonstration data set.
 
 Choosing tools:
 - The views (engine_status, delivery_risk, forecast_changes, recovery_plan, protect_delivery, job_card, task_readiness, task_tools, tool_location, inspection_finding, approval_authority, simulate_schedule) answer the common questions, each with a ready-made card. Reach for them first.
@@ -159,7 +160,7 @@ Choosing tools:
 # What you may and may not do
 You inform and prepare; authorised people decide. You cannot approve a deviation or concession, accept or disposition a finding, certify work, release work or an engine, authorise overtime or spend, or record a tool handover. When someone asks you to do one of these, say plainly that you cannot, name the role that can (approval_authority knows), and offer what you can do: assemble the evidence and route it.
 
-Your action tools (raise_tool_request, draft_finding, prepare_deviation_package, submit_recovery_option, confirm_job_step, save_note) each create a pending record for an authorised person. Use one only when the person asks for that action, not on your own initiative. Afterwards say what was created, give its reference, and say that it is pending and who acts on it. The tools enforce the role rules themselves: if one refuses, tell the person why in a sentence and do not try another way round.
+Your action tools (raise_tool_request, draft_finding, prepare_deviation_package, submit_recovery_option, confirm_job_step, save_note) each create a pending record for an authorised person. Use one only when the person asks for that action, not on your own initiative. Afterwards say what was created, give its reference, and say that it is pending and who acts on it. The tools enforce the role rules themselves: if one refuses, tell the person why in a sentence and do not try another way round. Where an action takes free text (a reason, a justification), keep it to one plain sentence and use only figures that are in this message.
 
 A person's role limits what they may decide, not what they may ask. Anyone may see any status.
 
@@ -169,7 +170,8 @@ A person's role limits what they may decide, not what they may ask. Anyone may s
 - Keep it brief: usually 40 to 110 words. The card shows the table, so do not repeat the card's rows in text; say what they mean.
 - Write dates as 3 Nov 18:00, durations as 36 h or 90 min, and ids exactly as recorded (ENG-204, P-4582, T-117, JC-FAN-204).
 - Bold the two or three facts that matter most. No headings, no preamble such as "Based on the data", no closing offer of further help.
-- Step-by-step guidance: give the current step and the confirmation it needs, and point to the card for the rest. Remind the person of the care point when there is one.
+- Step-by-step guidance: work one step at a time, on the step that is next to be confirmed. Give that step and the confirmation it needs, and point to the card for the rest. Remind the person of the care point when there is one. Give a later step only when it is asked for by number. If the person says only "next" or "done", do not skip ahead and do not record a confirmation they have not given: ask them to confirm the current step in its own words, and say you will record it and move on.
+- When someone says "this step", "this task" or "the job" without naming one, they mean the job card they are working on. Answer for it without remarking on the wording.
 - If the question is unclear, answer the most likely reading and say which one you took.
 - Outside the shop (weather, general knowledge, other companies): say in a sentence that you cover this shop's engines, parts, tools, job cards, findings and approvals, and stop. For general aviation maintenance knowledge that the documents do not cover, you may answer briefly, and say that it is general knowledge and not from Sanad's approved documents.
 - Answer in English unless the person writes to you in another language.
@@ -216,19 +218,25 @@ def _history(history: list[dict]) -> list[dict]:
     return out
 
 
-def user_turn(question: str, ctx: tools.Context, prefetched: list[tuple[str, dict]], attachments: list[dict] | None = None) -> str:
+def user_turn(question: str, ctx: tools.Context, prefetched: list[tuple[str, dict]], attachments: list[dict] | None = None,
+              carried: list[tuple[str, dict]] | None = None) -> str:
     p = ctx.persona
     parts = [f"<asked_by>{p['title']} ({p['id']}). {p['authority']}</asked_by>",
              f"<shop_time>{ctx.shop.clock.strftime('%A')} {nice(ctx.shop.clock)}</shop_time>"]
-    if ctx.notebook.items:
-        mine = "\n".join(f"- {r['id']} {r['label']}: {r['title']} ({r['status']})" for r in ctx.notebook.items[-8:] if r["kind"] not in ("answer",))
-        if mine:
-            parts.append(f"<my_pending_records note=\"Raised earlier by this person through you. Pending, not decided.\">\n{mine}\n</my_pending_records>")
+    raised = [r for r in ctx.notebook.items[-8:] if r["kind"] not in ("answer", "note")]
+    if raised:
+        lines = "\n".join(f"- {r['id']} {r['label']}: {r['title']}. Raised by {r['by']} at shop time {r['shop_time']}. {records.since(r, ctx.shop)}" for r in raised)
+        parts.append("<records_raised_through_you note=\"Raised earlier from this device. Each line says which role raised it, so do not call it "
+                     f"'your' request unless that role is asking now.\">\n{lines}\n</records_raised_through_you>")
+
+    def views_xml(items: list[tuple[str, dict]]) -> str:
+        return "\n".join(f'<view name="{r["view"]}" card="{h if r.get("card") else "none"}">\n{tools.to_json(tools.view_payload(h, r))}\n</view>' for h, r in items)
+
     if prefetched:
-        views_xml = "\n".join(
-            f'<view name="{r["view"]}" card="{h if r.get("card") else "none"}">\n{tools.to_json(tools.view_payload(h, r))}\n</view>'
-            for h, r in prefetched)
-        parts.append(f"<prefetched_views>\n{views_xml}\n</prefetched_views>")
+        parts.append(f"<prefetched_views note=\"Fetched ahead because they looked relevant to this question.\">\n{views_xml(prefetched)}\n</prefetched_views>")
+    if carried:
+        parts.append("<context_views note=\"The views behind the previous answer in this conversation, refreshed for this shop time. "
+                     f"Use them if this question follows on from it; otherwise ignore them.\">\n{views_xml(carried)}\n</context_views>")
     for a in attachments or []:
         parts.append(f'<attached_document name="{str(a.get("name", "attachment"))[:120]}">\n{str(a.get("text", ""))[:20000]}\n</attached_document>')
     parts.append(f"<question>\n{question.strip()}\n</question>")
@@ -248,7 +256,7 @@ def parse_answer(text: str) -> tuple[str, list[str], list[str]]:
         if kind.lower() == "card":
             cards.extend(h.strip() for h in re.split(r"[,\s]+", body) if h.strip())
         else:
-            nexts.extend(q.strip(" \n\t-") for q in body.split("|") if q.strip(" \n\t-"))
+            nexts.extend(q.strip(" \n\t-") for q in re.split(r"[|｜]", body) if q.strip(" \n\t-"))
     clean = _MARKER.sub("", text)
     clean = re.sub(r"\n{3,}", "\n\n", clean).strip()
     return clean, cards, nexts[:4]
@@ -266,14 +274,15 @@ Emit = Callable[[str, dict[str, Any]], None]
 
 
 async def run(question: str, ctx: tools.Context, *, history: list[dict], prefetched: list[tuple[str, dict]],
-              attachments: list[dict] | None, emit: Emit, fallback_cards: list[str] | None = None) -> dict[str, Any]:
+              attachments: list[dict] | None, emit: Emit, fallback_cards: list[str] | None = None,
+              carried: list[tuple[str, dict]] | None = None) -> dict[str, Any]:
     """Answer one question. Returns {text, cards, followups, usage, model, calls}.
     `emit(kind, payload)` reports progress: "text" {text}, "step" {...}. Raises Unavailable."""
     if not enabled():
         raise Unavailable("no api key")
     import anthropic
 
-    messages: list[dict] = _history(history) + [{"role": "user", "content": user_turn(question, ctx, prefetched, attachments)}]
+    messages: list[dict] = _history(history) + [{"role": "user", "content": user_turn(question, ctx, prefetched, attachments, carried)}]
     usage = {"input_tokens": 0, "output_tokens": 0, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0, "model_calls": 0, "model_ms": 0}
     llm_calls: list[dict] = []
     served_model = MODEL
@@ -405,11 +414,26 @@ def _kind(name: str) -> str:
     return {"run_sql": "sql", "search_documents": "search", "render_chart": "chart"}.get(name, "tool")
 
 
-def _request(messages: list[dict]) -> dict[str, Any]:
+def _system() -> Any:
+    """The instructions, schema and document list, marked as the fixed part of every request.
+
+    Tools and system are rendered first and never change, so the marker here caches both. Every
+    question after the first reads them back instead of paying for them again, whatever the
+    question is. The entry is kept for an hour, because people pause between questions."""
+    if not _optional["cache"]:
+        return system_prompt()
+    mark: dict[str, Any] = {"type": "ephemeral"}
+    if _optional["ttl"]:
+        mark["ttl"] = "1h"
+    return [{"type": "text", "text": system_prompt(), "cache_control": mark}]
+
+
+def _request(messages: list[dict], *, tail_cache: bool = True) -> dict[str, Any]:
     schemas = tools.SCHEMAS if _optional["eager"] else [{k: v for k, v in t.items() if k != "eager_input_streaming"} for t in tools.SCHEMAS]
-    req: dict[str, Any] = {"model": MODEL, "max_tokens": MAX_TOKENS, "system": system_prompt(), "tools": schemas, "messages": messages}
-    if _optional["cache"]:
-        req["cache_control"] = {"type": "ephemeral"}   # caches the instructions, schema, tools and the conversation so far
+    req: dict[str, Any] = {"model": MODEL, "max_tokens": MAX_TOKENS, "system": _system(), "tools": schemas, "messages": messages}
+    if _optional["cache"] and tail_cache:
+        # the automatic breakpoint, on the end of the conversation: read back by the next model call of the same question
+        req["cache_control"] = {"type": "ephemeral"}
     if _optional["effort"]:
         req["output_config"] = {"effort": EFFORT}
     betas: list[str] = []
@@ -433,7 +457,7 @@ def _degrade(error_text: str) -> bool:
                     "Upgrade it: pip install -U 'anthropic>=2.8'", error_text[:200])
         return True
     for key, words in (("fallbacks", ("fallback",)), ("speed", ("speed", "fast mode", "fast-mode")), ("eager", ("eager_input_streaming",)),
-                       ("cache", ("cache_control",)), ("effort", ("output_config", "effort"))):
+                       ("ttl", ("ttl",)), ("cache", ("cache_control",)), ("effort", ("output_config", "effort"))):
         if _optional[key] and any(w in low for w in words):
             _optional[key] = False
             log.warning("the API rejected `%s` for %s; continuing without it (%s)", key, MODEL, error_text[:200])
@@ -445,6 +469,23 @@ def _degrade(error_text: str) -> bool:
         log.warning("the API rejected the request for %s without naming a feature; continuing with the plain request (%s)", MODEL, error_text[:200])
         return True
     return False
+
+
+async def warm() -> dict[str, Any]:
+    """Put the fixed part of the prompt in the cache (or refresh it there), without generating anything.
+    Called at start-up and while the service is in use, so the first question after a pause is as
+    quick as the rest. Costs a cache read when the entry is still there, a cache write when it is not."""
+    if not enabled() or not _optional["cache"]:
+        return {"ok": False, "skipped": True}
+    import anthropic
+    req = _request([{"role": "user", "content": "warm"}], tail_cache=False)
+    req["max_tokens"] = 0
+    try:
+        r = await client().beta.messages.create(**req)
+        u = r.usage
+        return {"ok": True, "read": int(getattr(u, "cache_read_input_tokens", 0) or 0), "wrote": int(getattr(u, "cache_creation_input_tokens", 0) or 0)}
+    except (anthropic.APIError, TypeError) as e:           # never worth failing over: the next question simply writes the cache itself
+        return {"ok": False, "error": f"{type(e).__name__}: {str(e)[:160]}"}
 
 
 def _api_message(e: Exception) -> str:

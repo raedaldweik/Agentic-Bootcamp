@@ -533,9 +533,11 @@ html, body, #root {
   border: 1px solid rgba(255,255,255,0.55);
   box-shadow: 0 1px 3px rgba(0,0,0,0.20);
 }
-.ram-page .chat-item:hover { background: #FFFFFF; color: var(--text); }
+/* Hover and active states keep a gradient (a flat one): swapping a gradient for a plain colour makes the
+   colour fade in from transparent, which showed as a dark flicker on these light buttons. */
+.ram-page .chat-item:hover { background: linear-gradient(180deg, #FFFFFF, #FFFFFF); color: var(--text); }
 .ram-page .chat-item.active {
-  background: #FFFFFF;
+  background: linear-gradient(180deg, #FFFFFF, #FFFFFF);
   color: var(--brand-lo);
   border-color: rgba(255,255,255,0.90);
   border-inline-start: 3px solid var(--brand);
@@ -547,5 +549,5 @@ html, body, #root {
   border: 2px dashed rgba(47,111,168,0.45);
   box-shadow: 0 2px 8px rgba(0,0,0,0.22);
 }
-.ram-page .new-chat-btn:hover { background: #FFFFFF; color: var(--brand-lo); border-color: rgba(47,111,168,0.70); }
+.ram-page .new-chat-btn:hover { background: linear-gradient(180deg, #FFFFFF, #FFFFFF); color: var(--brand-lo); border-color: rgba(47,111,168,0.70); }
 

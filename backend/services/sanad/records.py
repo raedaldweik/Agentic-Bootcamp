@@ -52,3 +52,28 @@ class Notebook:
 
     def clear(self) -> None:
         self.items.clear()
+
+
+def since(record: dict, shop: Any) -> str:
+    """What the shop records show has happened, since a record was raised, to the thing it asked for.
+    The record itself stays as it was raised; this is said beside it so the two are never read as a contradiction."""
+    d = record.get("detail") or {}
+    try:
+        if record["kind"] == "tool_request":
+            st = shop.tool_state(d.get("tool_id", ""))
+            if st and st["checked_in"] and st.get("custody_ts", "") > record["shop_time"]:
+                return f"Since then the shop records show the tool checked in at {st['location']} ({st['custody_ts']})."
+        elif record["kind"] == "recovery_submission":
+            kind = {"A": "stock_transfer", "B": "expedite", "C": "resequence"}.get(d.get("option"))
+            done = [a for a in shop.approvals(d.get("engine_id"), kind) if a["ts"] > record["shop_time"]] if kind else []
+            if done:
+                a = done[-1]
+                return f"Since then the shop records show a decision: {a['decision'].lower()} by {a['decided_by']} at {a['ts']} ({a['ref']})."
+        elif record["kind"] in ("deviation_package", "finding_draft"):
+            done = [a for a in shop.approvals(d.get("engine_id"), "disposition") if a["ts"] > record["shop_time"]]
+            if done and record["kind"] == "deviation_package":
+                a = done[-1]
+                return f"Since then the shop records show a disposition: {a['ref']} by {a['decided_by']} at {a['ts']}."
+    except Exception:                                    # a note beside a record must never break an answer
+        return ""
+    return "Still pending."

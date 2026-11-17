@@ -28,12 +28,16 @@ questions outside the demonstration storyline work too. The data itself is synth
 2. The model receives that view with the question, so most answers take **one** model call.
 3. The answer streams as it is written, and answers are short by instruction: the card carries
    the table, the text says what it means.
-4. The instructions, data schema and tool definitions never change between questions, so they
-   are served from the prompt cache.
-5. If the model is slow, rate limited or down, the question is answered straight from the shop
+4. The instructions, data schema and tool definitions never change between questions. They carry
+   their own cache marker, kept for an hour and refreshed while the service is in use, so every
+   question reads them from the prompt cache instead of paying for them again.
+5. A follow-up that names nothing ("which would you pick?") is handed the views behind the
+   previous answer, refreshed for the current shop time, so it is answered in one call and its
+   figures come from the records, not from the wording of an earlier reply.
+6. If the model is slow, rate limited or down, the question is answered straight from the shop
    data and the answer says so. After repeated failures the model is skipped for 30 seconds so
    nobody waits on a timeout.
-6. A dropped connection while an answer is on its way is ridden out for about 25 seconds, and a
+7. A dropped connection while an answer is on its way is ridden out for about 25 seconds, and a
    server that is restarting shows "The assistant can't be reached" and reconnects by itself.
 
 Without a model key the standard questions still work (answered in milliseconds from the data);
@@ -143,7 +147,7 @@ pip install pytest
 python -m pytest tests/sanad -q
 ```
 
-195 tests: the read-only SQL guard, the schedule against the storyline, every view at every
+203 tests: the read-only SQL guard, the schedule against the storyline, every view at every
 moment, the wording of every answer across the allowed period, the router, the role rules, the HTTP API, limits and the access code. The model path
 runs against a local stand-in for the Anthropic API that speaks the real streaming format, so
 the real SDK, the tool loop, streaming, retries, the outage fallback and stop are exercised

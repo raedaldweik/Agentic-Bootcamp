@@ -109,10 +109,19 @@ def test_video_storyline_facts():
     ("What if P-4582 arrives four hours later than promised?", None), ("Raise a handover request for T-117.", None),
     ("hello", None), ("what's the weather in Abu Dhabi", None),
     ("What does the tool control procedure say about camera detections?", None),
+    ("How many tools need calibration and when is each one due?", None),        # a count across the shop: no single view
+    ("list all purchase orders", None), ("is the torque wrench calibrated?", None),
 ])
 def test_router_picks_the_view(question, view):
     got = router.match(question, ops.shop("2026-10-28 12:15"), scenario.persona("manager"))
     assert (got[0]["view"] if got else None) == view
+
+
+def test_router_does_not_carry_an_unknown_subject_forward():
+    got = router.match("what will the status be on 5 November?", ops.shop(), scenario.persona("manager"), history=["status of ENG-999"])
+    assert got and got[0]["view"] == "engine_status" and got[0]["args"] == {}
+    got = router.match("status of ENG-999", ops.shop(), scenario.persona("manager"))
+    assert got[0]["args"] == {"engine_id": "ENG-999"}                  # asked for directly, it is looked up and reported as unknown
 
 
 def test_router_carries_the_subject_from_earlier_turns():

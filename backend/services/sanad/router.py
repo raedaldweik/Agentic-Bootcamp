@@ -24,7 +24,7 @@ _RULES: list[tuple[str, str, bool]] = [
     ("approval_authority", r"\b(who (can|may|is allowed to|approves?|authoris\w+|signs?)|can i (approve|authoris\w+|sign off|release|certif\w+|accept)|am i allowed|allowed to approve|approval authority|authority matrix)\b", True),
     ("tool_location", r"\b(where('s| is| are)?|locate|location of|find|track down|still at|who has|missing)\b.*\b(tool|extractor|t[\s\-]?\d{3}|k[\s\-]?\d{3}|it)\b", True),
     ("tool_location", r"\b(tool|t[\s\-]?\d{3})\b.*\b(where|still|gate 3|location|custody|handover|camera)\b", True),
-    ("task_tools", r"\b(which|what|list)\b.*\btools?\b|\btools? (do|does|are|is) .*(need|required)|\btools? (needed|required)\b|\bcalibrat", True),
+    ("task_tools", r"\b(which|what|list)\b.*\btools?\b|\btools? (do|does|are|is) .*(need|required)|\btools? (needed|required)\b", True),
     ("task_readiness", r"\b(can i|may i|are we|am i|is it) .*\b(start|begin|go ahead|proceed)\b|\bready (to|for)\b|\breadiness\b|\bgood to go\b|\bok(ay)? to start\b|\bstart .* now\b", True),
     ("job_card", r"\b(guide me|step[\s\-]by[\s\-]step|walk me|how do i|how to|procedure|instructions?|job card|next step|what('s| is) step|steps?)\b|\bneed to start\b|\bplease guide\b", True),
     ("inspection_finding", r"\b(finding|scratch|blade (damage|inspection)|inspection (result|finding|limit)|limits?\b.*(scratch|blade|leading)|zone [abc]\b|leading[\s\-]edge|disposition)", True),
@@ -40,6 +40,8 @@ _RULES: list[tuple[str, str, bool]] = [
 ]
 _WHAT_IF = re.compile(r"\b(what if|suppose|assuming|if (the |we |it |p[\s\-]?\d|t[\s\-]?\d)|would happen|simulate|scenario where)\b", re.I)
 _DOCS = re.compile(r"\b(what (does|do)|according to|per the|as per|in the|under the|where does)\b.*\b(procedure|manual|policy|standard|document|matrix|instructions?|process)\b|\bsay(s)? about\b|\bdefin(e|ition)\b|\bwhat is (a|an|the) (concession|deviation|disposition|watch status)\b", re.I)
+_WIDE = re.compile(r"^\s*(how many|how much|count|list)\b|\b(number of|across the shop|in the shop|every (tool|part|engine)|"
+                   r"all (the |our )?(tools|parts|purchase orders|orders|approvals|job cards|findings|staff))\b|\bcalibrat", re.I)
 _ACTION = re.compile(r"^\s*(please\s+)?(raise|record|log|prepare|submit|create|save|file|open|draft|route|send|request|confirm)\b", re.I)
 
 
@@ -69,11 +71,14 @@ def match(question: str, shop: Shop, persona: dict[str, Any], history: list[str]
     # carry the subject over from earlier turns ("is it still at Gate 3?")
     for earlier in reversed(history or []):
         for k, v in entities(earlier).items():
-            found.setdefault(k, v)
+            if _known(k, v, shop):      # a subject is carried over only if it exists: "ENG-999" must not follow the person around
+                found.setdefault(k, v)
     if _WHAT_IF.search(q):
         return []                       # needs parameters only the model can read out of the sentence
     if _DOCS.search(q):
         return []                       # a question about what a document says: search, do not guess a view
+    if _WIDE.search(q):
+        return []                       # a count or a list across the shop: a single view would narrow it
     picked: list[dict[str, Any]] = []
     seen: set[str] = set()
     for view, pattern, strong in _RULES:
@@ -103,6 +108,12 @@ def _args(view: str, found: dict[str, str], question: str, shop: Shop) -> dict[s
     if view == "approval_authority":
         return {"action": question}
     return {}
+
+
+def _known(kind: str, value: str, shop: Shop) -> bool:
+    table, column = {"engine_id": ("engines", "engine_id"), "tool_id": ("tools", "tool_id"), "job_card": ("job_cards", "job_card"),
+                     "part_id": ("parts", "part_id")}[kind]
+    return any(row[column] == value for row in shop.t[table])
 
 
 def _missing_tool(shop: Shop) -> str | None:

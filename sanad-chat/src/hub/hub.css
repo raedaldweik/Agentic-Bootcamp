@@ -125,7 +125,7 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.22), 0 0 0 1px rgba(95,147,196,0.30);
 }
 .hub-page .hub-followup svg { color: var(--brand); flex: none; }
-.hub-page .hub-followup:hover { transform: translateY(-1px); background: #fff; box-shadow: 0 6px 16px rgba(0,0,0,0.30), 0 0 0 2px rgba(95,147,196,0.65); }
+.hub-page .hub-followup:hover { transform: translateY(-1px); background: linear-gradient(180deg, #FFFFFF, #FFFFFF); box-shadow: 0 6px 16px rgba(0,0,0,0.30), 0 0 0 2px rgba(95,147,196,0.65); }
 .hub-page .hub-record-chip {
   display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; font-size: 12px; color: var(--text-md);
   background: linear-gradient(180deg, #FFFFFF, #FFF6E3); border: 1px solid #F1CE8B; box-shadow: 0 2px 8px rgba(0,0,0,0.22); cursor: pointer;

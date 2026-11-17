@@ -136,7 +136,51 @@ def test_one_model_call_when_the_view_was_prefetched(client, model):
     assert body["fallbacks"] == "default" and "server-side-fallback-2026-07-01" in model.LOG[-1]["beta"]
     assert all(t.get("eager_input_streaming") for t in body["tools"]) and len(body["tools"]) == 21
     assert "<shop_time>Wednesday 28 Oct 2026 09:30</shop_time>" in body["messages"][-1]["content"]
-    assert "28 Oct" not in body["system"]                                  # the cached part never carries the clock
+    # the fixed part is one block with its own long-lived cache marker, and never carries the clock or the role
+    assert len(body["system"]) == 1 and body["system"][0]["cache_control"] == {"type": "ephemeral", "ttl": "1h"}
+    assert "28 Oct" not in body["system"][0]["text"] and "MGR-0107" not in body["system"][0]["text"]
+
+
+def test_the_fixed_instructions_are_identical_for_every_role_time_and_question(client, model):
+    ask(client, "What is the primary risk to ENG-204?")
+    first = model.LOG[-1]["body"]
+    ask(client, "Can I start fan blade removal now?", "technician", "2026-10-28 12:15")
+    second = model.LOG[-1]["body"]
+    assert first["system"] == second["system"] and first["tools"] == second["tools"]       # so the second reads the first's cache entry
+
+
+def test_a_follow_up_gets_the_views_behind_the_previous_answer(client, model):
+    a = ask(client, "Generate a recovery plan for component P-4582.")
+    assert [c["id"] for c in a["cards"]] == ["recovery_plan"]
+    b = ask(client, "which one would you pick and why?", session=a["querySessionId"])
+    sent = model.LOG[-1]["body"]["messages"][-1]["content"]
+    assert "<context_views" in sent and '<view name="recovery_plan"' in sent and "<prefetched_views" not in sent
+    assert '"cost_usd":2400' in sent                                       # the figures are in the message, not left to memory
+    assert b["usage"]["model_calls"] == 1 and b["answer"].startswith("**Answer from the carried-over view.**")
+    # the same view an hour later is refreshed for the new shop time, not replayed
+    ask(client, "and now?", shop_time="2026-10-28 11:30", session=a["querySessionId"])
+    assert "EXQ-0592" in model.LOG[-1]["body"]["messages"][-1]["content"] and "Approved" in model.LOG[-1]["body"]["messages"][-1]["content"]
+    # a new conversation carries nothing over
+    ask(client, "which one would you pick and why?")
+    assert "<context_views" not in model.LOG[-1]["body"]["messages"][-1]["content"]
+
+
+def test_records_say_who_raised_them_and_what_became_of_them(client, model):
+    s = ask(client, "Raise a handover request for T-117.", "supervisor", "2026-10-28 09:30")
+    assert s["records"][0]["id"] == "THR-0001"
+    ask(client, "Can I start fan blade removal now?", "technician", "2026-10-28 12:15")
+    sent = model.LOG[-1]["body"]["messages"][-1]["content"]
+    assert "THR-0001 Tool handover request" in sent and "Raised by Supervisor SUP-0210" in sent and "Still pending." in sent
+    ask(client, "Can I start fan blade removal now?", "technician", "2026-10-28 13:30")
+    assert "Since then the shop records show the tool checked in at Gate 1 tool board" in model.LOG[-1]["body"]["messages"][-1]["content"]
+
+
+def test_the_cache_is_warmed_without_generating_anything(client, model):
+    out = asyncio.run(agent.warm())
+    assert out == {"ok": True, "read": 0, "wrote": 11000}
+    body = model.LOG[-1]["body"]
+    assert body["max_tokens"] == 0 and "cache_control" not in body and not body.get("stream")
+    assert body["system"][0]["cache_control"]["ttl"] == "1h" and len(body["tools"]) == 21
 
 
 def test_markers_never_reach_the_screen_while_streaming(client, model):
@@ -208,7 +252,8 @@ def test_any_rejected_feature_costs_a_retry_not_the_answer(client, model):
     body = model.LOG[-1]["body"]
     assert r["mode"] == "model" and "cache_control" not in body and "fallbacks" not in body
     assert not any("eager_input_streaming" in t for t in body["tools"])
-    assert client.get("/api/assistant/health").json()["features"] == {"fallbacks": False, "speed": False, "eager": False, "cache": False, "effort": False}
+    assert client.get("/api/assistant/health").json()["features"] == {"fallbacks": False, "speed": False, "eager": False, "cache": False, "ttl": False, "effort": False}
+    assert isinstance(body["system"], str)                                 # without caching the instructions are sent plainly
 
 
 def test_static_files_do_not_escape_the_build(client):

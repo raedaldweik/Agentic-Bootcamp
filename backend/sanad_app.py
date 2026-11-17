@@ -47,11 +47,12 @@ async def lifespan(app: FastAPI):
             async def check() -> None:
                 res = await ENGINE.check_model()
                 if res.get("ok"):
-                    log.info("model ready: %s answered in %s ms (effort %s%s)", res["model"], res["ms"], agent.EFFORT,
-                             ", fast mode" if agent.FAST_MODE else "")
+                    log.info("model ready: %s answered in %s ms (effort %s%s); instructions cached: %s", res["model"], res["ms"], agent.EFFORT,
+                             ", fast mode" if agent.FAST_MODE else "", ENGINE.cache_warm)
                 else:
                     log.warning("model check FAILED (%s). Questions are answered from the shop data until it works.", res.get("error"))
             tasks.append(asyncio.create_task(check()))
+            tasks.append(asyncio.create_task(ENGINE.keep_warm()))
         else:
             log.warning("ANTHROPIC_API_KEY is not set: standard questions are answered from the shop data; free-form questions need the key.")
     if USE_RAM:

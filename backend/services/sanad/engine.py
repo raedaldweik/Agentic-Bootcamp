@@ -44,6 +44,9 @@ MAX_IN_FLIGHT = 3                 # per browser
 MODEL_SLOTS = int(os.getenv("SANAD_MAX_CONCURRENCY", "24"))
 SLOT_WAIT_S = 12.0
 POLL_INTERVAL_S = 0.3
+MAX_CARRIED = 2                   # views carried from one answer into the next question
+WARM_EVERY_S = 50 * 60            # the cached instructions are refreshed this often while the service is in use
+WARM_WHILE_USED_S = 12 * 3600     # ... and only if someone asked something in this long
 SAVE_DELAY_S = 4.0
 FAST_PATH = os.getenv("SANAD_FAST_PATH", "").lower() in ("1", "true", "yes")
 BREAKER_FAILURES = 3
@@ -87,6 +90,8 @@ class Engine:
         self._breaker_until = 0.0
         self._save_task: asyncio.Task | None = None
         self.model_check: dict[str, Any] = {"ok": None}
+        self.last_model_use = 0.0
+        self.cache_warm: dict[str, Any] = {}
         self.stats = {"questions": 0, "model_answers": 0, "direct_answers": 0, "errors": 0, "started": _now_iso()}
         self._loaded = False
 
@@ -271,6 +276,21 @@ class Engine:
                     strong.append(handle)
             turn["preview"] = [ctx.card(h) for h in strong[:1]]
 
+            # A follow-up that names nothing ("which would you pick?", "how much so far?") is about the
+            # previous answer. Its views are fetched again, for this shop time, so the figures come from
+            # the records and not from the wording of an earlier reply.
+            carried: list[tuple[str, dict]] = []
+            if not prefetched:
+                for item in (session.get("context_views") or [])[:MAX_CARRIED]:
+                    try:
+                        handle, result = tools.run_view(item["view"], item["args"], ctx)
+                    except Exception:
+                        log.exception("could not refresh %s for a follow-up; continuing without it", item.get("view"))
+                        continue
+                    ctx.calls.append({"name": item["view"], "input": item["args"], "ok": True, "ms": 0.0, "carried": True,
+                                      "output": {"card": handle if result.get("card") else None, "summary": result["summary"]}})
+                    carried.append((handle, result))
+
             # 2. Answer: the model when it is available, the views alone when it is not.
             out: dict[str, Any] | None = None
             notice = None
@@ -288,7 +308,8 @@ class Engine:
                 else:
                     try:
                         out = await agent.run(question, ctx, history=[self._public(t) for t in earlier], prefetched=prefetched,
-                                              attachments=attachments, emit=emit, fallback_cards=strong)
+                                              attachments=attachments, emit=emit, fallback_cards=strong, carried=carried)
+                        self.last_model_use = time.time()
                         self._failures = 0
                         self.model_check = {"ok": True, "model": out.get("model"), "ms": (out.get("usage") or {}).get("model_ms")}
                     except agent.Unavailable as e:
@@ -327,6 +348,15 @@ class Engine:
             turn.update(answer=out["text"], text=out["text"], cards=cards, preview=[], followups=followups,
                         sources=_sources(ctx, out["cards"]), records=list(ctx.created), usage=out.get("usage") or {},
                         model=out.get("model"), notice=notice, state="done")
+            # what the next follow-up will be about: the views this answer was built on (the shown one first)
+            used = [c for c in ctx.calls if c["name"] in tools.VIEW_NAMES and c.get("ok") and c["name"] != "simulate_schedule"
+                    and not (c.get("output") or {}).get("error")]
+            shown = set(out["cards"])
+            used.sort(key=lambda c: (c.get("output") or {}).get("card") not in shown)
+            if used and not all(c.get("carried") for c in used):
+                seen: set[str] = set()
+                session["context_views"] = [{"view": c["name"], "args": c["input"]} for c in used
+                                            if not (c["name"] in seen or seen.add(c["name"]))][:MAX_CARRIED]
             turn["trace"] = {"toolCalls": ctx.calls, "llmCalls": out.get("llm_calls") or [],
                              "retrievalCalls": [{k: p[k] for k in ("title", "doc_id", "collection", "page", "section", "score")} | {"text": p["text"][:600]}
                                                 for p in ctx.passages]}
@@ -440,12 +470,23 @@ class Engine:
     # -- health -------------------------------------------------------------
     async def check_model(self) -> dict:
         self.model_check = await agent.self_test() if agent.enabled() else {"ok": False, "error": "no key"}
+        if self.model_check.get("ok"):
+            self.cache_warm = await agent.warm()
         return self.model_check
+
+    async def keep_warm(self) -> None:
+        """While the service is in use, refresh the cached instructions before they expire, so the
+        first question after a quiet spell is as quick as the others. Idle for half a day: stop."""
+        while True:
+            await asyncio.sleep(WARM_EVERY_S)
+            if agent.enabled() and time.time() - self.last_model_use < WARM_WHILE_USED_S and time.time() >= self._breaker_until:
+                self.cache_warm = await agent.warm()
 
     def health(self) -> dict:
         live = agent.enabled()
         return {"status": "ok", "mode": "builtin", "assistant": scenario.AGENT["name"], "llm": live, **agent.describe(),
-                "modelCheck": self.model_check if live else None, "keyCheck": agent.key_report(), "fastPath": FAST_PATH,
+                "modelCheck": self.model_check if live else None, "keyCheck": agent.key_report(), "cacheWarm": self.cache_warm or None,
+                "fastPath": FAST_PATH,
                 "degraded": bool(live and time.time() < self._breaker_until),
                 "build": os.getenv("RAILWAY_GIT_COMMIT_SHA", "")[:7] or "local", "stats": self.stats}
 

@@ -106,8 +106,11 @@ def script(body: dict) -> tuple[list[dict], str]:
         return [], "refusal"
     if "truncate" in q:
         return [think, {"type": "tool_use", "id": "toolu_cut", "name": "run_sql", "input": {"sql": "select"}}], "max_tokens"
-    if "<prefetched_views>" in text:
-        handle = text.split('card="')[1].split('"')[0]
+    if "<context_views" in text and "<prefetched_views" not in text:      # a follow-up answered from the carried-over view
+        handle = text.split("<context_views")[1].split('card="')[1].split('"')[0]
+        return [think, {"type": "text", "text": f"**Answer from the carried-over view.**\n\n[[card:{handle}]]\n[[next: Show me the status of all the engines.]]"}], "end_turn"
+    if "<prefetched_views" in text:
+        handle = text.split("<prefetched_views")[1].split('card="')[1].split('"')[0]
         return [think, {"type": "text", "text": f"**Answer from the pre-fetched view.** The detail is in the card.\n\n[[card:{handle}]]\n[[next: What has changed on ENG-204 since yesterday? | Generate a recovery plan for ENG-204.]]"}], "end_turn"
     return [think, {"type": "text", "text": "A plain answer with no card.\n[[next: Show me the status of all the engines.]]"}], "end_turn"
 
@@ -130,6 +133,9 @@ async def messages(request: Request):
         STATE["fail_next"] -= 1
         return JSONResponse({"type": "error", "error": {"type": "overloaded_error", "message": "Overloaded"}}, status_code=529)
     if not body.get("stream"):
+        if body.get("max_tokens") == 0:                               # a cache warm-up: nothing is generated
+            return {"id": "msg_w", "type": "message", "role": "assistant", "model": body["model"], "stop_reason": "max_tokens", "stop_sequence": None,
+                    "content": [], "usage": {"input_tokens": 3, "output_tokens": 0, "cache_creation_input_tokens": 11000, "cache_read_input_tokens": 0}}
         return {"id": "msg_x", "type": "message", "role": "assistant", "model": body["model"], "stop_reason": "end_turn", "stop_sequence": None,
                 "content": [{"type": "text", "text": "ready"}], "usage": {"input_tokens": 9, "output_tokens": 2}}
     blocks, stop = script(body)
