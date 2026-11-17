@@ -1,6 +1,6 @@
-# Railway deployment of the Sanad MRO Intelligence Hub.
-# In the Railway service settings, set the config file path to /railway.sanad.toml
-# (the default railway.toml builds the hackathon app).
+# Same as railway.toml, for a service whose config path was set to this file.
+# Nothing to set in Railway beyond the variables (ANTHROPIC_API_KEY, and SANAD_ACCESS_CODE
+# for a public address). Keep one replica: questions in flight are held in memory.
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile.sanad"

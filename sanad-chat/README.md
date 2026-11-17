@@ -78,16 +78,17 @@ All are environment variables on the backend. Only the first matters to start.
 
 ## Deploy on Railway
 
-1. Create a service from this repository.
-2. In the service settings, set the **config file path** to `/railway.sanad.toml`. It builds
-   `Dockerfile.sanad` and sets the health check. (The repository's default `railway.toml` builds
-   the hackathon app.) If your Railway project has no such setting, set the variable
-   `RAILWAY_DOCKERFILE_PATH=Dockerfile.sanad` instead.
-3. Add the variables: `ANTHROPIC_API_KEY`, and `SANAD_ACCESS_CODE` if the address is public.
-4. Keep it at **one replica**. Questions in flight are held in memory by the process that
+1. Create a service from this repository and choose the branch `sanad-mro-hub`.
+2. Add the variables: `ANTHROPIC_API_KEY`, and `SANAD_ACCESS_CODE` if the address is public.
+3. Keep it at **one replica**. Questions in flight are held in memory by the process that
    took them.
-5. Optional: mount a volume and set `SANAD_STATE_FILE` to a path on it, so conversations
+4. Optional: mount a volume and set `SANAD_STATE_FILE` to a path on it, so conversations
    survive a redeploy.
+
+There is nothing else to set. On this branch the default `Dockerfile` and `railway.toml` build
+the Sanad app, so a deploy of the branch cannot produce anything else. To confirm what is
+running, open `/api/health` on the deployed address: it answers `"app": "sanad"` with the
+commit it was built from.
 
 The image is slim (the chat, `sanad_app.py`, the assistant, its data and documents) and starts
 in about a second. `/api/health` reports whether a model key is present; the start-up log says
@@ -142,7 +143,7 @@ pip install pytest
 python -m pytest tests/sanad -q
 ```
 
-179 tests: the read-only SQL guard, the schedule against the storyline, every view at every
+182 tests: the read-only SQL guard, the schedule against the storyline, every view at every
 moment, the router, the role rules, the HTTP API, limits and the access code. The model path
 runs against a local stand-in for the Anthropic API that speaks the real streaming format, so
 the real SDK, the tool loop, streaming, retries, the outage fallback and stop are exercised

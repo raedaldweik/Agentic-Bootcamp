@@ -1,8 +1,11 @@
 # Sanad MRO Intelligence Hub: the standalone Sanad chat and its built-in assistant.
 #
-# A slim image: the chat (sanad-chat/) and backend/sanad_app.py with the Sanad
-# assistant, its shop data and its documents. None of the hackathon app's models or
-# data is copied in. On Railway, point the service's config file at railway.sanad.toml.
+# This branch deploys the Sanad app and nothing else. This file and Dockerfile.sanad are
+# kept identical, and railway.toml points here, so whichever one a host picks up, it builds
+# the Sanad app. (The hackathon app's image lives on the hackathon branches.)
+#
+# A slim image: the chat (sanad-chat/) and backend/sanad_app.py with the Sanad assistant,
+# its shop data and its documents. None of the hackathon app's models or data is copied in.
 
 # ─── Stage 1: build the chat ───────────────────────────────────────
 FROM node:22-alpine AS frontend-build

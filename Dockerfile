@@ -1,38 +1,50 @@
-# ─── Stage 1: Build the React frontend ─────────────────────────────
+# Sanad MRO Intelligence Hub: the standalone Sanad chat and its built-in assistant.
+#
+# This branch deploys the Sanad app and nothing else. This file and Dockerfile.sanad are
+# kept identical, and railway.toml points here, so whichever one a host picks up, it builds
+# the Sanad app. (The hackathon app's image lives on the hackathon branches.)
+#
+# A slim image: the chat (sanad-chat/) and backend/sanad_app.py with the Sanad assistant,
+# its shop data and its documents. None of the hackathon app's models or data is copied in.
+
+# ─── Stage 1: build the chat ───────────────────────────────────────
 FROM node:22-alpine AS frontend-build
 
-WORKDIR /app/frontend
-COPY frontend/package*.json ./
+WORKDIR /app/sanad-chat
+COPY sanad-chat/package*.json ./
 RUN npm ci --no-fund --no-audit
-COPY frontend/ ./
+COPY sanad-chat/ ./
 RUN npm run build
 
 
-# ─── Stage 2: Python backend + built frontend ──────────────────────
-FROM python:3.12-slim
+# ─── Stage 2: the service ──────────────────────────────────────────
+# Python 3.13: the version the test suite was run on.
+FROM python:3.13-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends gcc \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app/backend
 
-WORKDIR /app
-
-COPY backend/requirements.txt /app/backend/requirements.txt
+COPY backend/requirements-sanad.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r /app/backend/requirements.txt
+    pip install --no-cache-dir -r requirements-sanad.txt
 
-COPY backend/ /app/backend/
+COPY backend/sanad_app.py ./
+COPY backend/routers/sanad.py backend/routers/ram.py ./routers/
+COPY backend/services/__init__.py backend/services/ram_client.py backend/services/teams.py ./services/
+COPY backend/services/sanad/ ./services/sanad/
+COPY backend/data/sanad/ ./data/sanad/
+COPY --from=frontend-build /app/sanad-chat/dist /app/sanad-chat/dist
 
-# Train the ML models at build time so artifacts always match the installed
-# sklearn/xgboost versions (they are never committed to git).
-RUN cd /app/backend && python -m scripts.train_models
-
-COPY --from=frontend-build /app/frontend/dist /app/frontend/dist
+# Run as an unprivileged user; the runtime folder holds saved conversations.
+RUN useradd --create-home --uid 10001 sanad && mkdir -p /app/backend/data/runtime && chown -R sanad /app/backend/data/runtime
+USER sanad
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    FRONTEND_DIST=/app/sanad-chat/dist \
+    SANAD_AGENT=true \
     PORT=8000
 
-WORKDIR /app/backend
 EXPOSE 8000
 
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# One process: conversations in flight live in memory, so do not add workers.
+CMD ["sh", "-c", "uvicorn sanad_app:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips '*'"]
