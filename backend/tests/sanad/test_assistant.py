@@ -91,6 +91,10 @@ def test_bad_requests(client):
     assert client.get("/api/assistant/query/unknown").status_code == 404
     r = ask(client, "Show me the status of all the engines.", shop_time="not a time")
     assert r["shopTime"] == "2026-10-28 09:30"                       # an unreadable time falls back to the start
+    r = ask(client, "Show me the status of all the engines.", shop_time="2026-11-10 09:00")
+    assert r["shopTime"] == "2026-10-30 12:00" and "165" not in r["answer"]    # a time past the records is held at their end
+    r = ask(client, "Show me the status of all the engines.", shop_time="2026-01-01 00:00")
+    assert r["shopTime"] == "2026-10-27 16:00"
 
 
 def test_rate_limit(client, monkeypatch):

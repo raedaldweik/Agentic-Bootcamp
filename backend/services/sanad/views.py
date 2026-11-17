@@ -12,17 +12,41 @@ no language model is connected.
 """
 from __future__ import annotations
 
+import re
 from datetime import datetime, timedelta
 from typing import Any, Callable
 
 from . import ops
-from .ops import Shop, nice, parse, stamp, hours_text, lc_first
+from .ops import Shop, nice, parse, stamp, hours_text, lc_first, uc_first
 
 ASSISTANT_LIMITS = ("The Sanad Digital Assistant cannot approve deviations, certify work, accept findings "
                     "or release an engine. It can prepare the evidence and route it to the authorised role.")
 
 
 # ─── Small helpers ───────────────────────────────────────────────────────
+_STATUS_PHRASE = {"At risk": "at risk", "Watch": "on watch", "On track": "on track", "Back on track": "back on track"}
+
+
+def _flat(text: str) -> str:
+    """'approved (2 technicians)' -> 'approved, 2 technicians', so the phrase can sit inside brackets."""
+    return re.sub(r"\s*\(([^()]*)\)", r", \1", text)
+
+
+def _by(approver: str) -> str:
+    """An approving role as it reads after 'by': 'the Supervisor', 'procurement and logistics'."""
+    return "the " + approver if approver in ("Supervisor", "Engine Shop Manager") else lc_first(approver)
+
+
+def _held(held_by: str | None, tasks: list[dict]) -> str:
+    """What a task waits for, in words: 'task:FBR' -> 'After fan blade removal and inspection'."""
+    kind, _, ref = (held_by or "plan").partition(":")
+    if kind == "task":
+        name = next((t["task"].split(":")[0] for t in tasks if t.get("task_id") == ref), ref)
+        return f"After {lc_first(name)}"
+    return {"part": f"Arrival of {ref}", "tool": f"Tool {ref} at the gate", "release": f"Work release of {ref}",
+            "now": "The current shop time", "plan": "The plan"}.get(kind, held_by or "The plan")
+
+
 def _tone(status: str) -> str:
     return {"On track": "good", "Back on track": "good", "Watch": "warn", "At risk": "bad"}.get(status, "info")
 
@@ -108,7 +132,7 @@ def engine_status(shop: Shop, engine_id: str | None = None, **_: Any) -> dict:
 
     if off:
         o = off[0]
-        summary = (f"{o['engine_id']} needs attention: it is {lc_first(o['status'])}, predicted {nice(parse(o['predicted_completion_ts']))}, "
+        summary = (f"{o['engine_id']} needs attention: it is {_STATUS_PHRASE.get(o['status'], lc_first(o['status']))}, predicted {nice(parse(o['predicted_completion_ts']))}, "
                    f"{_late(o['variance_hours'])} against a commitment of {nice(parse(o['committed_completion_ts']))}. {o['driver']}. "
                    f"The other {len(green)} engines are on track; next release is {nxt['engine_id']} on {nice(parse(nxt['predicted_completion_ts']))}.")
     else:
@@ -117,7 +141,7 @@ def engine_status(shop: Shop, engine_id: str | None = None, **_: Any) -> dict:
                 f"{_late(back[0]['variance_hours'])}. " if back else "")
         summary = f"{lead}All {len(engines)} engines are on track. Next release: {nxt['engine_id']} on {nice(parse(nxt['predicted_completion_ts']))}."
         if recovery:
-            summary += " Recovery actions in force: " + "; ".join(f"{r['label']} ({lc_first(r['sub'])})" for r in recovery) + "."
+            summary += " Recovery actions in force: " + "; ".join(f"{r['label']} ({_flat(lc_first(r['sub']))})" for r in recovery) + "."
     data = {"shop_time": shop.now,
             "engines": [{k: e[k] for k in ("engine_id", "engine_type", "esn", "customer", "workscope", "status", "committed_tat_days",
                                            "committed_completion_ts", "predicted_completion_ts", "variance_hours", "driver",
@@ -230,7 +254,7 @@ def delivery_risk(shop: Shop, engine_id: str | None = None, **_: Any) -> dict:
     else:
         buffer = -fc["variance_hours"]
         summary = (f"{eid} carries no delivery risk right now: it is predicted for {nice(predicted)}, {hours_text(buffer)} ahead of its commitment of {nice(committed)}. "
-                   f"{drv.get('text', 'The plan')} sets the finish date, so a slip there of more than {hours_text(buffer)} would breach the commitment.")
+                   f"{drv.get('text', 'The planned sequence sets the finish')}. A slip there of more than {hours_text(buffer)} would breach the commitment.")
         data["buffer_hours"] = buffer
     followups = ([f"Generate a recovery plan for {drv['ref'] if drv.get('kind') == 'part' else eid}.", f"What has changed on {eid} since yesterday?", "Has the recovery option been approved?"]
                  if late else [f"What if {drv.get('ref', 'the part')} arrives four hours late?", f"Show me the recovery progress on {eid}.", "Show me the status of all the engines."])
@@ -313,7 +337,7 @@ def recovery_options(shop: Shop, engine_id: str) -> list[dict]:
         if inv["on_hand"] and inv["ready_at_gate_ts"]:
             f = run(part_arrival={part: parse(inv["ready_at_gate_ts"])})
             out.append({"option": "A", "kind": "alternate_stock", "title": "Alternate stock",
-                        "action": f"Authorised stock transfer of one unit from {inv['location']}; at the gate {nice(parse(inv['ready_at_gate_ts']))} after configuration confirmation",
+                        "action": f"Authorised stock transfer of one unit from {inv['location']}; at the gate from {nice(parse(inv['ready_at_gate_ts']))} after configuration confirmation",
                         "predicted_completion_ts": f["predicted_completion_ts"], "variance_hours": f["variance_hours"],
                         "cost_usd": inv["transfer_cost_usd"] or 0, "cost_note": "transfer", "approval_required": inv["approval_required"],
                         "status": "Available, not selected"})
@@ -390,15 +414,16 @@ def recovery_plan(shop: Shop, engine_id: str | None = None, **_: Any) -> dict:
             {"label": "Approval reference", "value": ap["ref"]},
             {"label": "Approved by", "value": ap["decided_by"]},
             {"label": "Cost recorded", "value": f"{_usd(ap['amount_usd'])} against {ap['work_order']}" if ap["amount_usd"] else "No additional cost"}]})
-        summary = (f"Yes. Option {b['option']}, the {lc_first(b['title'])}, was approved on {nice(parse(ap['ts']))} under {ap['ref']} by {ap['decided_by']}. "
+        summary = (f"Option {b['option']}, the {lc_first(b['title'])}, was approved on {nice(parse(ap['ts']))} under {ap['ref']} by {ap['decided_by']}. "
                    f"{part} is {'in transit and ' if sup.get('status', '').startswith('Shipped') else ''}expected at {sup.get('deliver_to', 'the gate')} on {nice(parse(sup.get('promised_arrival_ts')))}"
                    + (f", {'within' if parse(sup.get('promised_arrival_ts')) <= parse(win['window_end']) else 'after'} the installation window" if win else "") + ". "
                    + (f"The {_usd(ap['amount_usd'])} fee is recorded against {ap['work_order']}. " if ap["amount_usd"] else "")
                    + f"The forecast for {eid} is now {nice(parse(fc['predicted_completion_ts']))}, {_late(fc['variance_hours'])}. "
-                   + " ".join(f"Option {o['option']} is {lc_first(o['status'])}." for o in opts if o["option"] == "C"))
+                   + " ".join((f"Option {o['option']} was authorised on {o['status'][len('Authorised '):]}." if o["status"].startswith("Authorised ")
+                               else f"Option {o['option']} is {lc_first(o['status'])}.") for o in opts if o["option"] == "C"))
     else:
         summary = (f"{len(opts)} recovery options are available for {part} on {eid}, each scheduled forward to a finish date. "
-                   + " ".join(f"Option {o['option']} ({lc_first(o['title'])}): {nice(parse(o['predicted_completion_ts']))}, {_late(o['variance_hours'])}, {lc_first(_usd(o['cost_usd']))}, approval by {lc_first(o['approval_required'])}." for o in opts)
+                   + " ".join(f"Option {o['option']} ({lc_first(o['title'])}): {nice(parse(o['predicted_completion_ts']))}, {_late(o['variance_hours'])}, {lc_first(_usd(o['cost_usd']))}, approval by {_by(o['approval_required'])}." for o in opts)
                    + f" The commitment is {nice(committed)}. None is approved yet; the decision rests with the approving roles.")
         blocks.append({"type": "options", "items": [
             {"title": f"Option {o['option']}", "text": {"alternate_stock": "Lowest-cost route; move a unit from satellite stock", "expedite": "Expedite the supplier shipment",
@@ -471,11 +496,11 @@ def protect_delivery(shop: Shop, engine_id: str | None = None, **_: Any) -> dict
         if deps:
             lead = ("The selected disposition adds process and material dependencies, so the plan has been reassessed. " + lead)
         blocks.append({"type": "callout", "tone": "good", "title": "Recovery plan summary", "text": lead + (
-            " The approved actions still fit the plan: " + "; ".join(f"{a['label']} ({lc_first(a['sub'])})" for a in actions) + "." if actions else "")})
+            " The approved actions still fit the plan: " + "; ".join(f"{a['label']} ({_flat(lc_first(a['sub']))})" for a in actions) + "." if actions else "")})
     else:
         lead = f"{eid} is projected for {nice(predicted)}, {_late(fc['variance_hours'])}."
         if best and best["variance_hours"] <= 0:
-            lead += f" {best['lever']} would bring it to {nice(parse(best['predicted_completion_ts']))}, {_late(best['variance_hours'])}; it needs approval by {best['approval']}."
+            lead += f" {best['lever']} would bring it to {nice(parse(best['predicted_completion_ts']))}, {_late(best['variance_hours'])}; it needs approval by {_by(best['approval'])}."
         elif best:
             lead += f" The strongest unused lever is {lc_first(best['lever'])}: {nice(parse(best['predicted_completion_ts']))}, {_late(best['variance_hours'])}."
         blocks.append({"type": "callout", "tone": "warn", "title": "Recovery plan summary", "text": lead})
@@ -484,7 +509,7 @@ def protect_delivery(shop: Shop, engine_id: str | None = None, **_: Any) -> dict
             {"label": a["label"], "detail": a["sub"], "state": "done" if a["state"] == "done" else "pending"} for a in actions]})
     if deps:
         blocks.append({"type": "table", "title": "New dependencies", "columns": ["Type", "Dependency", "Where", "State"],
-                       "rows": [[d["kind"].capitalize(), d["dependency"], d["where"], {"text": d["state"], "tone": "good"}] for d in deps]})
+                       "rows": [[uc_first(d["kind"]), d["dependency"], d["where"], {"text": d["state"], "tone": "good"}] for d in deps]})
     if unused:
         blocks.append({"type": "table", "title": "Levers not yet used", "columns": ["Lever", "Would finish", "Cost (synthetic)", "Approval"],
                        "rows": [[u["lever"], f"{nice(parse(u['predicted_completion_ts']))} ({_late(u['variance_hours'])})",
@@ -495,7 +520,8 @@ def protect_delivery(shop: Shop, engine_id: str | None = None, **_: Any) -> dict
                                                 "tone": "good" if s["variance_hours"] <= 0 else "bad"}] for s in sens]})
     summary = lead + (f" Cost of recovery so far is {_usd(cost)}." if cost else "")
     if sens and fc["variance_hours"] <= 0:
-        summary += f" The buffer is {hours_text(-fc['variance_hours'])}: {sens[0]['what_if']} would give {nice(parse(sens[0]['predicted_completion_ts']))}, {_late(sens[0]['variance_hours'])}."
+        summary += (f" The buffer is {hours_text(-fc['variance_hours'])}: if {sens[0]['what_if']}, the finish moves to "
+                    f"{nice(parse(sens[0]['predicted_completion_ts']))}, {_late(sens[0]['variance_hours'])}.")
     return {"view": "protect_delivery", "data": data, "summary": summary,
             "card": _card("protect_delivery", f"Protecting the commitment: {eid}", subtitle=f"Shop time {nice(shop.clock)}", tiles=tiles, blocks=blocks),
             "followups": ["Show me the updated engine status and recovery progress.", f"What if {part} arrives four hours late?" if part else f"What has changed on {eid} since yesterday?",
@@ -523,7 +549,7 @@ def job_card(shop: Shop, job_card: str | None = None, **_: Any) -> dict:
             "finding_recorded": finding["finding_id"] if finding else None}
     tiles = [{"label": "Job card", "value": jid, "sub": jc["title"], "icon": "doc", "tone": "info"},
              {"label": "Revision", "value": jc["revision"], "sub": "Latest approved", "icon": "layers", "tone": "info"},
-             {"label": "Key care point", "value": "Care", "sub": jc["key_care_point"], "icon": "shield", "tone": "good"},
+             {"label": "Key care point", "value": "Caution", "sub": jc["key_care_point"], "icon": "shield", "tone": "good"},
              {"label": "Readiness", "value": "Released" if ready else f"{done} of {len(checks)}" if checks else "To confirm",
               "sub": f"Released {nice(parse(rel['ts']), with_year=False)}" if rel else "The supervisor releases the work once all checks are complete",
               "icon": "clipboard", "tone": "good" if ready else "warn"}]
@@ -535,10 +561,16 @@ def job_card(shop: Shop, job_card: str | None = None, **_: Any) -> dict:
                    "text": (f"Revision {jc['revision']} is the approved instruction and the work is released. Follow it exactly and confirm each step before moving on."
                             if ready else
                             f"Revision {jc['revision']} is the approved instruction. Start only after all readiness checks are complete and the supervisor releases the work.")})
-    summary = (f"Job card {jid}, revision {jc['revision']} ({lc_first(jc['title'])}) is the approved instruction: {len(steps)} steps, about {jc['est_hours']} working hours for a crew of {jc['crew']}. "
+    if not steps:
+        blocks.insert(0, {"type": "callout", "tone": "info", "title": "Steps",
+                          "text": f"The step-by-step instruction for {jid} is in {jc['document']}. Its steps are not held in the shop system."})
+    summary = (f"Job card {jid}, revision {jc['revision']} ({lc_first(jc['title'])}) is the approved instruction: "
+               + (f"{len(steps)} steps, " if steps else "") + f"about {jc['est_hours']} working hours for a crew of {jc['crew']}. "
                f"Key care point: {lc_first(jc['key_care_point'])}. "
+               + ("" if steps else f"Its steps are in {jc['document']}. ")
                + (f"All {len(checks)} readiness checks are complete and the work was released on {nice(parse(rel['ts']))}, so it can start with step 1: {lc_first(steps[0]['title'])}."
                   if ready and steps else
+                  "No readiness checks are recorded for it yet and the work is not released, so it cannot start yet." if not checks else
                   f"{done} of {len(checks)} readiness checks are complete and the work is {'released' if rel else 'not yet released'}, so it cannot start yet."))
     return {"view": "job_card", "data": data, "summary": summary,
             "card": _card("job_card", f"{jid}: {jc['title']}", subtitle=f"Revision {jc['revision']} · {jc['document']}", tiles=tiles, blocks=blocks),
@@ -602,7 +634,7 @@ def task_readiness(shop: Shop, job_card: str | None = None, **_: Any) -> dict:
     blocker = blocked[0] if blocked else None
     tiles = [{"label": "Status", "value": status, "sub": f"Released {nice(parse(rel['ts']), with_year=False)}" if rel else "The supervisor releases the work",
               "icon": "gear", "tone": "good" if ready or started else "bad"},
-             {"label": "Checks complete", "value": f"{len(done)} of {len(checks)}", "sub": ", ".join(lc_first(c["check_name"]) for c in done[:3]) or "None yet",
+             {"label": "Checks complete", "value": f"{len(done)} of {len(checks)}", "sub": uc_first(", ".join(lc_first(c["check_name"]) for c in done[:3])) or "None yet",
               "icon": "clipboard", "tone": "good" if len(done) == len(checks) else "warn"},
              ({"label": "Blocker", "value": blocker["check_name"], "sub": blocker["detail"], "icon": "wrench", "tone": "bad"}
               if blocker else {"label": "Blocker", "value": "None", "sub": "No check is blocked", "icon": "check", "tone": "good"})]
@@ -614,9 +646,9 @@ def task_readiness(shop: Shop, job_card: str | None = None, **_: Any) -> dict:
     nxt: list[str] = []
     for c in checks:
         if c["state"] == "blocked":
-            nxt.append(f"Clear the blocker: {c['check_name']} ({lc_first(c['detail'])}); owner {c['owner']}.")
+            nxt.append(f"Clear the blocker. {c['check_name']}: {lc_first(c['detail'])}. Owner: {c['owner']}.")
         elif c["state"] == "pending":
-            nxt.append(f"Confirm {lc_first(c['check_name'])} ({lc_first(c['detail'])}); owner {c['owner']}.")
+            nxt.append(f"{c['check_name']}: {lc_first(c['detail'])}. Owner: {c['owner']}.")
     if overtime_h and not ot_approved and not started:
         nxt.append(f"Ask the Engine Shop Manager to authorise overtime for {jc['crew']} technicians ({hours_text(overtime_h)} beyond the shift).")
     if not rel and not nxt:
@@ -742,9 +774,12 @@ def tool_location(shop: Shop, tool_id: str | None = None, **_: Any) -> dict:
                    + "A person must verify identity and location and sign the custody handover before the transfer is recorded.")
     else:
         blocks.append({"type": "callout", "tone": "good", "title": "Custody status",
-                       "text": f"{tid} is at {st['location']} by signed custody record ({lc_first(st['custody_event'])} {nice(parse(st['custody_ts']), with_year=False)}, {st['custody_source']})."
+                       "text": (f"{tid} is at {st['location']} by signed custody record ({lc_first(st['custody_event'])} {nice(parse(st['custody_ts']), with_year=False)}, {st['custody_source']})."
+                                if st["custody_ts"] else f"{tid} is at its home location, {st['location']}. No issue or handover is recorded against it.")
                                + (" Calibration is in date." if st["calibration_required"] and st["calibration_ok"] else "")})
-        summary = (f"{tid} ({lc_first(st['tool'])}) is at {st['location']}: {lc_first(st['custody_event'])} on {nice(parse(st['custody_ts']))}, recorded by {st['custody_source']}."
+        summary = ((f"{tid} ({lc_first(st['tool'])}) is at {st['location']}: {lc_first(st['custody_event'])} on {nice(parse(st['custody_ts']))}, recorded by {st['custody_source']}."
+                    if st["custody_ts"] else
+                    f"{tid} ({lc_first(st['tool'])}) is at its home location, {st['location']}. No issue or handover is recorded against it.")
                    + (f" The handover from {signed['location']} was signed at {signed['ts'][11:]}." if signed else "")
                    + (f" Calibration is valid until {nice(parse(st['calibration_due']))[:-6]}." if st["calibration_required"] else ""))
     return {"view": "tool_location", "data": data, "summary": summary,
@@ -790,7 +825,7 @@ def inspection_finding(shop: Shop, engine_id: str | None = None, finding_id: str
                                                       "A crack at the blade base requires rejection regardless of scratch size." if z["zone"] == "C" else "")} for z in zrows]}]
     if dispo:
         blocks.append({"type": "callout", "tone": "good", "title": f"Disposition {dispo['ref']}",
-                       "text": f"{dispo['subject'].split(': ', 1)[-1].capitalize()}. Issued {nice(parse(dispo['ts']))} by {dispo['decided_by']}."})
+                       "text": f"{uc_first(dispo['subject'].split(': ', 1)[-1])}. Issued {nice(parse(dispo['ts']))} by {dispo['decided_by']}."})
     elif above:
         blocks.append({"type": "callout", "tone": "warn", "title": "Disposition pending",
                        "text": "The finding is recorded, not accepted. Work on the affected blade stays on hold until an authorised Engineering or Quality role records a disposition."})
@@ -821,17 +856,49 @@ _AUTH_WORDS = {
 }
 
 
+# How each decision reads after "may ...", and whether work waits on it.
+_AUTH_VERB = {
+    "Deviation or concession": ("approve a deviation or concession", True),
+    "Acceptance or disposition of a finding": ("accept or disposition a finding", True),
+    "Certification of work": ("certify work", False),
+    "Release of an engine": ("release an engine", False),
+    "Work release at a workstation": ("release work at a workstation", True),
+    "Overtime": ("authorise overtime", False),
+    "Supplier expedite spend": ("approve supplier expedite spend", False),
+    "Alternate stock transfer": ("approve an alternate stock transfer", False),
+    "Re-sequencing of permitted preparatory work": ("authorise re-sequencing of permitted preparatory work", False),
+    "Tool custody handover": ("record a tool custody handover", False),
+}
+
+
 def _a(noun: str) -> str:
     return ("an " if noun[:1].lower() in "aeiou" else "a ") + noun
 
 
+def _who_cannot(nots: list[str]) -> str:
+    """The 'who may not' column as a sentence."""
+    if not nots:
+        return ""
+    if nots == ["Anyone else"]:
+        return "No one else may. "
+    if nots == ["Shop roles"]:
+        return "Shop roles cannot. "
+    if nots == ["Camera detection alone"]:
+        return "A camera detection alone is not a handover. "
+    return f"{uc_first(_a(' or '.join(lc_first(n) for n in nots)))} cannot. "
+
+
 def _who(authority: str) -> str:
-    """'Authorised Engineering or Quality role' -> 'an authorised Engineering or Quality role'."""
+    """The approving role as the subject of a sentence: 'an authorised Engineering or Quality role',
+    'the Supervisor', 'Procurement, with logistics confirmation,' (the aside closed by a comma)."""
     if authority.startswith("Authorised"):
         return "an " + lc_first(authority)
-    if authority.split(",")[0] in ("Supervisor", "Engine Shop Manager"):
+    if authority.startswith("Releasing custodian"):
+        return "the releasing custodian and the receiving person, both signing,"
+    if authority in ("Supervisor", "Engine Shop Manager"):
         return "the " + authority
-    return lc_first(authority) if authority.startswith(("Certifying", "Releasing")) else authority
+    text = lc_first(authority) if authority.startswith("Certifying") else authority
+    return text + "," if "," in text else text
 
 
 def approval_authority(shop: Shop, action: str | None = None, role: str | None = None, **_: Any) -> dict:
@@ -853,9 +920,11 @@ def approval_authority(shop: Shop, action: str | None = None, role: str | None =
               {"type": "callout", "tone": "info", "title": "What the assistant can and cannot do", "text": ASSISTANT_LIMITS}]
     if hits:
         nots = [n for n in top["cannot_approve"].split("; ") if "Assistant" not in n]
-        summary = (f"Only {_who(top['authority'])} may approve {_a(lc_first(top['action']))} under the approval authority matrix ({top['reference']}). "
-                   + (f"{_a(' or '.join(lc_first(n) for n in nots)).capitalize()} cannot approve it. " if nots else "")
-                   + f"{ASSISTANT_LIMITS} Work on the affected step stays on hold until the approval is recorded.")
+        verb, holds_work = _AUTH_VERB.get(top["action"], (f"approve {_a(lc_first(top['action']))}", False))
+        under = f"the approval authority matrix ({top['reference']})" if top["reference"].startswith("QP-014") else top["reference"]
+        summary = (f"Only {_who(top['authority'])} may {verb} under {under}. "
+                   + _who_cannot(nots) + ASSISTANT_LIMITS
+                   + (" Work on the affected step stays on hold until the decision is recorded." if holds_work else ""))
     else:
         summary = "The approval authority matrix (QP-014) sets who may approve each kind of decision. " + ASSISTANT_LIMITS
     return {"view": "approval_authority", "data": data, "summary": summary,
@@ -883,9 +952,9 @@ def simulate_schedule(shop: Shop, engine_id: str | None = None, part_arrival: st
         what_if["part_arrival"] = {part: pa}; changed.append(f"{part} arrives {nice(pa)}")
     if ta and tool:
         what_if["tool_available"] = {tool: ta}; changed.append(f"{tool} is at the gate from {nice(ta)}")
-    for key, val, yes, no in (("overtime", overtime, "overtime is authorised", "no overtime"),
+    for key, val, yes, no in (("overtime", overtime, "overtime is authorised", "overtime is not authorised"),
                               ("resequence", resequence, "permitted work is re-sequenced", "work is not re-sequenced"),
-                              ("disposition", disposition, "a blade repair disposition is in force", "no repair disposition")):
+                              ("disposition", disposition, "a blade repair disposition is in force", "no repair disposition is in force")):
         if val is not None:
             what_if[key] = bool(val); changed.append(yes if val else no)
     base = shop.forecast(eid)
@@ -903,12 +972,14 @@ def simulate_schedule(shop: Shop, engine_id: str | None = None, part_arrival: st
         {"label": "Simulated", "value": nice(parse(sim["predicted_completion_ts"])), "sub": _late(sim["variance_hours"]), "tone": _tone(sim["status"])}],
         "delta": {"text": "No change" if not delta else f"{hours_text(delta)} {'later' if delta > 0 else 'earlier'}", "tone": "bad" if delta > 0 else "good" if delta < 0 else "info"}},
         {"type": "table", "title": "Simulated schedule", "columns": ["Task", "Start", "Finish", "Held by"],
-         "rows": [[t["task"].split(":")[0], nice(parse(t["start_ts"]), with_year=False), nice(parse(t["end_ts"]), with_year=False), t["held_by"] or "plan"] for t in sim["tasks"]]},
+         "rows": [[t["task"].split(":")[0], nice(parse(t["start_ts"]), with_year=False), nice(parse(t["end_ts"]), with_year=False), _held(t["held_by"], sim["tasks"])] for t in sim["tasks"]]},
         {"type": "callout", "tone": "info", "title": "Simulation only", "text": "Nothing in the plan has changed. Each of these actions needs its own approval from the authorised role."}]
-    summary = (f"If {' and '.join(changed) if changed else 'nothing changes'}, {eid} would finish {nice(parse(sim['predicted_completion_ts']))}, {_late(sim['variance_hours'])} "
-               f"against a commitment of {nice(parse(base['committed_completion_ts']))}. "
+    drv_text = (sim["driver"] or {}).get("text", "The planned sequence sets the finish")
+    summary = (f"If {' and '.join(changed) if changed else 'nothing changes'}, {eid} would finish {nice(parse(sim['predicted_completion_ts']))}, {_late(sim['variance_hours'])}; "
+               f"the commitment is {nice(parse(base['committed_completion_ts']))}. "
                + (f"That is {hours_text(delta)} {'later' if delta > 0 else 'earlier'} than the current forecast of {nice(parse(base['predicted_completion_ts']))}." if delta else
-                  f"That is the same as the current forecast: {(sim['driver'] or {}).get('text', 'the plan')} still sets the finish date.")
+                  "That is the current forecast." if not changed else
+                  f"That is the same as the current forecast, because this does not move what sets the finish date. {drv_text}.")
                + " This is a simulation; nothing has changed in the plan.")
     return {"view": "simulate_schedule", "data": data, "summary": summary,
             "card": _card("simulate_schedule", f"What if: {eid}", subtitle="; ".join(changed) or "Current plan", blocks=blocks),

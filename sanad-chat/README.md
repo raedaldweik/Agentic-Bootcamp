@@ -13,7 +13,7 @@ questions outside the demonstration storyline work too. The data itself is synth
 | | |
 |---|---|
 | **Three roles** | Engine Shop Manager, Technician, Supervisor, chosen from the "Asking as" dropdown. The role sets the suggested questions and what the assistant may do on that person's behalf. |
-| **Shop time** | A demonstration clock with six moments of the story (the delivery slips, the recovery is approved, the tool arrives, the finding is recorded, the plan is reassessed) and any other time. The data is shown as it stood at that time, so the same question changes its answer through the day. |
+| **Shop time** | A demonstration clock with six moments of the story (the delivery slips, the recovery is approved, the tool arrives, the finding is recorded, the plan is reassessed) and any other time between 27 Oct 16:00 and 30 Oct 12:00, the period the records cover. The data is shown as it stood at that time, so the same question changes its answer through the day. |
 | **Visual answers** | A short answer plus a card: status tables, the critical path, option comparisons, readiness checklists, tool custody, job card steps, and a blade inspection view with each zone against its limit. Charts on request. |
 | **Next questions** | Two or three one-tap follow-ups docked above the input after every answer. |
 | **Voice** | Tap the microphone and speak. Words appear as they are heard, shop ids are tidied ("t one one seven" becomes T-117), and the question sends itself after a short pause that can be cancelled. "Read aloud" speaks the answers. Chrome, Edge and Safari. |
@@ -143,8 +143,8 @@ pip install pytest
 python -m pytest tests/sanad -q
 ```
 
-182 tests: the read-only SQL guard, the schedule against the storyline, every view at every
-moment, the router, the role rules, the HTTP API, limits and the access code. The model path
+185 tests: the read-only SQL guard, the schedule against the storyline, every view at every
+moment, the wording of every answer across the allowed period, the router, the role rules, the HTTP API, limits and the access code. The model path
 runs against a local stand-in for the Anthropic API that speaks the real streaming format, so
 the real SDK, the tool loop, streaming, retries, the outage fallback and stop are exercised
 without a key.

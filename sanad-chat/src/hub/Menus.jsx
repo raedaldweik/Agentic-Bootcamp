@@ -52,8 +52,6 @@ export function PersonaMenu({ personas, value, onChange }) {
   );
 }
 
-const CLOCK_MIN = '2026-10-20 00:00';          // the range the shop data covers; the server holds the same limits
-const CLOCK_MAX = '2026-11-20 00:00';
 const pad = (n) => String(n).padStart(2, '0');
 const toInput = (ts) => (ts || '').replace(' ', 'T');
 const fromInput = (v) => (v || '').replace('T', ' ').slice(0, 16);
@@ -63,7 +61,10 @@ export function niceTime(ts) {
   return m ? `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${pad(m[4])}:${m[5]}` : ts;
 }
 
-export function ClockMenu({ moments, value, onChange }) {
+/** Hold a shop time inside the period the records cover (the server holds the same limits). */
+export const holdTime = (t, clock) => (!clock ? t : t < clock.min ? clock.min : t > clock.max ? clock.max : t);
+
+export function ClockMenu({ moments, value, onChange, clock }) {
   const [open, setOpen] = useState(false);
   const [custom, setCustom] = useState(toInput(value));
   const ref = useDismiss(open, () => setOpen(false));
@@ -97,14 +98,15 @@ export function ClockMenu({ moments, value, onChange }) {
           <div className="hub-menu-custom">
             <label htmlFor="hub-clock">Any other time</label>
             <div className="flex gap-2">
-              <input id="hub-clock" type="datetime-local" value={custom} min="2026-10-20T00:00" max="2026-11-20T00:00"
+              <input id="hub-clock" type="datetime-local" value={custom} min={toInput(clock?.min)} max={toInput(clock?.max)}
                 onChange={(e) => setCustom(e.target.value)} />
               <button disabled={!custom || fromInput(custom) === value}
-                onClick={() => { const t = fromInput(custom); onChange(t < CLOCK_MIN ? CLOCK_MIN : t > CLOCK_MAX ? CLOCK_MAX : t); setOpen(false); }}>Set</button>
+                onClick={() => { onChange(holdTime(fromInput(custom), clock)); setOpen(false); }}>Set</button>
             </div>
           </div>
           <div className="hub-menu-foot">
             A demonstration clock. The shop data is shown as it stood at this time{moment ? '' : ' (custom)'}, so the same question can have a different answer later in the day.
+            {clock ? ` The records cover ${clock.minNice} to ${clock.maxNice}.` : ''}
           </div>
         </div>
       )}

@@ -48,7 +48,10 @@ SAVE_DELAY_S = 4.0
 FAST_PATH = os.getenv("SANAD_FAST_PATH", "").lower() in ("1", "true", "yes")
 BREAKER_FAILURES = 3
 BREAKER_OPEN_S = 30.0
-CLOCK_MIN, CLOCK_MAX = "2026-10-20 00:00", "2026-11-20 00:00"
+# The shop time a person may choose: the period the records cover. Before it there is no
+# readiness or tool history for the job; after it there are no later events (the part's
+# receipt, later task sign-offs), so a forecast would drift for want of data, not for cause.
+CLOCK_MIN, CLOCK_MAX = scenario.CLOCK_MIN, scenario.CLOCK_MAX
 
 
 class Refused(Exception):
@@ -362,9 +365,9 @@ class Engine:
     @staticmethod
     def _clock(shop_time: str | None):
         dt = ops.parse(shop_time)
-        if not dt or not (ops.parse(CLOCK_MIN) <= dt <= ops.parse(CLOCK_MAX)):
+        if not dt:
             return ops.scenario_start()
-        return dt.replace(second=0, microsecond=0)
+        return min(max(dt, ops.parse(CLOCK_MIN)), ops.parse(CLOCK_MAX)).replace(second=0, microsecond=0)
 
     @staticmethod
     def _public(t: dict) -> dict:

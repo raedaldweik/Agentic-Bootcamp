@@ -182,3 +182,78 @@ def test_deviation_package_needs_a_recorded_finding_and_never_approves():
     result, is_error = tools.execute("prepare_deviation_package", {}, ctx("2026-10-28 16:00", "supervisor"))
     assert not is_error and result["status"] == "routed" and "pending" in result["record"]["status"].lower()
     assert "Nothing is approved" in result["note"]
+
+
+# ── what people read ─────────────────────────────────────────────────────
+def _every_text(value, out):
+    if isinstance(value, str):
+        out.append(value)
+    elif isinstance(value, dict):
+        for k, v in value.items():
+            if k not in ("kind", "id", "type", "icon", "tone", "state", "zone", "status"):
+                _every_text(v, out)
+    elif isinstance(value, list):
+        for v in value:
+            _every_text(v, out)
+
+
+def _allowed_times():
+    from datetime import timedelta
+    t, end = ops.parse(scenario.CLOCK_MIN), ops.parse(scenario.CLOCK_MAX)
+    while t <= end:
+        yield ops.stamp(t)
+        t += timedelta(minutes=95)
+    yield scenario.CLOCK_MAX
+
+
+BAD_WORDING = [
+    r"\bit is watch\b", r"\b[Aa]n anyone\b", r"\bA shop roles\b", r" on , ", r"\b0 of 0\b", r"\b0 steps\b", r"  ", r" ,", r"\(\)", r"\bwould give\b",
+    r"\ban overtime\b", r"\brs-\d", r"\bgate \d", r"\btask:[A-Z]", r"\bpart:P", r"\bNone\b(?! (is|yet|added))", r"\bnan\b", r"\{|\}", r"\bis authorised \d",
+    r"sets the finish date, so", r"still sets the finish", r"\bIf no \w+,", r"\([^()]*\([^()]*\)[^()]*\)",
+]
+VARIANTS = {
+    "engine_status": [{}, {"engine_id": "ENG-204"}, {"engine_id": "ENG-215"}], "delivery_risk": [{}, {"engine_id": "ENG-201"}], "forecast_changes": [{}],
+    "recovery_plan": [{}, {"engine_id": "ENG-209"}], "protect_delivery": [{}], "job_card": [{}, {"job_card": "JC-FAN-231"}], "task_readiness": [{}],
+    "task_tools": [{}], "tool_location": [{"tool_id": t} for t in ("T-117", "T-063", "T-208", "T-615", "K-014")], "inspection_finding": [{}],
+    "approval_authority": [{"action": a} for a in ("approve a deviation", "accept the finding", "certify the work", "release the engine", "release the work",
+                                                   "authorise overtime", "expedite spend", "stock transfer", "re-sequence work", "tool handover", "anything")],
+    "simulate_schedule": [{"part_arrival": "2026-11-03 14:00"}, {"overtime": False}, {"resequence": False, "disposition": True}, {}],
+}
+
+
+def test_every_answer_in_the_allowed_period_reads_properly():
+    import re
+    faults = []
+    for ts in _allowed_times():
+        shop = ops.shop(ts)
+        for name, sets in VARIANTS.items():
+            for args in sets:
+                r = views.run(name, shop, **args)
+                texts = [r["summary"]]
+                _every_text(r["card"], texts)
+                for text in texts:
+                    for pattern in BAD_WORDING:
+                        if text in ("None", "None yet", "None added"):       # a tile that honestly says there is none
+                            continue
+                        if re.search(pattern, text):
+                            faults.append(f"{name} @ {ts}: /{pattern}/ in: {text[:140]}")
+                    if text and text == r["summary"]:
+                        assert text[0].isupper() or text[0].isdigit(), text[:60]
+                        assert text.rstrip().endswith("."), f"{name} @ {ts}: summary does not end with a full stop: ...{text[-60:]}"
+    assert not faults, "\n".join(sorted(set(faults))[:25])
+
+
+def test_nothing_drifts_for_want_of_data_inside_the_allowed_period():
+    """Inside the period a person may choose, no forecast is in the past and ENG-204 is never later than the slip made it."""
+    for ts in _allowed_times():
+        shop = ops.shop(ts)
+        for eid in shop.engine_ids():
+            f = shop.forecast(eid)
+            assert f["predicted_completion_ts"] > ts, (eid, ts, f["predicted_completion_ts"])
+        assert shop.forecast("ENG-204")["variance_hours"] <= 36.0, ts
+        assert all(shop.forecast(e)["variance_hours"] <= 0 for e in ("ENG-201", "ENG-209", "ENG-215")), ts
+
+
+def test_the_story_moments_sit_inside_the_allowed_period():
+    assert all(scenario.CLOCK_MIN <= m["ts"] <= scenario.CLOCK_MAX for m in scenario.MOMENTS)
+    assert scenario.public()["clock"] == {"min": "2026-10-27 16:00", "max": "2026-10-30 12:00", "minNice": "27 Oct 16:00", "maxNice": "30 Oct 12:00"}

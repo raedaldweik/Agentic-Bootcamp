@@ -55,6 +55,9 @@ def hours_text(h: float) -> str:
     return f"{a:g} h" if abs(a - round(a, 1)) < 1e-9 else f"{a:.1f} h"
 
 
+_PROPER = {"Gate"}                   # words that keep their capital mid-sentence ("Gate 1 bay reserved")
+
+
 def lc_first(text: str) -> str:
     """Lower the first letter for mid-sentence use, unless the word is an identifier or acronym (P-4582, FPI)."""
     if not text:
@@ -62,7 +65,14 @@ def lc_first(text: str) -> str:
     first = text.split(" ", 1)[0]
     if len(first) > 1 and (first.isupper() or any(ch.isdigit() for ch in first)):
         return text
+    if first in _PROPER:
+        return text
     return text[0].lower() + text[1:]
+
+
+def uc_first(text: str) -> str:
+    """Capital first letter, the rest untouched (str.capitalize would lower-case ids such as RS-72-21-08)."""
+    return text[:1].upper() + text[1:]
 
 
 def scenario_start() -> datetime:
@@ -356,7 +366,7 @@ class Shop:
             if e["po_id"] in pos and e["event"] != "Order confirmed":
                 out.append((parse(e["ts"]), f"{e['po_id']}: {e['event'].lower()} ({e['note']})"))
         for a in self.approvals(engine_id):
-            out.append((parse(a["ts"]), f"{a['ref']}: {a['subject']} ({a['decision'].lower()} by {a['decided_by']})"))
+            out.append((parse(a["ts"]), f"{a['ref']}: {a['subject']} ({a['decision'].lower()} by {a['decided_by'].replace(' (', ', ').replace(')', '')})"))
         tools = {n.split(":")[1] for t in self.rows("schedule_tasks", engine_id=engine_id) for n in (t["needs"] or "").split(";") if n.startswith("tool:")}
         for e in self.t["tool_events"]:
             if e["tool_id"] in tools and e["event"] in ("Issued", "Handover signed", "Checked in"):

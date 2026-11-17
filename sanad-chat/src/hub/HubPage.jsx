@@ -8,7 +8,7 @@ import { SanadMark } from '../ram/Logo';
 import Icon from './Icon';
 import Card from './Card';
 import Markdown from './Markdown';
-import { PersonaMenu, ClockMenu, niceTime } from './Menus';
+import { PersonaMenu, ClockMenu, niceTime, holdTime } from './Menus';
 import { Notebook, Details, SourceSheet, AccessGate } from './Panels';
 import { useVoice, speak, stopSpeaking, speechSupported } from './voice';
 import CheckPage from './CheckPage';
@@ -193,7 +193,7 @@ function Hub({ health, onLocked }) {
     api.getConfig().then((c) => {
       setConfig(c);
       setPersona((p) => (c.personas.some((x) => x.key === p) ? p : c.defaultPersona));
-      setShopTime((t) => (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(t) ? t : c.defaultMoment));
+      setShopTime((t) => (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(t) ? holdTime(t, c.clock) : c.defaultMoment));
     }).catch((e) => { if (e.status !== 401) setConfigError(e.message); });
     api.getSessions().then((sessions) => {
       setChats((prev) => [...prev, ...sessions.map((s) => ({ id: uid(), sessionId: s.id, title: s.title, messages: [], loaded: false, updatedAt: s.updateTimestamp }))]);
@@ -438,7 +438,7 @@ function Hub({ health, onLocked }) {
             {!health.llm && <span className="status-pill" style={{ color: 'var(--amber)' }} title="No language model key is configured on the server. The standard questions are answered from the shop data.">Standard answers only</span>}
             {health.llm && health.modelCheck?.ok === false && <span className="status-pill" style={{ color: 'var(--amber)' }} title={health.modelCheck.error || ''}>Model unavailable</span>}
             {config && <PersonaMenu personas={config.personas} value={persona} onChange={setPersona} />}
-            {config && <ClockMenu moments={config.moments} value={shopTime} onChange={setShopTime} />}
+            {config && <ClockMenu moments={config.moments} value={shopTime} onChange={setShopTime} clock={config.clock} />}
             {speechSupported && (
               <button className={`hub-control is-compact ${readAloud ? 'is-on' : ''}`} onClick={() => setReadAloud((v) => !v)}
                 title={readAloud ? 'Answers are read aloud. Click to turn off.' : 'Read answers aloud'} aria-pressed={readAloud}>

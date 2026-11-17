@@ -62,6 +62,8 @@ MOMENTS: list[dict[str, str]] = [
     {"id": "m6", "ts": "2026-10-29 10:00", "label": "Plan reassessed", "detail": "Disposition issued, engine back on track"},
 ]
 
+CLOCK_MIN, CLOCK_MAX = "2026-10-27 16:00", "2026-10-30 12:00"      # the period the shop records cover
+
 AGENT = {"id": "sanad-data-agent", "name": "SANAD_data_agent",
          "description": "Sanad Digital Assistant: engine status, delivery risk, recovery planning, job cards, tools, findings and approvals"}
 
@@ -83,5 +85,6 @@ def public() -> dict[str, Any]:
         "defaultPersona": DEFAULT_PERSONA,
         "moments": [{**m, "nice": ops.nice(ops.parse(m["ts"]))} for m in MOMENTS],
         "defaultMoment": MOMENTS[0]["ts"],
+        "clock": {"min": CLOCK_MIN, "max": CLOCK_MAX, "minNice": ops.nice(ops.parse(CLOCK_MIN), with_year=False), "maxNice": ops.nice(ops.parse(CLOCK_MAX), with_year=False)},
         "note": "Synthetic demonstration data. Not Sanad operational data.",
     }
