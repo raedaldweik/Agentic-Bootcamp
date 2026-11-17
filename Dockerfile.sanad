@@ -34,9 +34,8 @@ COPY backend/services/sanad/ ./services/sanad/
 COPY backend/data/sanad/ ./data/sanad/
 COPY --from=frontend-build /app/sanad-chat/dist /app/sanad-chat/dist
 
-# Run as an unprivileged user; the runtime folder holds saved conversations.
-RUN useradd --create-home --uid 10001 sanad && mkdir -p /app/backend/data/runtime && chown -R sanad /app/backend/data/runtime
-USER sanad
+# Saved conversations and notebooks go here (see SANAD_STATE_FILE to keep them on a volume).
+RUN mkdir -p /app/backend/data/runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
